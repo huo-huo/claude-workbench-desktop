@@ -165,6 +165,23 @@ export function buildChannelEnvFrom(state, readSecret) {
 }
 
 /**
+ * 探测 SDK 自带平台包中的原生 CLI 是否存在。
+ *
+ * 默认实现与 SDK 内部定位 CLI 的方式一致；打包产物不再包含平台包时返回 false，
+ * 由健康检查明确报告“需要安装 Claude Code”。
+ *
+ * @returns {boolean} 平台包中的 claude.exe 是否可解析
+ */
+function defaultProbeBundledRuntime() {
+  try {
+    require.resolve(`@anthropic-ai/claude-agent-sdk-${process.platform}-${process.arch}/claude.exe`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * 创建 SDK 运行时。
  *
  * @param {object} [options] 依赖注入项
@@ -173,6 +190,7 @@ export function buildChannelEnvFrom(state, readSecret) {
  * @param {() => object} [options.buildChannelEnv] 渠道环境构造
  * @param {string} [options.sessionFile] 会话记录文件路径
  * @param {() => object} [options.loadSdk] SDK 加载函数，注入后才视为可用
+ * @param {() => boolean} [options.probeBundledRuntime] 探测 SDK 自带原生 CLI 是否可用
  * @returns {{ health: () => object, createSession: Function, send: Function, interrupt: Function, close: Function, get: Function, subscribe: Function, shutdown: Function }}
  */
 export function createSdkRuntime({
@@ -181,6 +199,7 @@ export function createSdkRuntime({
   buildChannelEnv,
   sessionFile,
   loadSdk,
+  probeBundledRuntime = defaultProbeBundledRuntime,
 } = {}) {
   /** 会话表：会话 id -> 会话对象；本阶段尚未创建任何会话 */
   const sessions = new Map();
@@ -294,6 +313,21 @@ export function createSdkRuntime({
     if (result.runtimeSource === 'installed' && !fs.existsSync(runtimePath)) {
       result.runtimePath = '';
       result.runtimeSource = 'bundled';
+    }
+
+    // bundled 表示需要依赖 SDK 平台包中的原生 CLI；安装包不再分发该文件，
+    // 因此必须探测其是否存在，避免健康检查误报可用后创建会话才失败
+    if (result.runtimeSource === 'bundled') {
+      let bundledAvailable = false;
+      try {
+        bundledAvailable = Boolean(probeBundledRuntime());
+      } catch {
+        bundledAvailable = false;
+      }
+      if (!bundledAvailable) {
+        result.error = '未找到 Claude Code 运行时，请安装 Claude Code 或设置 CLAUDE_WORKBENCH_SDK_EXECUTABLE';
+        return result;
+      }
     }
 
     if (typeof loadSdk !== 'function') {

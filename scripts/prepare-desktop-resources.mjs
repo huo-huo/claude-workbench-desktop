@@ -72,16 +72,8 @@ copyPackageFiles(
   (_rel, name) => !name.endsWith('.map') && !name.endsWith('.md'),
 );
 
-// SDK 通过 require.resolve('@anthropic-ai/claude-agent-sdk-<platform>-<arch>/claude.exe') 定位原生 CLI，
-// 缺少该平台包时创建会话会报 "Native CLI binary ... not found"，故一并复制 Windows x64 运行时
-const sdkPlatformFiles = ['package.json', 'claude.exe'];
-for (const file of sdkPlatformFiles) {
-  const from = path.join(modules, '@anthropic-ai', 'claude-agent-sdk-win32-x64', file);
-  const to = path.join(stagedModules, '@anthropic-ai', 'claude-agent-sdk-win32-x64', file);
-  fs.mkdirSync(path.dirname(to), { recursive: true });
-  fs.copyFileSync(from, to);
-  copiedFiles++;
-}
+// 原生 CLI 不随安装包分发：按 README 要求由用户预先安装 Claude Code，
+// SDK 运行时通过 resolveExecutable 使用该 CLI；未安装时健康检查会明确报告不可用
 
 const sizes = [];
 function walk(dir) {

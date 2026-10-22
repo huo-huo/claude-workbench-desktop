@@ -102,11 +102,13 @@ function tempDir(t) {
 }
 
 /** 构造注入了 mock SDK 与临时记录文件的运行时 */
-function createTestRuntime({ sdk, sessionFile, resolveProject, resolveExecutable, buildChannelEnv } = {}) {
+function createTestRuntime({ sdk, sessionFile, resolveProject, resolveExecutable, buildChannelEnv, probeBundledRuntime } = {}) {
   return createSdkRuntime({
     resolveProject: resolveProject || ((value) => `C:\\规范\\${value}`),
     resolveExecutable: resolveExecutable || (() => ({ path: '', source: 'bundled' })),
     buildChannelEnv: buildChannelEnv || (() => ({ CWB_CHANNEL: 'test' })),
+    // 默认视为 SDK 自带运行时可用，避免每条会话用例都依赖真实平台包
+    probeBundledRuntime: probeBundledRuntime || (() => true),
     sessionFile,
     loadSdk: () => sdk,
   });
@@ -218,7 +220,7 @@ test('createSdkRuntime：返回约定的方法集合', () => {
 });
 
 test('health()：未注入 loadSdk 时返回不可用且有错误信息', async () => {
-  const runtime = createSdkRuntime({});
+  const runtime = createSdkRuntime({ probeBundledRuntime: () => true });
   const health = await runtime.health();
 
   assert.equal(health.available, false);
@@ -232,6 +234,7 @@ test('health()：未注入 loadSdk 时返回不可用且有错误信息', async 
 
 test('health()：loadSdk 抛错时返回不可用且有错误信息', async () => {
   const runtime = createSdkRuntime({
+    probeBundledRuntime: () => true,
     loadSdk: () => {
       throw new Error('模拟 SDK 加载失败');
     },
@@ -273,9 +276,10 @@ test('health()：installed 运行时存在时采用该路径', async () => {
   assert.equal(health.runtimeSource, 'installed');
 });
 
-test('health()：没有可用运行时路径时回落到 bundled', async () => {
+test('health()：没有可用运行时路径但 SDK 自带运行时存在时可用', async () => {
   const runtime = createSdkRuntime({
     resolveExecutable: () => ({ path: '', source: 'bundled' }),
+    probeBundledRuntime: () => true,
     loadSdk: () => Promise.resolve({ query: () => {} }),
   });
   const health = await runtime.health();
@@ -283,6 +287,48 @@ test('health()：没有可用运行时路径时回落到 bundled', async () => {
   assert.equal(health.available, true);
   assert.equal(health.runtimePath, '');
   assert.equal(health.runtimeSource, 'bundled');
+});
+
+test('health()：bundled 运行时探测失败时不可用并提示安装 Claude Code', async () => {
+  let probes = 0;
+  let loads = 0;
+  const runtime = createSdkRuntime({
+    resolveExecutable: () => ({ path: '', source: 'bundled' }),
+    probeBundledRuntime: () => {
+      probes += 1;
+      return false;
+    },
+    loadSdk: () => {
+      loads += 1;
+      return Promise.resolve({ query: () => {} });
+    },
+  });
+  const health = await runtime.health();
+
+  assert.equal(health.available, false);
+  assert.equal(health.runtimeSource, 'bundled');
+  assert.ok(health.error.includes('安装 Claude Code'), 'error 应提示安装 Claude Code');
+  assert.equal(probes, 1, 'bundled 源应探测一次');
+  assert.equal(loads, 0, '运行时缺失时不应加载 SDK');
+});
+
+test('health()：env / installed 源不探测 bundled 运行时', async () => {
+  const runtimePath = process.execPath;
+  for (const source of ['env', 'installed']) {
+    let probes = 0;
+    const runtime = createSdkRuntime({
+      resolveExecutable: () => ({ path: runtimePath, source }),
+      probeBundledRuntime: () => {
+        probes += 1;
+        return false;
+      },
+      loadSdk: () => Promise.resolve({ query: () => {} }),
+    });
+    const health = await runtime.health();
+
+    assert.equal(health.available, true, `${source} 源不应受 bundled 探测影响`);
+    assert.equal(probes, 0, `${source} 源不应调用 probeBundledRuntime`);
+  }
 });
 
 test('health()：env 指定的运行时不存时不可用并说明原因', async () => {
@@ -303,6 +349,7 @@ test('health()：env 指定的运行时不存时不可用并说明原因', async
 test('health()：loadSdk 返回 Promise 时只加载一次', async () => {
   let loads = 0;
   const runtime = createSdkRuntime({
+    probeBundledRuntime: () => true,
     loadSdk: () => {
       loads += 1;
       return Promise.resolve({ query: () => {} });
@@ -319,6 +366,7 @@ test('health()：loadSdk 返回 Promise 时只加载一次', async () => {
 
 test('health()：SDK 模块缺少 query 时不可用', async () => {
   const runtime = createSdkRuntime({
+    probeBundledRuntime: () => true,
     loadSdk: () => Promise.resolve({}),
   });
   const health = await runtime.health();
@@ -329,6 +377,7 @@ test('health()：SDK 模块缺少 query 时不可用', async () => {
 
 test('health()：可用时读取已安装 SDK 的版本号', async () => {
   const runtime = createSdkRuntime({
+    probeBundledRuntime: () => true,
     loadSdk: () => import('@anthropic-ai/claude-agent-sdk'),
   });
   const health = await runtime.health();
@@ -340,6 +389,7 @@ test('health()：可用时读取已安装 SDK 的版本号', async () => {
 test('health()：SDK 加载失败后缓存原因，不重复加载', async () => {
   let loads = 0;
   const runtime = createSdkRuntime({
+    probeBundledRuntime: () => true,
     loadSdk: () => {
       loads += 1;
       throw new Error('模拟 SDK 加载失败');
@@ -359,6 +409,7 @@ test('health()：SDK 加载失败后缓存原因，不重复加载', async () =>
 test('createSession()：SDK 不可用时抛出 503', async () => {
   const runtime = createSdkRuntime({
     resolveProject: () => 'C:\\已登记项目',
+    probeBundledRuntime: () => true,
     loadSdk: () => {
       throw new Error('模拟 SDK 加载失败');
     },
@@ -377,6 +428,7 @@ test('createSession()：项目路径校验失败时抛 400 且不启动查询', 
     resolveProject: () => {
       throw new Error('项目路径无效');
     },
+    probeBundledRuntime: () => true,
     loadSdk: () => Promise.resolve({
       query: () => {
         queries += 1;
