@@ -2,6 +2,8 @@
 
 Claude Workbench is a Windows desktop workspace for Claude Code. It puts Claude configuration, projects, terminal sessions, and a project file browser in one window.
 
+**[Visit the landing page](https://young920.github.io/claude-workbench-desktop/)** · [Download the latest Windows installer](https://github.com/young920/claude-workbench-desktop/releases/latest)
+
 > The screenshot uses a fictional project and sample terminal text. It contains no personal project paths or files.
 
 ![Claude Workbench workspace](docs/screenshots/workspace-overview.png)
