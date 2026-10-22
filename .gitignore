@@ -19,3 +19,15 @@ desktop-build-025/
 *.db
 Thumbs.db
 .DS_Store
+# >>> Comet managed project state >>>
+!/.comet/
+/.comet/*
+!/.comet/config.yaml
+# <<< Comet managed project state <<<
+# Comet change 运行时状态（不提交，留本机）
+docs/openspec/changes/**/.comet.yaml
+docs/openspec/changes/**/.comet/
+# 子代理开发协调产物
+.superpowers/
+# git worktree 目录
+.worktrees/
