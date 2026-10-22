@@ -183,3 +183,37 @@ test('health()：可用时读取已安装 SDK 的版本号', async () => {
   assert.equal(health.available, true);
   assert.match(String(health.sdkVersion), /^\d+\.\d+\.\d+/, 'sdkVersion 应是语义化版本号');
 });
+
+test('health()：SDK 加载失败后缓存原因，不重复加载', async () => {
+  let loads = 0;
+  const runtime = createSdkRuntime({
+    loadSdk: () => {
+      loads += 1;
+      throw new Error('模拟 SDK 加载失败');
+    },
+  });
+
+  const first = await runtime.health();
+  const second = await runtime.health();
+
+  assert.equal(first.available, false);
+  assert.ok(first.error.includes('模拟 SDK 加载失败'));
+  assert.equal(second.available, false);
+  assert.equal(second.error, first.error);
+  assert.equal(loads, 1, '失败原因应被缓存，避免反复尝试加载');
+});
+
+test('createSession()：SDK 不可用时抛出 503', async () => {
+  const runtime = createSdkRuntime({
+    resolveProject: () => 'C:\\已登记项目',
+    loadSdk: () => {
+      throw new Error('模拟 SDK 加载失败');
+    },
+  });
+
+  await assert.rejects(runtime.createSession({ projectPath: 'C:\\已登记项目' }), (error) => {
+    assert.equal(error.statusCode, 503);
+    assert.ok(error.message.length > 0);
+    return true;
+  });
+});

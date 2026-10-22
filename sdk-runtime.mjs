@@ -199,7 +199,16 @@ export function createSdkRuntime({
   return {
     health,
 
-    createSession() {
+    async createSession() {
+      // SDK 不可用时统一降级为 503，路由层据此返回可读错误
+      const status = await health();
+      if (!status.available) {
+        const error = new Error(status.error || 'Claude Agent SDK 不可用');
+        error.statusCode = 503;
+        throw error;
+      }
+
+      // 会话创建留待任务 3.1 实现
       throw notImplemented('createSession');
     },
 
