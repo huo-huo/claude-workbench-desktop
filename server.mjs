@@ -2175,6 +2175,9 @@ const server = http.createServer(async (req, res) => {
       const body = await bodyJson(req);
       const project = null;
       if (url.pathname === '/api/sdk/sessions') return send(res, 201, await sdkRuntime.createSession(body));
+      if (url.pathname === '/api/sdk/sessions/message') return send(res, 202, sdkRuntime.send(body.id, body.prompt));
+      if (url.pathname === '/api/sdk/sessions/interrupt') return send(res, 200, await sdkRuntime.interrupt(body.id));
+      if (url.pathname === '/api/sdk/sessions/close') return send(res, 200, await sdkRuntime.close(body.id));
       if (url.pathname === '/api/prompt-library/refine') return send(res, 200, await refinePromptLibraryItem(body));
       if (url.pathname === '/api/prompt-library/save') return send(res, 200, savePromptLibraryItem(body));
       if (url.pathname === '/api/prompt-library/delete') return send(res, 200, deletePromptLibraryItem(body));
@@ -2229,7 +2232,32 @@ server.on('upgrade', (req, socket, head) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || '127.0.0.1'}`);
     const origin = req.headers.origin;
-    if (url.pathname !== '/api/workspace/terminal' || (origin && new URL(origin).host !== req.headers.host)) return socket.destroy();
+    if (origin && new URL(origin).host !== req.headers.host) return socket.destroy();
+
+    // SDK 会话事件流：复用 workspaceWs；未知或已关闭会话直接拒绝升级
+    if (url.pathname === '/api/sdk/events') {
+      const target = sdkRuntime.get(url.searchParams.get('session') || '');
+      if (!target || target.status === 'closed') return socket.destroy();
+      workspaceWs.handleUpgrade(req, socket, head, ws => {
+        ws.isAlive = true;
+        ws.on('pong', () => { ws.isAlive = true; });
+        let unsubscribe = null;
+        try {
+          // subscribe 会先发送 ready 并同步回放缓冲，再推送实时事件
+          unsubscribe = sdkRuntime.subscribe(target.id, message => {
+            if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(message));
+          });
+        } catch {
+          ws.close();
+          return;
+        }
+        ws.on('close', () => { if (unsubscribe) unsubscribe(); });
+        ws.on('error', () => { if (unsubscribe) unsubscribe(); });
+      });
+      return;
+    }
+
+    if (url.pathname !== '/api/workspace/terminal') return socket.destroy();
     const terminal = workspaceTerminals.get(url.searchParams.get('session') || '');
     if (!terminal) return socket.destroy();
     workspaceWs.handleUpgrade(req, socket, head, ws => {

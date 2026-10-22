@@ -1,15 +1,41 @@
 /**
- * Claude Agent SDK 运行时骨架。
+ * Claude Agent SDK 运行时。
  *
- * 本模块后续承担 SDK 会话生命周期与事件分发；当前阶段只提供输入队列与健康检查
- * 的最小可用实现，其余会话方法留待后续任务补齐。
+ * 本模块承担 SDK 会话生命周期与事件分发：健康检查、创建会话、发送提示词、
+ * 事件订阅与回放、中断、关闭，以及独立的会话记录持久化。
  */
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
+
+/** 会话允许自动放行的只读工具；其余工具一律拒绝 */
+const ALLOWED_TOOLS = new Set(['Read', 'Glob', 'Grep']);
+/** 每个会话保留的最近事件条数 */
+const MAX_EVENTS = 100;
+/** 会话记录文件最多保留的条数 */
+const MAX_RECORDS = 200;
+
+/**
+ * 构造带 HTTP 状态码的错误，供路由层直接透传。
+ */
+function httpError(statusCode, message) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+}
+
+/**
+ * 构造 SDK 流式输入模式下的用户消息。
+ * session_id 留空，由 SDK 在初始化后回填。
+ */
+function userMessage(content) {
+  return { type: 'user', session_id: '', message: { role: 'user', content }, parent_tool_use_id: null };
+}
 
 /**
  * 创建 SDK 会话的输入队列。
@@ -89,13 +115,13 @@ export function createInputQueue() {
 }
 
 /**
- * 创建 SDK 运行时骨架。
+ * 创建 SDK 运行时。
  *
  * @param {object} [options] 依赖注入项
- * @param {(projectPath: string) => string} [options.resolveProject] 项目路径校验（后续任务使用）
- * @param {() => { path: string, source: string }} [options.resolveExecutable] 运行时可执行文件解析（后续任务使用）
- * @param {() => object} [options.buildChannelEnv] 渠道环境构造（后续任务使用）
- * @param {string} [options.sessionFile] 会话记录文件路径（后续任务使用）
+ * @param {(projectPath: string) => string} [options.resolveProject] 项目路径校验并返回规范路径
+ * @param {() => { path: string, source: string }} [options.resolveExecutable] 运行时可执行文件解析
+ * @param {() => object} [options.buildChannelEnv] 渠道环境构造
+ * @param {string} [options.sessionFile] 会话记录文件路径
  * @param {() => object} [options.loadSdk] SDK 加载函数，注入后才视为可用
  * @returns {{ health: () => object, createSession: Function, send: Function, interrupt: Function, close: Function, get: Function, subscribe: Function, shutdown: Function }}
  */
@@ -110,6 +136,53 @@ export function createSdkRuntime({
   const sessions = new Map();
   /** SDK 模块加载 Promise 缓存，避免并发或重复加载 */
   let sdkPromise = null;
+  /** 会话记录文件：默认位于 ~/.claude，测试通过注入临时路径隔离 */
+  const recordsFile = sessionFile || path.join(os.homedir(), '.claude', 'workbench-sdk-sessions.json');
+
+  /**
+   * 读取会话记录；文件缺失或损坏时按空记录回退，不抛错。
+   */
+  function readSessionRecords() {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(recordsFile, 'utf8'));
+      return Array.isArray(parsed?.sessions) ? parsed.sessions : [];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * 原子写入会话记录：先写临时文件再 rename，避免半截文件。
+   */
+  function writeSessionRecords(records) {
+    try {
+      fs.mkdirSync(path.dirname(recordsFile), { recursive: true });
+      const temp = `${recordsFile}.${process.pid}.tmp`;
+      fs.writeFileSync(temp, `${JSON.stringify({ sessions: records }, null, 2)}\n`, 'utf8');
+      fs.renameSync(temp, recordsFile);
+    } catch {
+      // 记录写入失败不影响会话本身，仅丢失可恢复的元数据
+    }
+  }
+
+  /**
+   * 持久化单个会话记录：按 lastUsedAt 保留最新 MAX_RECORDS 条。
+   */
+  function persistSession(session) {
+    const record = {
+      id: session.id,
+      sessionId: session.sessionId,
+      projectPath: session.projectPath,
+      status: session.status,
+      createdAt: session.createdAt,
+      lastUsedAt: session.lastUsedAt,
+    };
+    const records = readSessionRecords().filter((item) => item?.id !== session.id);
+    // 新记录置于最前，保证同一毫秒内创建的多条会话裁剪时优先保留最新
+    records.unshift(record);
+    records.sort((a, b) => String(b.lastUsedAt || '').localeCompare(String(a.lastUsedAt || '')));
+    writeSessionRecords(records.slice(0, MAX_RECORDS));
+  }
 
   /**
    * 读取已安装 SDK 包的版本号；读取失败时返回 null。
@@ -188,70 +261,269 @@ export function createSdkRuntime({
   }
 
   /**
-   * 生成“尚未实现”错误，供后续任务逐步替换骨架方法。
+   * 权限回调：仅放行只读工具，其余返回拒绝并说明原因。
+   * 放行时必须原样回传 input，避免 SDK 侧丢失工具参数。
    */
-  function notImplemented(name) {
-    const error = new Error(`${name} 尚未实现`);
-    error.statusCode = 501;
-    return error;
+  async function canUseTool(toolName, input) {
+    if (ALLOWED_TOOLS.has(toolName)) {
+      return { behavior: 'allow', updatedInput: input };
+    }
+    return {
+      behavior: 'deny',
+      message: `本次 SDK 会话仅允许 Read、Glob、Grep，已拒绝工具：${toolName}`,
+    };
+  }
+
+  /**
+   * 更新会话状态与最近使用时间，并同步写入会话记录。
+   */
+  function setStatus(session, status) {
+    session.status = status;
+    session.lastUsedAt = new Date().toISOString();
+    persistSession(session);
+  }
+
+  /**
+   * 按 id 查找会话，不存在时统一抛 404。
+   */
+  function requireSession(id) {
+    const session = sessions.get(String(id || ''));
+    if (!session) throw httpError(404, '会话不存在');
+    return session;
+  }
+
+  /**
+   * 向所有订阅者广播消息；单个订阅者回调异常不影响其他订阅者。
+   */
+  function broadcast(session, message) {
+    for (const listener of [...session.subscribers]) {
+      try {
+        listener(message);
+      } catch {
+        // 订阅者自身异常只影响自己，继续保持会话运行
+      }
+    }
+  }
+
+  /**
+   * 包装并记录一条 SDK 事件，同时实时广播；缓冲只保留最近 MAX_EVENTS 条。
+   */
+  function appendEvent(session, message) {
+    const eventType = message?.subtype ? `${message.type}.${message.subtype}` : String(message?.type ?? '');
+    const event = { type: 'event', sessionId: session.id, eventType, event: message };
+    session.events.push(event);
+    if (session.events.length > MAX_EVENTS) {
+      session.events.splice(0, session.events.length - MAX_EVENTS);
+    }
+    broadcast(session, event);
+  }
+
+  /**
+   * 后台消费 SDK 消息流：驱动状态机并分发事件。
+   * 正常结束置 exited；异常置 failed；关闭会话后不再广播。
+   */
+  async function consume(session, queryResult) {
+    try {
+      for await (const message of queryResult) {
+        if (session.status === 'closed') break;
+
+        if (message?.type === 'system' && message.subtype === 'init') {
+          // SDK 初始化完成后回填真实会话标识
+          session.sessionId = message.session_id || session.sessionId;
+          setStatus(session, 'running');
+        } else if (message?.type === 'result') {
+          setStatus(session, 'idle');
+        }
+
+        appendEvent(session, message);
+      }
+
+      if (session.status !== 'closed') {
+        setStatus(session, 'exited');
+        broadcast(session, { type: 'exit', sessionId: session.id });
+      }
+    } catch (error) {
+      // abort 导致的退出由 close() 负责，不再重复广播
+      if (session.status === 'closed') return;
+
+      setStatus(session, 'failed');
+      broadcast(session, {
+        type: 'error',
+        sessionId: session.id,
+        message: error instanceof Error ? error.message : String(error),
+      });
+      broadcast(session, { type: 'exit', sessionId: session.id });
+    }
+  }
+
+  /**
+   * 关闭单个会话：关闭输入队列、终止运行时、置 closed 并通知订阅者。
+   * 重复关闭保持幂等。
+   */
+  async function closeSession(id) {
+    const session = requireSession(id);
+    if (session.status === 'closed') return { closed: true };
+
+    try {
+      session.inputQueue.close();
+    } catch {
+      // 输入队列关闭失败不应阻断后续清理
+    }
+    try {
+      session.abortController.abort();
+    } catch {
+      // 重复 abort 或运行时已结束都视为已清理
+    }
+
+    setStatus(session, 'closed');
+    broadcast(session, { type: 'exit', sessionId: session.id, reason: 'closed' });
+    session.subscribers.clear();
+    return { closed: true };
   }
 
   return {
     health,
 
     async createSession(options = {}) {
-      // 第一步校验项目路径：未通过时不得加载 SDK，也不写入会话表
+      // 先确认 SDK 可用，不可用时统一返回 503
+      const status = await health();
+      if (!status.available) {
+        throw httpError(503, status.error || 'Claude Agent SDK 不可用');
+      }
+
+      // 路径校验失败沿用其自带状态码，缺省按 400 处理
+      let canonicalPath;
       try {
         if (typeof resolveProject !== 'function') {
-          const error = new Error('未注入项目路径校验函数 resolveProject');
-          error.statusCode = 500;
-          throw error;
+          throw httpError(500, '未注入项目路径校验函数 resolveProject');
         }
-        resolveProject(options.projectPath);
+        canonicalPath = resolveProject(options.projectPath);
       } catch (error) {
-        // 把路径校验失败统一映射为 400，供路由层透传
         const failure = error instanceof Error ? error : new Error(String(error));
         failure.statusCode = Number(failure.statusCode) || 400;
         throw failure;
       }
 
-      // SDK 不可用时统一降级为 503，路由层据此返回可读错误
-      const status = await health();
-      if (!status.available) {
-        const error = new Error(status.error || 'Claude Agent SDK 不可用');
-        error.statusCode = 503;
-        throw error;
+      const now = new Date().toISOString();
+      const session = {
+        id: crypto.randomUUID(),
+        sessionId: '',
+        projectPath: canonicalPath,
+        status: 'starting',
+        createdAt: now,
+        lastUsedAt: now,
+        inputQueue: createInputQueue(),
+        abortController: new AbortController(),
+        query: null,
+        events: [],
+        subscribers: new Set(),
+      };
+      sessions.set(session.id, session);
+      // 创建即写入独立会话记录，便于服务重启后追溯
+      persistSession(session);
+
+      // 健康检查已加载并缓存 SDK，此处直接复用
+      const sdk = await sdkPromise;
+
+      const sdkOptions = {
+        cwd: canonicalPath,
+        abortController: session.abortController,
+        env: { ...process.env, ...(typeof buildChannelEnv === 'function' ? buildChannelEnv() : {}) },
+        permissionMode: options.permissionMode || 'default',
+        canUseTool,
+        includePartialMessages: false,
+      };
+      if (options.model) sdkOptions.model = options.model;
+
+      // 仅在使用用户已安装 CLI 时显式指定可执行文件，bundled 交给 SDK 自行解析
+      let executable = { path: '', source: 'bundled' };
+      try {
+        if (typeof resolveExecutable === 'function') executable = resolveExecutable() || executable;
+      } catch {
+        executable = { path: '', source: 'bundled' };
+      }
+      if (executable.path && executable.source !== 'bundled') {
+        sdkOptions.pathToClaudeCodeExecutable = executable.path;
       }
 
-      // 会话创建留待任务 3.1 实现
-      throw notImplemented('createSession');
+      // query() 同步返回异步迭代器，不 await
+      session.query = sdk.query({ prompt: session.inputQueue, options: sdkOptions });
+
+      // 初始提示词直接进入输入队列，由 SDK 按流式输入消费
+      if (typeof options.prompt === 'string' && options.prompt.trim()) {
+        session.inputQueue.push(userMessage(options.prompt));
+      }
+
+      // 后台消费消息流，不阻塞创建接口
+      void consume(session, session.query);
+
+      return {
+        id: session.id,
+        sessionId: session.sessionId,
+        projectPath: session.projectPath,
+        status: session.status,
+        eventUrl: `/api/sdk/events?session=${session.id}`,
+      };
     },
 
-    send() {
-      throw notImplemented('send');
+    send(id, prompt) {
+      const session = requireSession(id);
+      if (session.status === 'closed') throw httpError(409, '会话已关闭');
+      if (typeof prompt !== 'string' || !prompt.trim()) throw httpError(400, '提示词必须是非空字符串');
+
+      session.inputQueue.push(userMessage(prompt));
+      setStatus(session, 'running');
+      return { accepted: true, status: session.status };
     },
 
-    interrupt() {
-      throw notImplemented('interrupt');
+    async interrupt(id) {
+      const session = requireSession(id);
+      // 仅运行中的会话需要中断；其他状态直接返回成功但无动作
+      if (session.status === 'running' && session.query) {
+        await session.query.interrupt();
+        return { interrupted: true };
+      }
+      return { interrupted: false };
     },
 
-    close() {
-      throw notImplemented('close');
-    },
+    close: closeSession,
 
     /**
-     * 查询会话摘要；本阶段会话表为空，始终返回 null。
+     * 查询会话对象；不存在时返回 null。
      */
     get(id) {
       return sessions.get(id) ?? null;
     },
 
-    subscribe() {
-      throw notImplemented('subscribe');
+    /**
+     * 订阅会话事件：先发送 ready，再同步回放缓冲，最后加入实时订阅集合。
+     * 返回取消订阅函数；取消只移除监听器，不影响会话本身。
+     */
+    subscribe(id, listener) {
+      const session = sessions.get(String(id || ''));
+      if (!session || session.status === 'closed') throw httpError(409, '会话不存在或已关闭');
+      if (typeof listener !== 'function') throw httpError(400, '订阅回调必须是函数');
+
+      listener({ type: 'ready', sessionId: session.id, status: session.status, replay: session.events.length });
+      for (const event of session.events) listener(event);
+      session.subscribers.add(listener);
+
+      return () => {
+        session.subscribers.delete(listener);
+      };
     },
 
-    shutdown() {
-      throw notImplemented('shutdown');
+    /**
+     * 关闭全部会话，供服务退出时调用；单个会话失败不影响其余会话。
+     */
+    async shutdown() {
+      for (const session of [...sessions.values()]) {
+        try {
+          await closeSession(session.id);
+        } catch {
+          // shutdown 绝不抛错，保证进程退出流程可继续
+        }
+      }
     },
   };
 }
