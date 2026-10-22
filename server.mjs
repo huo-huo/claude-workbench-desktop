@@ -554,7 +554,13 @@ function pluginRows(hooks, skills, mcp) {
 
 function claudeInstallInfo() {
   const where = spawnSync('where.exe', ['claude'], { encoding: 'utf8', windowsHide: true, timeout: 5000 });
-  const executable = String(where.stdout || '').split(/\r?\n/).map(x => x.trim()).find(x => /claude\.exe$/i.test(x)) || '';
+  const candidates = String(where.stdout || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+  // node-pty 只能直接启动可执行文件；npm 安装的 claude.cmd 只是转调包内的 bin\claude.exe
+  const executable = candidates.find(x => /claude\.exe$/i.test(x))
+    || candidates.filter(x => /claude\.(cmd|bat)$/i.test(x))
+      .map(x => path.join(path.dirname(x), 'node_modules', '@anthropic-ai', 'claude-code', 'bin', 'claude.exe'))
+      .find(x => fs.existsSync(x))
+    || '';
   if (claudeInfoCache?.executable === executable && executable) return claudeInfoCache;
   let version = '';
   if (executable) {
