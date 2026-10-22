@@ -88,9 +88,12 @@
 运行时解析顺序：
 
 1. `CLAUDE_WORKBENCH_SDK_EXECUTABLE`（显式覆盖，必须是 `claude.exe`）；
-2. 用户已安装的 `claude.exe`；
-3. SDK 平台包自带运行时（仅开发树或未裁剪的 `node_modules` 有效）。
+2. 用户已安装的 `claude.exe`（WinGet 等安装方式，`where.exe claude` 可直接找到）；
+3. npm 全局安装：合并 `where.exe claude` 与 `where.exe claude.cmd` 的输出，过滤空行并按路径大小写不敏感去重后，对每个 `claude.cmd` 所在目录推导
+   `<目录>/node_modules/@anthropic-ai/claude-code/bin/claude.exe`，取第一个存在的文件；探测成功的结果会缓存在进程内，避免每次健康检查都执行 `where.exe`；
+4. SDK 平台包自带运行时（仅开发树或未裁剪的 `node_modules` 有效）。
 
+npm 全局安装只生成 `claude.cmd` / `claude.ps1`，不能直接交给 SDK（无 shell spawn 会报 `EINVAL`），因此必须使用包内真实的 `claude.exe`。
 生产安装包不包含 SDK 平台包的原生 CLI，因此未安装 Claude Code 且未设置覆盖变量时，健康检查返回不可用并提示安装。
 
 ### 5.2 会话接口与事件流

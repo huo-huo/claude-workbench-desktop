@@ -81,7 +81,7 @@ SDK 采用动态 `import()` 加载，加载失败只让健康检查返回不可�
 - `subscribe(id, listener)`：先回放缓冲，再注册新事件，返回取消订阅函数
 - `shutdown()`：关闭全部会话，供服务退出时调用
 
-`server.mjs` 通过回调注入现有能力：`resolveProject` 包装 `recordWorkspaceProject` 与 `safeWorkspaceRoot`，`resolveExecutable` 包装 `claudeInstallInfo`，`buildChannelEnv` 包装 `channelState`、`channelApiKey` 与 DPAPI 解密。`sdk-runtime.mjs` 不反向导入 `server.mjs`，避免循环依赖并便于单测。
+`server.mjs` 通过回调注入现有能力：`resolveProject` 包装 `recordWorkspaceProject` 与 `safeWorkspaceRoot`，`resolveExecutable` 包装 `claudeInstallInfo` 并补充 npm 全局安装探测，`buildChannelEnv` 包装 `channelState`、`channelApiKey` 与 DPAPI 解密。`sdk-runtime.mjs` 不反向导入 `server.mjs`，避免循环依赖并便于单测。
 
 ### 会话状态机
 
@@ -92,9 +92,9 @@ starting ──init──> running ──result──> idle ──send──> ru
     └──────────────close / shutdown────────────────> closed
 ```
 
-- `interrupt`：仅 `running` 状态调用 `query.interrupt()`；`idle`、`closed` 状态直接返回成功但无动作。
-- `close`：关闭输入队列、调用 `abortController.abort()`、清空订阅者、状态置 `closed`，并原子写入会话记录。
-- 每个会话独立 `AbortController`；服务退出时统一 `shutdown()`。
+- `interrupt`：仅 `running` 状态调用 `query.interrupt()`，终止当前回合但保留会话进程与输入队列，会话仍可继续发送；`idle`、`closed` 状态直接返回成功但无动作。中断调用失败时保持原状态并广播错误。
+- `close`：关闭输入队列、调用 `abortController.abort()`、清空订阅者、状态置 `closed`，并原子写入会话记录；只有 close 与服务退出才 abort 运行时进程。
+- 每个会话独立 `AbortController`；服务退出时统一 `shutdown()`，进程 `exit` 回调使用同步的 `shutdownSync()` 清理。
 
 ### 输入队列
 

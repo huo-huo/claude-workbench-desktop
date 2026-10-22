@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { buildChannelEnvFrom, createInputQueue, createSdkRuntime } from '../sdk-runtime.mjs';
+import { buildChannelEnvFrom, createInputQueue, createSdkRuntime, findClaudeExeFromWhere } from '../sdk-runtime.mjs';
 
 /**
  * 创建可控的 mock SDK。
@@ -201,6 +201,50 @@ test('输入队列：暴露异步迭代器并支持逐条消费', async () => {
 
   queue.close();
   assert.deepEqual(await iterator.next(), { value: undefined, done: true });
+});
+
+test('findClaudeExeFromWhere：仅有 claude.cmd 时推导出存在的 npm 包内 claude.exe', () => {
+  // npm 全局安装只提供 claude.cmd，需要按 npm 前缀推导包内真实的 claude.exe
+  const npmDir = 'C:\\Users\\tester\\AppData\\Roaming\\npm';
+  const whereOutput = `${npmDir}\\claude.cmd\r\n`;
+  const expected = path.join(npmDir, 'node_modules', '@anthropic-ai', 'claude-code', 'bin', 'claude.exe');
+  const checked = [];
+
+  const found = findClaudeExeFromWhere(whereOutput, (candidate) => {
+    checked.push(candidate);
+    return candidate === expected;
+  });
+
+  assert.equal(found, expected);
+  assert.deepEqual(checked, [expected], '应只检查推导出的包内 exe');
+});
+
+test('findClaudeExeFromWhere：推导出的 exe 不存在时返回空字符串', () => {
+  const whereOutput = 'C:\\Users\\tester\\AppData\\Roaming\\npm\\claude.cmd\n';
+
+  assert.equal(findClaudeExeFromWhere(whereOutput, () => false), '');
+});
+
+test('findClaudeExeFromWhere：过滤空行并按路径去重且大小写不敏感', () => {
+  // 第一行与第三行大小写不同但推导结果相同，只应检查一次
+  const whereOutput = [
+    'C:\\Tools\\Claude.CMD',
+    '',
+    'C:\\Tools\\claude.cmd',
+    'C:\\Other\\claude.exe',
+    '   ',
+  ].join('\r\n');
+  const expected = path.join('C:\\Other', 'node_modules', '@anthropic-ai', 'claude-code', 'bin', 'claude.exe');
+  const checked = [];
+
+  const found = findClaudeExeFromWhere(whereOutput, (candidate) => {
+    checked.push(candidate);
+    return candidate === expected;
+  });
+
+  assert.equal(found, expected);
+  assert.equal(checked.length, 2, '重复路径不应重复检查');
+  assert.equal(checked[0], path.join('C:\\Tools', 'node_modules', '@anthropic-ai', 'claude-code', 'bin', 'claude.exe'));
 });
 
 test('createSdkRuntime：返回约定的方法集合', () => {
@@ -1100,6 +1144,38 @@ test('3.5 关闭：幂等、广播 exit、关闭后订阅与发送返回 409', a
   assert.equal(received.length, countBefore, '关闭后不应再广播事件');
 });
 
+test('3.5 中断：query.interrupt 抛错时返回 false、状态保持 running 并广播 error', async (t) => {
+  const { sdk, calls } = createMockSdk();
+  const dir = tempDir(t);
+  const runtime = createTestRuntime({ sdk, sessionFile: path.join(dir, 'sessions.json') });
+  const session = await runtime.createSession({ projectPath: '项目' });
+  const { stream } = calls[0];
+
+  stream.push({ type: 'system', subtype: 'init', session_id: 'sdk-session-1' });
+  await flush();
+
+  const received = [];
+  runtime.subscribe(session.id, (message) => received.push(message));
+
+  let attempts = 0;
+  calls[0].query.interrupt = async () => {
+    attempts += 1;
+    throw new Error('模拟中断失败');
+  };
+
+  assert.deepEqual(await runtime.interrupt(session.id), { interrupted: false }, '中断失败应返回 false');
+  assert.equal(runtime.get(session.id).status, 'running', '中断失败不应改变会话状态');
+
+  const errorEvent = received.find((message) => message.type === 'error');
+  assert.ok(errorEvent, '应广播 error 消息');
+  assert.equal(errorEvent.sessionId, session.id);
+  assert.ok(errorEvent.message.includes('模拟中断失败'));
+
+  // finally 已复位 interrupting：再次中断仍会调用 SDK
+  await runtime.interrupt(session.id);
+  assert.equal(attempts, 2, '中断保护标志应在失败后复位');
+});
+
 test('3.5 shutdown：关闭全部会话且重复调用不抛错', async (t) => {
   const { sdk, calls } = createMockSdk();
   const dir = tempDir(t);
@@ -1114,6 +1190,30 @@ test('3.5 shutdown：关闭全部会话且重复调用不抛错', async (t) => {
 
   // 再次调用保持幂等且不抛错
   await runtime.shutdown();
+});
+
+test('3.5 shutdownSync：同步关闭全部会话、abort 且不广播', async (t) => {
+  const { sdk } = createMockSdk();
+  const dir = tempDir(t);
+  const runtime = createTestRuntime({ sdk, sessionFile: path.join(dir, 'sessions.json') });
+  const first = await runtime.createSession({ projectPath: '项目一' });
+  const second = await runtime.createSession({ projectPath: '项目二' });
+
+  const received = [];
+  runtime.subscribe(first.id, (message) => received.push(message));
+  const countBefore = received.length;
+
+  assert.equal(typeof runtime.shutdownSync, 'function', '应暴露同步关闭方法');
+  runtime.shutdownSync();
+
+  for (const id of [first.id, second.id]) {
+    assert.equal(runtime.get(id).status, 'closed', '全部会话应置为 closed');
+    assert.equal(runtime.get(id).abortController.signal.aborted, true, '全部会话应模拟 abort');
+  }
+  assert.equal(received.length, countBefore, '同步关闭不应广播事件');
+
+  // 进程退出路径上重复调用不应抛错
+  runtime.shutdownSync();
 });
 
 test('3.6 会话记录：创建与状态变化写入独立文件', async (t) => {

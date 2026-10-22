@@ -217,6 +217,43 @@ function defaultProbeBundledRuntime() {
 }
 
 /**
+ * 从 `where.exe claude` / `where.exe claude.cmd` 的输出推导 npm 全局安装包内的 claude.exe。
+ *
+ * npm 全局安装只生成 claude.cmd / claude.ps1，而 SDK 以无 shell 方式 spawn，
+ * 必须使用包内真实的 claude.exe：`<npm 前缀>/node_modules/@anthropic-ai/claude-code/bin/claude.exe`。
+ * 纯函数，文件存在性由调用方注入，便于单测。
+ *
+ * @param {string} whereOutput 合并后的多行路径输出
+ * @param {(candidate: string) => boolean} exists 判断推导出的路径是否存在
+ * @returns {string} 第一个存在的 claude.exe；没有则返回空字符串
+ */
+export function findClaudeExeFromWhere(whereOutput, exists) {
+  /** 已检查过的候选路径（小写），用于大小写不敏感去重 */
+  const seen = new Set();
+
+  for (const line of String(whereOutput || '').split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    const candidate = path.join(
+      path.dirname(trimmed),
+      'node_modules',
+      '@anthropic-ai',
+      'claude-code',
+      'bin',
+      'claude.exe',
+    );
+    const key = candidate.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    if (exists(candidate)) return candidate;
+  }
+
+  return '';
+}
+
+/**
  * 创建 SDK 运行时。
  *
  * @param {object} [options] 依赖注入项
@@ -226,7 +263,7 @@ function defaultProbeBundledRuntime() {
  * @param {string} [options.sessionFile] 会话记录文件路径
  * @param {() => object} [options.loadSdk] SDK 加载函数，注入后才视为可用
  * @param {() => boolean} [options.probeBundledRuntime] 探测 SDK 自带原生 CLI 是否可用
- * @returns {{ health: () => object, createSession: Function, send: Function, interrupt: Function, close: Function, get: Function, subscribe: Function, shutdown: Function }}
+ * @returns {{ health: () => object, createSession: Function, send: Function, interrupt: Function, close: Function, get: Function, subscribe: Function, shutdown: Function, shutdownSync: Function }}
  */
 export function createSdkRuntime({
   resolveProject,
@@ -640,7 +677,17 @@ export function createSdkRuntime({
 
       session.interrupting = true;
       try {
-        await session.query.interrupt();
+        try {
+          await session.query.interrupt();
+        } catch (error) {
+          // 中断调用失败时保持会话原状态，广播错误供前端提示，interrupting 由 finally 复位
+          broadcast(session, {
+            type: 'error',
+            sessionId: session.id,
+            message: error instanceof Error ? error.message : String(error),
+          });
+          return { interrupted: false };
+        }
         // 等待期间会话可能已自然结束（exited/failed）或被 close()，此时保持原状态且不补发事件
         if (session.status !== 'running') return { interrupted: false };
         setStatus(session, 'idle');
@@ -682,6 +729,26 @@ export function createSdkRuntime({
       return () => {
         session.subscribers.delete(listener);
       };
+    },
+
+    /**
+     * 同步关闭全部会话，仅供进程 exit 回调使用。
+     * 只做最小清理：关闭输入队列、abort 运行时、状态置 closed；不写记录、不广播、不抛错。
+     */
+    shutdownSync() {
+      for (const session of sessions.values()) {
+        try {
+          session.inputQueue.close();
+        } catch {
+          // 退出路径上忽略单会话清理异常，保证其余会话继续清理
+        }
+        try {
+          session.abortController.abort();
+        } catch {
+          // 重复 abort 或运行时已结束都视为已清理
+        }
+        session.status = 'closed';
+      }
     },
 
     /**

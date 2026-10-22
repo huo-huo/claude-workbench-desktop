@@ -8,7 +8,7 @@ import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import pty from 'node-pty';
 import { WebSocketServer, WebSocket } from 'ws';
-import { buildChannelEnvFrom, createSdkRuntime } from './sdk-runtime.mjs';
+import { buildChannelEnvFrom, createSdkRuntime, findClaudeExeFromWhere } from './sdk-runtime.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_WEB_ROOT = fs.existsSync(path.join(ROOT, 'dist', 'index.html')) ? path.join(ROOT, 'dist') : ROOT;
@@ -26,6 +26,8 @@ const MAX_IMAGE_UPLOAD = 20 * 1024 * 1024;
 const CLAUDE_WINGET_ID = 'Anthropic.ClaudeCode';
 let updateCheckCache = null;
 let claudeInfoCache = null;
+// npm 全局安装的 claude.exe 探测缓存：仅在成功找到时缓存，避免每次 health 都 spawnSync
+let sdkNpmClaudeExeCache = '';
 // SDK 渠道密钥缓存：只保留最近一条，避免每次创建会话都同步 DPAPI 解密阻塞事件循环
 let sdkChannelEnvCache = null;
 
@@ -593,12 +595,25 @@ const sdkRuntime = createSdkRuntime({
     }
     return recordWorkspaceProject(real);
   },
-  /** 运行时解析：环境变量显式覆盖 → 已安装 CLI → SDK 自带运行时 */
+  /** 运行时解析：环境变量显式覆盖 → 已安装 CLI → npm 全局安装包内 exe → SDK 自带运行时 */
   resolveExecutable() {
     const override = String(process.env.CLAUDE_WORKBENCH_SDK_EXECUTABLE || '').trim();
     if (override) return { path: override, source: 'env' };
     const installed = claudeInstallInfo().executable;
     if (installed) return { path: installed, source: 'installed' };
+    // 不改动 claudeInstallInfo（终端仍只认 claude.exe）：npm 全局安装只有 claude.cmd，
+    // 这里合并两次 where.exe 输出，从 npm 前缀推导包内真实的 claude.exe
+    if (!sdkNpmClaudeExeCache) {
+      const whereOutput = ['claude', 'claude.cmd'].map(name => {
+        try {
+          return String(spawnSync('where.exe', [name], { encoding: 'utf8', windowsHide: true, timeout: 5000 }).stdout || '');
+        } catch {
+          return '';
+        }
+      }).join('\n');
+      sdkNpmClaudeExeCache = findClaudeExeFromWhere(whereOutput, candidate => fs.existsSync(candidate));
+    }
+    if (sdkNpmClaudeExeCache) return { path: sdkNpmClaudeExeCache, source: 'installed' };
     return { path: '', source: 'bundled' };
   },
   /**
@@ -2338,8 +2353,8 @@ process.on('SIGINT', () => { void gracefulShutdown(); });
 process.on('SIGTERM', () => { void gracefulShutdown(); });
 
 process.on('exit', () => {
-  // 先关闭全部 SDK 会话：关闭输入队列并 abort 运行时进程，避免残留子进程
-  try { void sdkRuntime.shutdown(); } catch {}
+  // 进程退出回调无法 await，使用同步清理：关闭输入队列并 abort 运行时，避免残留子进程
+  try { sdkRuntime.shutdownSync(); } catch {}
   for (const terminal of workspaceTerminals.values()) {
     try { terminal.proc.kill(); } catch {}
   }
