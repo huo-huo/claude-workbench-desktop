@@ -2288,6 +2288,8 @@ server.listen(PORT, '127.0.0.1', () => {
 });
 
 process.on('exit', () => {
+  // 先关闭全部 SDK 会话：关闭输入队列并 abort 运行时进程，避免残留子进程
+  try { void sdkRuntime.shutdown(); } catch {}
   for (const terminal of workspaceTerminals.values()) {
     try { terminal.proc.kill(); } catch {}
   }
