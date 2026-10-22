@@ -24,9 +24,11 @@ Thumbs.db
 /.comet/*
 !/.comet/config.yaml
 # <<< Comet managed project state <<<
-# Comet change 运行时状态（不提交，留本机）
-docs/openspec/changes/**/.comet.yaml
-docs/openspec/changes/**/.comet/
+# Comet change 运行时状态（活动 change 不提交；归档目录的 .comet.yaml 随归档提交）
+docs/openspec/changes/*/.comet.yaml
+docs/openspec/changes/*/.comet/
+# 归档目录只保留 .comet.yaml 状态，忽略其余运行时目录
+docs/openspec/changes/archive/**/.comet/
 # 子代理开发协调产物
 .superpowers/
 # git worktree 目录
