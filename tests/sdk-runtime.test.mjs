@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { createInputQueue, createSdkRuntime } from '../sdk-runtime.mjs';
+import { buildChannelEnvFrom, createInputQueue, createSdkRuntime } from '../sdk-runtime.mjs';
 
 /**
  * 创建可控的 mock SDK。
@@ -471,6 +471,84 @@ test('4.1 创建会话：加载 user/project/local 配置并使用 claude_code �
   );
   assert.equal(options.cwd, 'C:\\规范\\配置项目', 'cwd 应是项目规范路径');
   assert.equal(options.includePartialMessages, false);
+});
+
+test('4.2 渠道环境：按激活渠道与模型槽位生成完整环境变量', () => {
+  const state = {
+    activeChannelId: 'active',
+    channels: [
+      {
+        id: 'other',
+        baseUrl: 'https://other.example',
+        messagesUrl: 'https://other.example/v1/messages',
+        modelSlots: { main: 'other-main' },
+      },
+      {
+        id: 'active',
+        baseUrl: 'https://api.example',
+        messagesUrl: 'https://api.example/v1/messages',
+        modelSlots: {
+          main: 'main-model',
+          opus: 'opus-model',
+          sonnet: 'sonnet-model',
+          haiku: 'haiku-model',
+          subagent: 'subagent-model',
+          vision: 'vision-model',
+          fallbackChain: ['fallback-a', 'fallback-b'],
+        },
+      },
+    ],
+  };
+  /** 记录 readSecret 收到的渠道，验证只读取激活渠道的密钥 */
+  const secretCalls = [];
+  const env = buildChannelEnvFrom(state, (channel) => {
+    secretCalls.push(channel.id);
+    return 'sk-test';
+  });
+
+  assert.deepEqual(env, {
+    ANTHROPIC_BASE_URL: 'https://api.example',
+    ANTHROPIC_AUTH_TOKEN: 'sk-test',
+    ANTHROPIC_MODEL: 'main-model',
+    ANTHROPIC_DEFAULT_OPUS_MODEL: 'opus-model',
+    ANTHROPIC_DEFAULT_SONNET_MODEL: 'sonnet-model',
+    ANTHROPIC_DEFAULT_HAIKU_MODEL: 'haiku-model',
+    CLAUDE_CODE_SUBAGENT_MODEL: 'subagent-model',
+    CLAUDE_WORKBENCH_VISION_MODEL: 'vision-model',
+    CLAUDE_WORKBENCH_VISION_MESSAGES_URL: 'https://api.example/v1/messages',
+    FALLBACK_FOR_ALL_PRIMARY_MODELS: '1',
+  });
+  assert.deepEqual(secretCalls, ['active'], '只应为激活渠道读取密钥');
+});
+
+test('4.2 渠道环境：无激活渠道时返回空对象且不读取密钥', () => {
+  let secretCalls = 0;
+  const readSecret = () => {
+    secretCalls += 1;
+    return 'sk-test';
+  };
+
+  assert.deepEqual(buildChannelEnvFrom({ channels: [], activeChannelId: '' }, readSecret), {});
+  assert.deepEqual(
+    buildChannelEnvFrom({ channels: [{ id: 'a', baseUrl: 'https://a.example' }], activeChannelId: '不存在' }, readSecret),
+    {},
+    '激活渠道 id 找不到对应渠道时也应返回空对象',
+  );
+  assert.equal(secretCalls, 0, '无激活渠道时不应读取密钥');
+});
+
+test('4.2 渠道环境：空值键不输出，密钥为空时不写 AUTH_TOKEN', () => {
+  const state = {
+    activeChannelId: 'active',
+    channels: [{
+      id: 'active',
+      baseUrl: '',
+      messagesUrl: '',
+      modelSlots: { main: '', opus: '', sonnet: '', haiku: '', subagent: '', vision: '', fallbackChain: [] },
+    }],
+  };
+
+  assert.deepEqual(buildChannelEnvFrom(state, () => ''), {}, '所有槽位为空时不应输出任何环境变量');
 });
 
 test('3.1 创建会话：路径校验的原始状态码优先于默认 400', async (t) => {

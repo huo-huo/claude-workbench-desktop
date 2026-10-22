@@ -8,7 +8,7 @@ import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import pty from 'node-pty';
 import { WebSocketServer, WebSocket } from 'ws';
-import { createSdkRuntime } from './sdk-runtime.mjs';
+import { buildChannelEnvFrom, createSdkRuntime } from './sdk-runtime.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_WEB_ROOT = fs.existsSync(path.join(ROOT, 'dist', 'index.html')) ? path.join(ROOT, 'dist') : ROOT;
@@ -594,9 +594,12 @@ const sdkRuntime = createSdkRuntime({
     if (installed) return { path: installed, source: 'installed' };
     return { path: '', source: 'bundled' };
   },
-  /** 渠道环境注入留待任务 4.2 实现 */
+  /**
+   * 渠道环境注入：只作用于当次 SDK 会话，不写回全局 settings.json。
+   * 激活渠道不存在或未配置密钥时返回空对象。
+   */
   buildChannelEnv() {
-    return {};
+    return buildChannelEnvFrom(channelState(), (channel) => channelApiKey(channel));
   },
   sessionFile: path.join(CLAUDE, 'workbench-sdk-sessions.json'),
   loadSdk: () => import('@anthropic-ai/claude-agent-sdk'),

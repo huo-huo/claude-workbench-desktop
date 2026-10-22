@@ -118,6 +118,52 @@ export function createInputQueue() {
   };
 }
 
+/** 渠道模型槽位到 Anthropic 环境变量的映射，顺序即注入顺序 */
+const CHANNEL_ENV_SLOTS = [
+  ['ANTHROPIC_MODEL', 'main'],
+  ['ANTHROPIC_DEFAULT_OPUS_MODEL', 'opus'],
+  ['ANTHROPIC_DEFAULT_SONNET_MODEL', 'sonnet'],
+  ['ANTHROPIC_DEFAULT_HAIKU_MODEL', 'haiku'],
+  ['CLAUDE_CODE_SUBAGENT_MODEL', 'subagent'],
+  ['CLAUDE_WORKBENCH_VISION_MODEL', 'vision'],
+];
+
+/**
+ * 从工作台渠道状态构造 SDK 会话的环境增量。
+ *
+ * 纯函数：不读写文件，激活渠道不存在时返回空对象；空值键一律不输出。
+ * 密钥通过 readSecret(channel) 注入，调用方负责解密，本函数只负责拼装。
+ *
+ * @param {object} state 工作台渠道状态 `{ channels, activeChannelId }`
+ * @param {(channel: object) => string} readSecret 激活渠道的密钥读取函数
+ * @returns {Record<string, string>} 可直接合并进 `process.env` 的环境增量
+ */
+export function buildChannelEnvFrom(state, readSecret) {
+  const channels = Array.isArray(state?.channels) ? state.channels : [];
+  const channel = channels.find((item) => item?.id === state?.activeChannelId);
+  if (!channel) return {};
+
+  const env = {};
+  /** 仅在值非空时写入，避免空字符串覆盖全局环境变量 */
+  const put = (key, value) => {
+    const text = typeof value === 'string' ? value.trim() : '';
+    if (text) env[key] = text;
+  };
+
+  put('ANTHROPIC_BASE_URL', channel.baseUrl);
+  if (typeof readSecret === 'function') put('ANTHROPIC_AUTH_TOKEN', readSecret(channel));
+
+  const slots = channel.modelSlots || {};
+  for (const [key, slot] of CHANNEL_ENV_SLOTS) put(key, slots[slot]);
+  put('CLAUDE_WORKBENCH_VISION_MESSAGES_URL', channel.messagesUrl);
+
+  // 存在备用模型链时才开启“所有主模型走 fallback”的能力
+  const fallbackChain = Array.isArray(slots.fallbackChain) ? slots.fallbackChain.filter(Boolean) : [];
+  if (fallbackChain.length > 0) env.FALLBACK_FOR_ALL_PRIMARY_MODELS = '1';
+
+  return env;
+}
+
 /**
  * 创建 SDK 运行时。
  *
