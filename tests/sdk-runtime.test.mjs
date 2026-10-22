@@ -217,3 +217,35 @@ test('createSession()：SDK 不可用时抛出 503', async () => {
     return true;
   });
 });
+
+test('createSession()：项目路径校验失败时抛 400 且不加载 SDK', async () => {
+  let loads = 0;
+  const runtime = createSdkRuntime({
+    resolveProject: () => {
+      throw new Error('项目路径无效');
+    },
+    loadSdk: () => {
+      loads += 1;
+      return Promise.resolve({ query: () => {} });
+    },
+  });
+
+  await assert.rejects(runtime.createSession({ projectPath: 'C:\\Windows' }), (error) => {
+    assert.equal(error.statusCode, 400);
+    assert.ok(error.message.includes('项目路径无效'));
+    return true;
+  });
+  assert.equal(loads, 0, '路径校验失败时不应加载 SDK');
+});
+
+test('createSession()：路径有效且 SDK 可用时暂时抛出 501', async () => {
+  const runtime = createSdkRuntime({
+    resolveProject: (value) => value,
+    loadSdk: () => Promise.resolve({ query: () => {} }),
+  });
+
+  await assert.rejects(runtime.createSession({ projectPath: 'C:\\已登记项目' }), (error) => {
+    assert.equal(error.statusCode, 501);
+    return true;
+  });
+});

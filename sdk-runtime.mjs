@@ -199,7 +199,22 @@ export function createSdkRuntime({
   return {
     health,
 
-    async createSession() {
+    async createSession(options = {}) {
+      // 第一步校验项目路径：未通过时不得加载 SDK，也不写入会话表
+      try {
+        if (typeof resolveProject !== 'function') {
+          const error = new Error('未注入项目路径校验函数 resolveProject');
+          error.statusCode = 500;
+          throw error;
+        }
+        resolveProject(options.projectPath);
+      } catch (error) {
+        // 把路径校验失败统一映射为 400，供路由层透传
+        const failure = error instanceof Error ? error : new Error(String(error));
+        failure.statusCode = Number(failure.statusCode) || 400;
+        throw failure;
+      }
+
       // SDK 不可用时统一降级为 503，路由层据此返回可读错误
       const status = await health();
       if (!status.available) {

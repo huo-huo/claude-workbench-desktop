@@ -2174,6 +2174,7 @@ const server = http.createServer(async (req, res) => {
       if (origin && new URL(origin).host !== req.headers.host) throw new Error('只接受本地工作台页面发起的操作');
       const body = await bodyJson(req);
       const project = null;
+      if (url.pathname === '/api/sdk/sessions') return send(res, 201, await sdkRuntime.createSession(body));
       if (url.pathname === '/api/prompt-library/refine') return send(res, 200, await refinePromptLibraryItem(body));
       if (url.pathname === '/api/prompt-library/save') return send(res, 200, savePromptLibraryItem(body));
       if (url.pathname === '/api/prompt-library/delete') return send(res, 200, deletePromptLibraryItem(body));
