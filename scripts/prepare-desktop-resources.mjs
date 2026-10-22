@@ -60,6 +60,29 @@ const stagedPrebuild = path.join(stagedModules, 'node-pty', 'prebuilds', 'win32-
 const runtimeFiles = new Set(['conpty.node', 'conpty_console_list.node', 'pty.node', 'winpty-agent.exe', 'winpty.dll']);
 copyPackageFiles(ptyPrebuild, stagedPrebuild, (rel, name) => runtimeFiles.has(name) || (rel.startsWith('conpty' + path.sep) && ['OpenConsole.exe', 'conpty.dll'].includes(name)));
 
+// SDK 运行时模块与服务端同目录，server.mjs 通过相对路径导入
+fs.copyFileSync(path.join(root, 'sdk-runtime.mjs'), path.join(destination, 'sdk-runtime.mjs'));
+copiedFiles++;
+
+// Claude Agent SDK 主包：入口 sdk.mjs 已内联 zod 与 @modelcontextprotocol/sdk（见官方 README），
+// 因此无需复制 peer 依赖；仅排除体积较大且运行时不用的 sourcemap 与文档
+copyPackageFiles(
+  path.join(modules, '@anthropic-ai', 'claude-agent-sdk'),
+  path.join(stagedModules, '@anthropic-ai', 'claude-agent-sdk'),
+  (_rel, name) => !name.endsWith('.map') && !name.endsWith('.md'),
+);
+
+// SDK 通过 require.resolve('@anthropic-ai/claude-agent-sdk-<platform>-<arch>/claude.exe') 定位原生 CLI，
+// 缺少该平台包时创建会话会报 "Native CLI binary ... not found"，故一并复制 Windows x64 运行时
+const sdkPlatformFiles = ['package.json', 'claude.exe'];
+for (const file of sdkPlatformFiles) {
+  const from = path.join(modules, '@anthropic-ai', 'claude-agent-sdk-win32-x64', file);
+  const to = path.join(stagedModules, '@anthropic-ai', 'claude-agent-sdk-win32-x64', file);
+  fs.mkdirSync(path.dirname(to), { recursive: true });
+  fs.copyFileSync(from, to);
+  copiedFiles++;
+}
+
 const sizes = [];
 function walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
