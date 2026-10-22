@@ -455,6 +455,10 @@ export function createSdkRuntime({
           permissionMode: ALLOWED_PERMISSION_MODES.has(options.permissionMode) ? options.permissionMode : 'default',
           canUseTool,
           includePartialMessages: false,
+          // 显式加载用户 / 项目 / 本地配置，使 CLAUDE.md、skills、hooks 与终端模式保持一致
+          settingSources: ['user', 'project', 'local'],
+          // 使用 claude_code 预设系统提示词，保留 CLI 内置能力描述
+          systemPrompt: { type: 'preset', preset: 'claude_code' },
         };
         if (options.model) sdkOptions.model = options.model;
 

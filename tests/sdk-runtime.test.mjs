@@ -455,6 +455,24 @@ test('3.1 创建会话：权限模式白名单与非 bundled 运行时路径', a
   assert.equal(calls[2].params.options.permissionMode, 'default');
 });
 
+test('4.1 创建会话：加载 user/project/local 配置并使用 claude_code 预设提示词', async (t) => {
+  const { sdk, calls } = createMockSdk();
+  const dir = tempDir(t);
+  const runtime = createTestRuntime({ sdk, sessionFile: path.join(dir, 'sessions.json') });
+
+  await runtime.createSession({ projectPath: '配置项目' });
+
+  const { options } = calls[0].params;
+  assert.deepEqual(options.settingSources, ['user', 'project', 'local'], '应按 CLI 顺序加载三类配置文件');
+  assert.deepEqual(
+    options.systemPrompt,
+    { type: 'preset', preset: 'claude_code' },
+    '应使用 claude_code 预设提示词，保证 skills 与 CLAUDE.md 可见',
+  );
+  assert.equal(options.cwd, 'C:\\规范\\配置项目', 'cwd 应是项目规范路径');
+  assert.equal(options.includePartialMessages, false);
+});
+
 test('3.1 创建会话：路径校验的原始状态码优先于默认 400', async (t) => {
   const { sdk } = createMockSdk();
   const dir = tempDir(t);
