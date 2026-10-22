@@ -2,6 +2,7 @@
 change: add-claude-agent-sdk-foundation
 design-doc: docs/openspec/changes/add-claude-agent-sdk-foundation/design.md
 base-ref: 39eed2e414875619d730330aa2a2577764f43dcd
+archived-with: 2026-10-23-add-claude-agent-sdk-foundation
 ---
 
 # Claude Agent SDK 接入骨架实施计划

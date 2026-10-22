@@ -2,6 +2,8 @@
 comet_change: add-claude-agent-sdk-foundation
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-10-23-add-claude-agent-sdk-foundation
+status: final
 ---
 
 ## Context
