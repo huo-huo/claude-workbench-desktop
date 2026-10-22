@@ -26,6 +26,13 @@ const MAX_IMAGE_UPLOAD = 20 * 1024 * 1024;
 const CLAUDE_WINGET_ID = 'Anthropic.ClaudeCode';
 let updateCheckCache = null;
 let claudeInfoCache = null;
+// SDK 渠道密钥缓存：只保留最近一条，避免每次创建会话都同步 DPAPI 解密阻塞事件循环
+let sdkChannelEnvCache = null;
+
+/** 读取文件修改时间；文件不存在时返回 0，用于判断渠道密钥缓存是否失效 */
+function fileMtimeMs(file) {
+  try { return fs.statSync(file).mtimeMs; } catch { return 0; }
+}
 const workspaceTerminals = new Map();
 const workspaceWs = new WebSocketServer({ noServer: true, maxPayload: 8 * 1024 * 1024 });
 const workspaceHeartbeat = setInterval(() => {
@@ -599,7 +606,21 @@ const sdkRuntime = createSdkRuntime({
    * 激活渠道不存在或未配置密钥时返回空对象。
    */
   buildChannelEnv() {
-    return buildChannelEnvFrom(channelState(), (channel) => channelApiKey(channel));
+    const channelStatus = channelState();
+    const channel = channelStatus.channels.find(item => item.id === channelStatus.activeChannelId);
+    if (!channel) return {};
+    // 渠道声明了专属密文但密文缺失时返回空对象，绝不回退到全局 token 以免与当前 baseUrl 不匹配
+    if (channel.secretRef && !safeReadJson(SECRETS_FILE, {})[channel.secretRef]) return {};
+    // 缓存键由渠道标识与两个配置文件的修改时间组成；命中时复用密钥，避免重复同步解密
+    const cacheKey = [channel.id, channel.secretRef || '', fileMtimeMs(SECRETS_FILE), fileMtimeMs(USER_SETTINGS)].join('|');
+    let secret;
+    if (sdkChannelEnvCache?.key === cacheKey) {
+      secret = sdkChannelEnvCache.secret;
+    } else {
+      secret = channelApiKey(channel);
+      sdkChannelEnvCache = { key: cacheKey, secret };
+    }
+    return buildChannelEnvFrom(channelStatus, () => secret);
   },
   sessionFile: path.join(CLAUDE, 'workbench-sdk-sessions.json'),
   loadSdk: () => import('@anthropic-ai/claude-agent-sdk'),
