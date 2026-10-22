@@ -344,6 +344,58 @@ test('health()：env 指定的运行时不存时不可用并说明原因', async
   assert.equal(health.runtimeSource, 'env');
   assert.ok(health.error.includes('不存在'), 'error 应说明指定的运行时不存在');
   assert.ok(health.error.includes(missing), 'error 应包含具体路径');
+  assert.ok(health.error.includes('claude.exe'), 'error 应提示必须是 claude.exe');
+});
+
+test('health()：env 指向 .cmd 文件时不可用并提示必须是 claude.exe', { skip: process.platform !== 'win32' }, async (t) => {
+  // npm 安装只生成 claude.cmd，SDK 无 shell spawn 会 EINVAL，必须提前判定不可用
+  const dir = tempDir(t);
+  const cmdPath = path.join(dir, 'claude.cmd');
+  fs.writeFileSync(cmdPath, '@echo off\r\n', 'utf8');
+
+  const runtime = createSdkRuntime({
+    resolveExecutable: () => ({ path: cmdPath, source: 'env' }),
+    loadSdk: () => Promise.resolve({ query: () => {} }),
+  });
+  const health = await runtime.health();
+
+  assert.equal(health.available, false);
+  assert.equal(health.runtimePath, cmdPath);
+  assert.equal(health.runtimeSource, 'env');
+  assert.ok(health.error.includes('CLAUDE_WORKBENCH_SDK_EXECUTABLE 必须指向 claude.exe'));
+});
+
+test('health()：env 指向目录时不可用', async (t) => {
+  const dir = tempDir(t);
+  const runtime = createSdkRuntime({
+    resolveExecutable: () => ({ path: dir, source: 'env' }),
+    loadSdk: () => Promise.resolve({ query: () => {} }),
+  });
+  const health = await runtime.health();
+
+  assert.equal(health.available, false);
+  assert.equal(health.runtimePath, dir);
+  assert.equal(health.runtimeSource, 'env');
+  assert.ok(health.error.includes('不是文件'), 'error 应说明路径不是文件');
+  assert.ok(health.error.includes('claude.exe'), 'error 应提示必须是 claude.exe');
+});
+
+test('health()：env 指向存在的 .exe 文件时可用', async (t) => {
+  // 仅模拟文件存在与扩展名，不实际执行，避免依赖真实 Claude Code
+  const dir = tempDir(t);
+  const exePath = path.join(dir, 'claude.exe');
+  fs.writeFileSync(exePath, '', 'utf8');
+
+  const runtime = createSdkRuntime({
+    resolveExecutable: () => ({ path: exePath, source: 'env' }),
+    loadSdk: () => Promise.resolve({ query: () => {} }),
+  });
+  const health = await runtime.health();
+
+  assert.equal(health.available, true);
+  assert.equal(health.runtimePath, exePath);
+  assert.equal(health.runtimeSource, 'env');
+  assert.equal(health.error, null);
 });
 
 test('health()：loadSdk 返回 Promise 时只加载一次', async () => {

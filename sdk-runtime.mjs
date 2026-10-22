@@ -165,6 +165,41 @@ export function buildChannelEnvFrom(state, readSecret) {
 }
 
 /**
+ * 校验 env 显式指定的运行时路径。
+ *
+ * SDK 以无 shell 的 spawn 启动该路径：npm 安装只提供 claude.cmd / claude.ps1，
+ * 直接作为可执行文件会 EINVAL。因此 Windows 下必须指向真实的 claude.exe。
+ *
+ * @param {string} runtimePath 环境变量指定的路径
+ * @returns {string | null} 校验失败的提示；通过时返回 null
+ */
+function validateEnvRuntime(runtimePath) {
+  const hint = 'CLAUDE_WORKBENCH_SDK_EXECUTABLE 必须指向 claude.exe';
+
+  if (!runtimePath) {
+    return hint;
+  }
+
+  let stats;
+  try {
+    stats = fs.statSync(runtimePath);
+  } catch {
+    return `指定的 SDK 运行时不存在：${runtimePath}；${hint}`;
+  }
+
+  if (!stats.isFile()) {
+    return `指定的 SDK 运行时不是文件：${runtimePath}；${hint}`;
+  }
+
+  // 仅 Windows 强制 .exe：非 Windows 平台的可执行文件没有该扩展名约定
+  if (process.platform === 'win32' && path.extname(runtimePath).toLowerCase() !== '.exe') {
+    return `指定的 SDK 运行时必须是可执行文件：${runtimePath}；${hint}`;
+  }
+
+  return null;
+}
+
+/**
  * 探测 SDK 自带平台包中的原生 CLI 是否存在。
  *
  * 默认实现与 SDK 内部定位 CLI 的方式一致；打包产物不再包含平台包时返回 false，
@@ -278,8 +313,8 @@ export function createSdkRuntime({
   /**
    * 健康检查：返回 SDK 是否可用以及运行时信息。
    *
-   * 运行时解析顺序与设计一致：env 显式覆盖 → installed 已安装 CLI → bundled 自带运行时。
-   * SDK 动态加载可能失败，此方法不抛错，统一把原因写入 error 字段。
+   * 运行时解析顺序与设计一致：env 显式覆盖（必须是 claude.exe）→ installed 已安装 CLI
+   * → bundled 自带运行时。SDK 动态加载可能失败，此方法不抛错，统一把原因写入 error 字段。
    */
   async function health() {
     const result = {
@@ -303,10 +338,13 @@ export function createSdkRuntime({
     result.runtimePath = runtimePath;
     result.runtimeSource = runtimePath ? (resolved.source || 'bundled') : 'bundled';
 
-    // 显式指定的运行时不存在时直接判定不可用，避免带着坏路径继续加载
-    if (result.runtimeSource === 'env' && !fs.existsSync(runtimePath)) {
-      result.error = `指定的 SDK 运行时不存在：${runtimePath}`;
-      return result;
+    // 显式指定的运行时必须是可执行文件，避免带着坏路径返回可用、创建会话时才失败
+    if (result.runtimeSource === 'env') {
+      const invalid = validateEnvRuntime(runtimePath);
+      if (invalid) {
+        result.error = invalid;
+        return result;
+      }
     }
 
     // 已安装 CLI 在解析后消失时按 SDK 自带运行时兜底
