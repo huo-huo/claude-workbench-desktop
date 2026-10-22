@@ -16,6 +16,8 @@ The installer is per-user and does not require administrator rights. WebView2 is
 
 Claude Workbench starts a local Node.js service when it opens. Node.js and Claude Code must remain installed for the desktop app to create or resume sessions.
 
+SDK mode reuses the Claude Code you already installed; the installer does not bundle a separate copy. When Claude Code is unavailable, the SDK endpoints report that the SDK is unavailable, while terminal sessions keep working as before.
+
 ## Features
 
 - Manage Claude Code models, hooks, skills, MCP servers, plugins, and diagnostics.
@@ -23,6 +25,7 @@ Claude Workbench starts a local Node.js service when it opens. Node.js and Claud
 - Browse project files, expand folders, refresh the tree, and drag or copy paths into a conversation.
 - Open files in their default app, reveal and select files in Explorer, or move files to the Windows Recycle Bin.
 - See when a running session is working or waiting for input.
+- SDK session foundation: the backend endpoints for health, session creation, messages, events, interrupt, and close are ready; the dedicated SDK session view will arrive in a later release.
 
 Project files and terminal sessions run through a local service bound to `127.0.0.1`. Prompts sent to Claude Code use the provider configured in your Claude Code environment.
 
