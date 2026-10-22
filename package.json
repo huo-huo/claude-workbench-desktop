@@ -1,0 +1,27 @@
+{
+  "name": "claude-workbench-desktop",
+  "version": "0.2.31",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "build:desktop": "vite build && node scripts/prepare-desktop-resources.mjs",
+    "tauri": "tauri",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build"
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "latest",
+    "@xterm/xterm": "latest",
+    "node-pty": "latest",
+    "ws": "latest"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "latest",
+    "vite": "latest"
+  },
+  "allowScripts": {
+    "node-pty@1.1.0": true
+  }
+}
