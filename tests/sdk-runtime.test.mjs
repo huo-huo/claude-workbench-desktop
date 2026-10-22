@@ -795,6 +795,73 @@ test('3.5 中断：成功后置 idle 并广播 interrupt，并发中断返回 fa
   assert.deepEqual(await runtime.interrupt(session.id), { interrupted: false });
 });
 
+test('3.5 中断：等待期间会话自然结束时保持 exited 且不广播', async (t) => {
+  const { sdk, calls } = createMockSdk();
+  const dir = tempDir(t);
+  const runtime = createTestRuntime({ sdk, sessionFile: path.join(dir, 'sessions.json') });
+  const session = await runtime.createSession({ projectPath: '项目' });
+  const { stream } = calls[0];
+
+  stream.push({ type: 'system', subtype: 'init', session_id: 'sdk-session-1' });
+  await flush();
+
+  const received = [];
+  runtime.subscribe(session.id, (message) => received.push(message));
+
+  // 让 interrupt 挂起 30ms，期间消息流返回 result 并正常结束
+  calls[0].query.interrupt = async () => {
+    await new Promise((resolve) => setTimeout(resolve, 30));
+  };
+  const pending = runtime.interrupt(session.id);
+
+  stream.push({ type: 'result', subtype: 'success' });
+  stream.end();
+  await flush();
+  assert.equal(runtime.get(session.id).status, 'exited', '消息流结束后会话应自然退出');
+
+  // 中断返回时不能把已结束的会话改回 idle
+  assert.deepEqual(await pending, { interrupted: false }, '会话已结束应返回未中断');
+  assert.equal(runtime.get(session.id).status, 'exited', '状态应保持 exited');
+  assert.ok(!received.some((message) => message.eventType === 'interrupt'), '不应补发 interrupt 事件');
+  assert.throws(() => runtime.send(session.id, '你好'), (error) => {
+    assert.equal(error.statusCode, 409, '已结束会话不应再接受消息');
+    return true;
+  });
+});
+
+test('3.5 中断：等待期间被关闭时保持 closed 且记录不被覆盖', async (t) => {
+  const { sdk, calls } = createMockSdk();
+  const dir = tempDir(t);
+  const file = path.join(dir, 'sessions.json');
+  const runtime = createTestRuntime({ sdk, sessionFile: file });
+  const session = await runtime.createSession({ projectPath: '项目' });
+  const { stream } = calls[0];
+
+  stream.push({ type: 'system', subtype: 'init', session_id: 'sdk-session-1' });
+  await flush();
+
+  const received = [];
+  runtime.subscribe(session.id, (message) => received.push(message));
+
+  // 让 interrupt 挂起 30ms，期间关闭会话
+  calls[0].query.interrupt = async () => {
+    await new Promise((resolve) => setTimeout(resolve, 30));
+  };
+  const pending = runtime.interrupt(session.id);
+  await runtime.close(session.id);
+
+  // 中断返回时不能覆盖 closed 状态与持久记录
+  assert.deepEqual(await pending, { interrupted: false }, '已关闭的会话应返回未中断');
+  assert.equal(runtime.get(session.id).status, 'closed', '状态应保持 closed');
+  assert.ok(
+    !runtime.get(session.id).events.some((event) => event.eventType === 'interrupt'),
+    '不应把 interrupt 写入事件缓冲',
+  );
+  assert.ok(!received.some((message) => message.eventType === 'interrupt'), '订阅者不应收到 interrupt 事件');
+  const saved = JSON.parse(fs.readFileSync(file, 'utf8'));
+  assert.equal(saved.sessions[0].status, 'closed', '持久记录应保持 closed');
+});
+
 test('3.5 关闭：幂等、广播 exit、关闭后订阅与发送返回 409', async (t) => {
   const { sdk, calls } = createMockSdk();
   const dir = tempDir(t);

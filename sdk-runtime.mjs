@@ -519,6 +519,8 @@ export function createSdkRuntime({
       session.interrupting = true;
       try {
         await session.query.interrupt();
+        // 等待期间会话可能已自然结束（exited/failed）或被 close()，此时保持原状态且不补发事件
+        if (session.status !== 'running') return { interrupted: false };
         setStatus(session, 'idle');
         // 记录并广播中断事件，便于前端同步展示中断结果
         appendEvent(session, { type: 'interrupt' });
