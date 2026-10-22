@@ -15,6 +15,10 @@ const require = createRequire(import.meta.url);
 
 /** 会话允许自动放行的只读工具；其余工具一律拒绝 */
 const ALLOWED_TOOLS = new Set(['Read', 'Glob', 'Grep']);
+/** 允许透传给 SDK 的权限模式；其余模式（含 bypassPermissions）一律回退 default */
+const ALLOWED_PERMISSION_MODES = new Set(['default', 'plan']);
+/** 已结束的会话状态：不可再发送提示词 */
+const FINISHED_STATUSES = new Set(['exited', 'failed', 'closed']);
 /** 每个会话保留的最近事件条数 */
 const MAX_EVENTS = 100;
 /** 会话记录文件最多保留的条数 */
@@ -185,6 +189,14 @@ export function createSdkRuntime({
   }
 
   /**
+   * 移除指定会话的记录；会话创建失败回滚时调用，避免残留无效记录。
+   */
+  function removeSessionRecord(id) {
+    const records = readSessionRecords().filter((item) => item?.id !== id);
+    writeSessionRecords(records);
+  }
+
+  /**
    * 读取已安装 SDK 包的版本号；读取失败时返回 null。
    */
   function readSdkVersion() {
@@ -311,6 +323,8 @@ export function createSdkRuntime({
   function appendEvent(session, message) {
     const eventType = message?.subtype ? `${message.type}.${message.subtype}` : String(message?.type ?? '');
     const event = { type: 'event', sessionId: session.id, eventType, event: message };
+    // 单独保留首条 system.init：前端重连时即使它已被挤出缓冲也能拿到初始化信息
+    if (eventType === 'system.init' && !session.initEvent) session.initEvent = event;
     session.events.push(event);
     if (session.events.length > MAX_EVENTS) {
       session.events.splice(0, session.events.length - MAX_EVENTS);
@@ -416,59 +430,78 @@ export function createSdkRuntime({
         abortController: new AbortController(),
         query: null,
         events: [],
+        /** 首条 system.init 事件；即使被缓冲挤出也保留用于回放 */
+        initEvent: null,
+        /** 是否正在中断；用于阻止并发的中断调用 */
+        interrupting: false,
         subscribers: new Set(),
       };
       sessions.set(session.id, session);
       // 创建即写入独立会话记录，便于服务重启后追溯
       persistSession(session);
 
-      // 健康检查已加载并缓存 SDK，此处直接复用
-      const sdk = await sdkPromise;
-
-      const sdkOptions = {
-        cwd: canonicalPath,
-        abortController: session.abortController,
-        env: { ...process.env, ...(typeof buildChannelEnv === 'function' ? buildChannelEnv() : {}) },
-        permissionMode: options.permissionMode || 'default',
-        canUseTool,
-        includePartialMessages: false,
-      };
-      if (options.model) sdkOptions.model = options.model;
-
-      // 仅在使用用户已安装 CLI 时显式指定可执行文件，bundled 交给 SDK 自行解析
-      let executable = { path: '', source: 'bundled' };
       try {
-        if (typeof resolveExecutable === 'function') executable = resolveExecutable() || executable;
-      } catch {
-        executable = { path: '', source: 'bundled' };
+        // 健康检查已加载并缓存 SDK，此处直接复用
+        const sdk = await sdkPromise;
+
+        // 等待 SDK 加载期间会话可能已被 close()/shutdown() 关闭，此时不应再启动查询
+        if (session.status === 'closed') throw httpError(409, '会话已结束，无法启动');
+
+        const sdkOptions = {
+          cwd: canonicalPath,
+          abortController: session.abortController,
+          env: { ...process.env, ...(typeof buildChannelEnv === 'function' ? buildChannelEnv() : {}) },
+          // 仅透传白名单内的权限模式，避免接受可能绕过权限确认的取值
+          permissionMode: ALLOWED_PERMISSION_MODES.has(options.permissionMode) ? options.permissionMode : 'default',
+          canUseTool,
+          includePartialMessages: false,
+        };
+        if (options.model) sdkOptions.model = options.model;
+
+        // 仅在使用用户已安装 CLI 时显式指定可执行文件，bundled 交给 SDK 自行解析
+        let executable = { path: '', source: 'bundled' };
+        try {
+          if (typeof resolveExecutable === 'function') executable = resolveExecutable() || executable;
+        } catch {
+          executable = { path: '', source: 'bundled' };
+        }
+        if (executable.path && executable.source !== 'bundled') {
+          sdkOptions.pathToClaudeCodeExecutable = executable.path;
+        }
+
+        // query() 同步返回异步迭代器，不 await
+        session.query = sdk.query({ prompt: session.inputQueue, options: sdkOptions });
+
+        // 初始提示词直接进入输入队列，由 SDK 按流式输入消费
+        if (typeof options.prompt === 'string' && options.prompt.trim()) {
+          session.inputQueue.push(userMessage(options.prompt));
+        }
+
+        // 后台消费消息流，不阻塞创建接口
+        void consume(session, session.query);
+
+        return {
+          id: session.id,
+          sessionId: session.sessionId,
+          projectPath: session.projectPath,
+          status: session.status,
+          eventUrl: `/api/sdk/events?session=${session.id}`,
+        };
+      } catch (error) {
+        // 创建失败回滚：删除会话与记录，避免留下无法使用的僵死会话
+        sessions.delete(session.id);
+        removeSessionRecord(session.id);
+        const failure = error instanceof Error ? error : new Error(String(error));
+        // 业务错误保留原状态码，未知异常统一按 500 处理
+        failure.statusCode = Number(failure.statusCode) || 500;
+        throw failure;
       }
-      if (executable.path && executable.source !== 'bundled') {
-        sdkOptions.pathToClaudeCodeExecutable = executable.path;
-      }
-
-      // query() 同步返回异步迭代器，不 await
-      session.query = sdk.query({ prompt: session.inputQueue, options: sdkOptions });
-
-      // 初始提示词直接进入输入队列，由 SDK 按流式输入消费
-      if (typeof options.prompt === 'string' && options.prompt.trim()) {
-        session.inputQueue.push(userMessage(options.prompt));
-      }
-
-      // 后台消费消息流，不阻塞创建接口
-      void consume(session, session.query);
-
-      return {
-        id: session.id,
-        sessionId: session.sessionId,
-        projectPath: session.projectPath,
-        status: session.status,
-        eventUrl: `/api/sdk/events?session=${session.id}`,
-      };
     },
 
     send(id, prompt) {
       const session = requireSession(id);
-      if (session.status === 'closed') throw httpError(409, '会话已关闭');
+      // exited/failed/closed 均视为会话已结束，不再接受新消息
+      if (FINISHED_STATUSES.has(session.status)) throw httpError(409, '会话已结束');
       if (typeof prompt !== 'string' || !prompt.trim()) throw httpError(400, '提示词必须是非空字符串');
 
       session.inputQueue.push(userMessage(prompt));
@@ -478,12 +511,21 @@ export function createSdkRuntime({
 
     async interrupt(id) {
       const session = requireSession(id);
-      // 仅运行中的会话需要中断；其他状态直接返回成功但无动作
-      if (session.status === 'running' && session.query) {
+      // 仅运行中的会话需要中断；其他状态直接返回无动作
+      if (session.status !== 'running' || !session.query) return { interrupted: false };
+      // 并发保护：同一会话已有中断在进行时直接返回，避免重复调用 SDK
+      if (session.interrupting) return { interrupted: false };
+
+      session.interrupting = true;
+      try {
         await session.query.interrupt();
+        setStatus(session, 'idle');
+        // 记录并广播中断事件，便于前端同步展示中断结果
+        appendEvent(session, { type: 'interrupt' });
         return { interrupted: true };
+      } finally {
+        session.interrupting = false;
       }
-      return { interrupted: false };
     },
 
     close: closeSession,
@@ -504,8 +546,13 @@ export function createSdkRuntime({
       if (!session || session.status === 'closed') throw httpError(409, '会话不存在或已关闭');
       if (typeof listener !== 'function') throw httpError(400, '订阅回调必须是函数');
 
-      listener({ type: 'ready', sessionId: session.id, status: session.status, replay: session.events.length });
-      for (const event of session.events) listener(event);
+      // 回放 init 与当前缓冲；init 仍在缓冲中时不重复发送
+      const replay = session.initEvent && !session.events.includes(session.initEvent)
+        ? [session.initEvent, ...session.events]
+        : session.events;
+
+      listener({ type: 'ready', sessionId: session.id, status: session.status, replay: replay.length });
+      for (const event of replay) listener(event);
       session.subscribers.add(listener);
 
       return () => {

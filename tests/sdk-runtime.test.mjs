@@ -13,18 +13,20 @@ import { createInputQueue, createSdkRuntime } from '../sdk-runtime.mjs';
  * 消息，从而精确验证会话消费循环与事件广播行为。
  */
 function createMockSdk() {
-  /** 每次 query() 的调用参数与消息流 */
+  /** 每次 query() 的调用参数、消息流与返回的查询对象 */
   const calls = [];
   const sdk = {
     query(params) {
       const stream = createMockStream();
-      calls.push({ params, stream });
-      return {
+      const query = {
         [Symbol.asyncIterator]: () => stream,
         interrupt: async () => {
           stream.interruptCalls += 1;
         },
       };
+      // 保留查询对象引用，测试可替换 interrupt 以模拟挂起
+      calls.push({ params, stream, query });
+      return query;
     },
   };
   return { sdk, calls };
@@ -108,6 +110,50 @@ function createTestRuntime({ sdk, sessionFile, resolveProject, resolveExecutable
     sessionFile,
     loadSdk: () => sdk,
   });
+}
+
+/**
+ * 在 createSession 的异步间隙轮询会话记录，捕获已写入的会话 id。
+ * 记录在启动 query 前同步落盘，因此可在微任务间隙读到。
+ */
+async function capturePersistedSessionId(file, pending) {
+  let settled = false;
+  pending.then(() => { settled = true; }, () => { settled = true; });
+
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    try {
+      const saved = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (saved.sessions?.length) return saved.sessions[0].id;
+    } catch {
+      // 文件尚未写入或内容不完整时继续等待下一个微任务
+    }
+    if (settled) break;
+    await Promise.resolve();
+  }
+  throw new Error('未捕获到会话记录');
+}
+
+/** 在会话记录落盘后、query 启动前关闭该会话，返回其 id */
+async function closePersistedSession(runtime, file, pending) {
+  let settled = false;
+  pending.then(() => { settled = true; }, () => { settled = true; });
+
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    try {
+      const saved = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (saved.sessions?.length) {
+        const id = saved.sessions[0].id;
+        // closeSession 的清理在首个 await 之前同步完成，可立即置为 closed
+        runtime.close(id);
+        return id;
+      }
+    } catch {
+      // 文件尚未写入时继续等待下一个微任务
+    }
+    if (settled) break;
+    await Promise.resolve();
+  }
+  throw new Error('未捕获到会话记录');
 }
 
 test('输入队列：无数据时 next() 挂起，push() 唤醒并返回该消息', async () => {
@@ -386,7 +432,7 @@ test('3.1 创建会话：返回 id、eventUrl 与 starting，query 只调用一�
   assert.ok(denied.message.includes('Bash'));
 });
 
-test('3.1 创建会话：自定义权限模式与非 bundled 运行时路径', async (t) => {
+test('3.1 创建会话：权限模式白名单与非 bundled 运行时路径', async (t) => {
   const { sdk, calls } = createMockSdk();
   const dir = tempDir(t);
   const runtime = createTestRuntime({
@@ -401,6 +447,12 @@ test('3.1 创建会话：自定义权限模式与非 bundled 运行时路径', a
   assert.equal(options.permissionMode, 'plan');
   assert.equal(options.pathToClaudeCodeExecutable, process.execPath);
   assert.equal(options.model, undefined);
+
+  // 白名单之外的模式（可能绕过权限确认）一律回退为 default
+  await runtime.createSession({ projectPath: '项目', permissionMode: 'acceptEdits' });
+  assert.equal(calls[1].params.options.permissionMode, 'default');
+  await runtime.createSession({ projectPath: '项目', permissionMode: 'bypassPermissions' });
+  assert.equal(calls[2].params.options.permissionMode, 'default');
 });
 
 test('3.1 创建会话：路径校验的原始状态码优先于默认 400', async (t) => {
@@ -464,6 +516,104 @@ test('3.2 发送提示词：不存在 404、空提示词 400', async (t) => {
   });
 });
 
+test('3.2 发送提示词：exited/failed 状态返回 409，idle 仍可发送', async (t) => {
+  const { sdk, calls } = createMockSdk();
+  const dir = tempDir(t);
+  const runtime = createTestRuntime({ sdk, sessionFile: path.join(dir, 'sessions.json') });
+
+  // 正常结束的会话不可再发送
+  const exited = await runtime.createSession({ projectPath: '项目' });
+  calls[0].stream.end();
+  await flush();
+  assert.equal(runtime.get(exited.id).status, 'exited');
+  assert.throws(() => runtime.send(exited.id, '你好'), (error) => {
+    assert.equal(error.statusCode, 409);
+    assert.ok(error.message.includes('结束'), '提示应说明会话已结束');
+    return true;
+  });
+
+  // 异常结束的会话同样不可再发送
+  const failed = await runtime.createSession({ projectPath: '项目' });
+  calls[1].stream.fail(new Error('模拟运行时崩溃'));
+  await flush();
+  assert.equal(runtime.get(failed.id).status, 'failed');
+  assert.throws(() => runtime.send(failed.id, '你好'), (error) => {
+    assert.equal(error.statusCode, 409);
+    return true;
+  });
+
+  // idle 状态允许继续发送
+  const idle = await runtime.createSession({ projectPath: '项目' });
+  calls[2].stream.push({ type: 'result', subtype: 'success' });
+  await flush();
+  assert.equal(runtime.get(idle.id).status, 'idle');
+  assert.deepEqual(runtime.send(idle.id, '继续'), { accepted: true, status: 'running' });
+});
+
+test('3.7 创建会话回滚：query 抛错时删除会话与记录并归一为 500', async (t) => {
+  const dir = tempDir(t);
+  const file = path.join(dir, 'sessions.json');
+  const runtime = createTestRuntime({
+    sdk: {
+      query: () => {
+        throw new Error('模拟 query 启动失败');
+      },
+    },
+    sessionFile: file,
+  });
+
+  const creation = runtime.createSession({ projectPath: '项目' });
+  // 记录在 query 之前落盘，此时捕获会话 id 以便验证回滚
+  const sessionId = await capturePersistedSessionId(file, creation);
+
+  await assert.rejects(creation, (error) => {
+    assert.equal(error.statusCode, 500, '未知异常应归一为 500');
+    assert.ok(error.message.includes('模拟 query 启动失败'));
+    return true;
+  });
+  assert.equal(runtime.get(sessionId), null, '失败的会话应从会话表删除');
+  assert.deepEqual(JSON.parse(fs.readFileSync(file, 'utf8')).sessions, [], '失败的记录应被移除');
+});
+
+test('3.7 创建会话回滚：已有 statusCode 保留', async (t) => {
+  const { sdk } = createMockSdk();
+  const dir = tempDir(t);
+  const file = path.join(dir, 'sessions.json');
+  sdk.query = () => {
+    const error = new Error('模拟权限错误');
+    error.statusCode = 403;
+    throw error;
+  };
+  const runtime = createTestRuntime({ sdk, sessionFile: file });
+
+  await assert.rejects(runtime.createSession({ projectPath: '项目' }), (error) => {
+    assert.equal(error.statusCode, 403, '已有状态码不应被覆盖为 500');
+    return true;
+  });
+});
+
+test('3.7 创建会话：等待 SDK 加载期间被关闭后不再启动查询并抛 409', async (t) => {
+  const { sdk, calls } = createMockSdk();
+  const dir = tempDir(t);
+  const file = path.join(dir, 'sessions.json');
+  const runtime = createTestRuntime({ sdk, sessionFile: file });
+
+  // 预热 SDK 加载缓存，使 createSession 的 await 产生可插入的微任务间隙
+  await runtime.health();
+
+  const creation = runtime.createSession({ projectPath: '项目' });
+  // 在会话记录落盘后、query 启动前关闭会话
+  const sessionId = await closePersistedSession(runtime, file, creation);
+
+  await assert.rejects(creation, (error) => {
+    assert.equal(error.statusCode, 409, '已关闭会话不应再启动查询');
+    return true;
+  });
+  assert.equal(runtime.get(sessionId), null, '关闭后应清理会话');
+  assert.equal(calls.length, 0, '已关闭的会话不应调用 query');
+  assert.deepEqual(JSON.parse(fs.readFileSync(file, 'utf8')).sessions, []);
+});
+
 test('3.3 事件流：init/result 驱动状态，订阅先 ready 回放再收新事件', async (t) => {
   const { sdk, calls } = createMockSdk();
   const dir = tempDir(t);
@@ -520,6 +670,29 @@ test('3.3 事件缓冲：最多保留最近 100 条', async (t) => {
   assert.equal(received[0].replay, 100, '缓冲应裁剪到最近 100 条');
   assert.equal(received[1].event.index, 5, '应保留最新 100 条，丢弃最早的 5 条');
   assert.equal(received.at(-1).event.index, 104);
+});
+
+test('3.3 事件回放：init 被挤出缓冲后仍最先回放', async (t) => {
+  const { sdk, calls } = createMockSdk();
+  const dir = tempDir(t);
+  const runtime = createTestRuntime({ sdk, sessionFile: path.join(dir, 'sessions.json') });
+  const session = await runtime.createSession({ projectPath: '项目' });
+  const { stream } = calls[0];
+
+  stream.push({ type: 'system', subtype: 'init', session_id: 'sdk-session-1' });
+  for (let index = 0; index < 120; index += 1) {
+    stream.push({ type: 'assistant', index, message: { role: 'assistant', content: [] } });
+  }
+  await flush();
+
+  const received = [];
+  runtime.subscribe(session.id, (message) => received.push(message));
+
+  // init 已被 100 条缓冲挤出，回放时应单独补在最前面
+  assert.equal(received[0].replay, 101, '回放条数应为 init 加最近 100 条');
+  assert.equal(received[1].eventType, 'system.init', '订阅后应最先收到 system.init');
+  assert.equal(received[2].event.index, 20, '其余回放应为缓冲内最新的 100 条');
+  assert.equal(received.at(-1).event.index, 119);
 });
 
 test('3.3 事件流：循环正常结束置 exited 并广播 exit', async (t) => {
@@ -582,6 +755,44 @@ test('3.5 中断：仅 running 状态调用 query.interrupt()', async (t) => {
     assert.equal(error.statusCode, 404);
     return true;
   });
+});
+
+test('3.5 中断：成功后置 idle 并广播 interrupt，并发中断返回 false', async (t) => {
+  const { sdk, calls } = createMockSdk();
+  const dir = tempDir(t);
+  const runtime = createTestRuntime({ sdk, sessionFile: path.join(dir, 'sessions.json') });
+  const session = await runtime.createSession({ projectPath: '项目' });
+  const { stream } = calls[0];
+
+  stream.push({ type: 'system', subtype: 'init', session_id: 'sdk-session-1' });
+  await flush();
+
+  const received = [];
+  runtime.subscribe(session.id, (message) => received.push(message));
+
+  // 让第一次中断挂起，以便观察并发保护
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  calls[0].query.interrupt = async () => { await gate; };
+
+  const first = runtime.interrupt(session.id);
+  assert.deepEqual(await runtime.interrupt(session.id), { interrupted: false }, '并发中断应直接返回 false');
+
+  release();
+  assert.deepEqual(await first, { interrupted: true });
+  assert.equal(runtime.get(session.id).status, 'idle', '中断成功后应置为 idle');
+
+  // 中断事件应广播给订阅者
+  const interruptEvent = received.find((message) => message.eventType === 'interrupt');
+  assert.deepEqual(interruptEvent, {
+    type: 'event',
+    sessionId: session.id,
+    eventType: 'interrupt',
+    event: { type: 'interrupt' },
+  });
+
+  // 完成后再中断（idle 状态）应返回 false，且保护标志已复位
+  assert.deepEqual(await runtime.interrupt(session.id), { interrupted: false });
 });
 
 test('3.5 关闭：幂等、广播 exit、关闭后订阅与发送返回 409', async (t) => {

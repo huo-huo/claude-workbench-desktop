@@ -2287,6 +2287,32 @@ server.listen(PORT, '127.0.0.1', () => {
   process.stdout.write(`Claude Workbench: http://127.0.0.1:${address.port}\n`);
 });
 
+/** 是否已开始优雅退出；重复信号直接退出进程 */
+let sdkShuttingDown = false;
+
+/**
+ * 优雅退出：先关闭全部 SDK 会话，再关闭 HTTP 服务。
+ * 2 秒兜底强制退出，避免挂起的长连接阻塞进程。
+ */
+async function gracefulShutdown() {
+  if (sdkShuttingDown) {
+    process.exit(0);
+    return;
+  }
+  sdkShuttingDown = true;
+  try {
+    await sdkRuntime.shutdown();
+  } catch {
+    // shutdown 内部已吞掉单会话异常，这里仅做兜底
+  }
+  setTimeout(() => process.exit(0), 2000).unref();
+  server.close(() => process.exit(0));
+}
+
+// 首次收到中断或终止信号时优雅关闭；重复信号立即退出
+process.on('SIGINT', () => { void gracefulShutdown(); });
+process.on('SIGTERM', () => { void gracefulShutdown(); });
+
 process.on('exit', () => {
   // 先关闭全部 SDK 会话：关闭输入队列并 abort 运行时进程，避免残留子进程
   try { void sdkRuntime.shutdown(); } catch {}
