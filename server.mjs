@@ -8,6 +8,7 @@ import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import pty from 'node-pty';
 import { WebSocketServer, WebSocket } from 'ws';
+import { createSdkRuntime } from './sdk-runtime.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_WEB_ROOT = fs.existsSync(path.join(ROOT, 'dist', 'index.html')) ? path.join(ROOT, 'dist') : ROOT;
@@ -565,6 +566,41 @@ function claudeInstallInfo() {
   claudeInfoCache = { executable, version, installMethod: wingetInstall ? 'WinGet' : executable ? '其他/未知' : '未找到 claude.exe', canUpdate: wingetInstall };
   return claudeInfoCache;
 }
+
+// SDK 运行时单例：复用工作台已有的路径校验、CLI 定位与配置目录
+const sdkRuntime = createSdkRuntime({
+  /**
+   * 校验并返回项目真实路径。
+   * 目录合法但未在工作台登记时按 400 处理，避免 SDK 会话脱离工作台的项目列表。
+   */
+  resolveProject(value) {
+    const real = safeWorkspaceRoot(value);
+    const saved = workspaceState();
+    const key = path.resolve(real).toLowerCase();
+    const registered = saved.projects.some(x => path.resolve(x.path).toLowerCase() === key)
+      || saved.sessions.some(x => x.projectPath && path.resolve(x.projectPath).toLowerCase() === key);
+    if (!registered) {
+      const error = new Error('该项目未在工作台中登记，请先从工作台打开项目');
+      error.statusCode = 400;
+      throw error;
+    }
+    return recordWorkspaceProject(real);
+  },
+  /** 运行时解析：环境变量显式覆盖 → 已安装 CLI → SDK 自带运行时 */
+  resolveExecutable() {
+    const override = String(process.env.CLAUDE_WORKBENCH_SDK_EXECUTABLE || '').trim();
+    if (override) return { path: override, source: 'env' };
+    const installed = claudeInstallInfo().executable;
+    if (installed) return { path: installed, source: 'installed' };
+    return { path: '', source: 'bundled' };
+  },
+  /** 渠道环境注入留待任务 4.2 实现 */
+  buildChannelEnv() {
+    return {};
+  },
+  sessionFile: path.join(CLAUDE, 'workbench-sdk-sessions.json'),
+  loadSdk: () => import('@anthropic-ai/claude-agent-sdk'),
+});
 
 function compareVersions(a, b) {
   const left = String(a || '').match(/\d+/g)?.map(Number) || [];
@@ -2122,6 +2158,11 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/state') {
       return send(res, 200, await overview(null));
     }
+    if (req.method === 'GET' && url.pathname === '/api/sdk/health') {
+      // SDK 可用返回 200，不可用降级为 503；响应体结构由运行时统一定义
+      const info = await sdkRuntime.health();
+      return send(res, info.available ? 200 : 503, info);
+    }
     if (req.method === 'GET' && url.pathname === '/api/channel-models') {
       return send(res, 200, await pullChannelModels(url.searchParams.get('id')));
     }
@@ -2178,7 +2219,8 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && serveWorkspaceAsset(url, res)) return;
     return send(res, 404, 'Not found', 'text/plain; charset=utf-8');
   } catch (error) {
-    return send(res, 400, { error: redacted(error.message || 'Request failed') });
+    // 透传业务错误自带的状态码（如 SDK 400/501/503），未知错误仍按 400 处理
+    return send(res, Number(error.statusCode) || 400, { error: redacted(error.message || 'Request failed') });
   }
 });
 

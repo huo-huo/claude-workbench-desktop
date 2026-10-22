@@ -5,6 +5,8 @@
  * 的最小可用实现，其余会话方法留待后续任务补齐。
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
@@ -106,15 +108,18 @@ export function createSdkRuntime({
 } = {}) {
   /** 会话表：会话 id -> 会话对象；本阶段尚未创建任何会话 */
   const sessions = new Map();
-  /** 已加载的 SDK 模块缓存，避免重复加载 */
-  let cachedSdk = null;
+  /** SDK 模块加载 Promise 缓存，避免并发或重复加载 */
+  let sdkPromise = null;
 
   /**
    * 读取已安装 SDK 包的版本号；读取失败时返回 null。
    */
   function readSdkVersion() {
     try {
-      return require('@anthropic-ai/claude-agent-sdk/package.json').version;
+      // SDK 的 exports 未暴露 ./package.json，先解析包入口再读取同目录的 package.json
+      const entry = require.resolve('@anthropic-ai/claude-agent-sdk');
+      const manifest = JSON.parse(fs.readFileSync(path.join(path.dirname(entry), 'package.json'), 'utf8'));
+      return manifest.version || null;
     } catch {
       return null;
     }
@@ -122,8 +127,11 @@ export function createSdkRuntime({
 
   /**
    * 健康检查：返回 SDK 是否可用以及运行时信息。
+   *
+   * 运行时解析顺序与设计一致：env 显式覆盖 → installed 已安装 CLI → bundled 自带运行时。
+   * SDK 动态加载可能失败，此方法不抛错，统一把原因写入 error 字段。
    */
-  function health() {
+  async function health() {
     const result = {
       available: false,
       sdkVersion: null,
@@ -133,19 +141,46 @@ export function createSdkRuntime({
       error: null,
     };
 
+    // 解析运行时路径；解析异常时按 SDK 自带运行时兜底
+    let resolved = { path: '', source: 'bundled' };
+    try {
+      if (typeof resolveExecutable === 'function') resolved = resolveExecutable() || resolved;
+    } catch {
+      resolved = { path: '', source: 'bundled' };
+    }
+
+    const runtimePath = String(resolved.path || '');
+    result.runtimePath = runtimePath;
+    result.runtimeSource = runtimePath ? (resolved.source || 'bundled') : 'bundled';
+
+    // 显式指定的运行时不存在时直接判定不可用，避免带着坏路径继续加载
+    if (result.runtimeSource === 'env' && !fs.existsSync(runtimePath)) {
+      result.error = `指定的 SDK 运行时不存在：${runtimePath}`;
+      return result;
+    }
+
+    // 已安装 CLI 在解析后消失时按 SDK 自带运行时兜底
+    if (result.runtimeSource === 'installed' && !fs.existsSync(runtimePath)) {
+      result.runtimePath = '';
+      result.runtimeSource = 'bundled';
+    }
+
     if (typeof loadSdk !== 'function') {
       result.error = '未注入 SDK 加载函数 loadSdk，Claude Agent SDK 不可用';
       return result;
     }
 
     try {
-      cachedSdk = cachedSdk ?? loadSdk();
-      if (!cachedSdk || typeof cachedSdk.query !== 'function') {
+      // 缓存加载 Promise：loadSdk 可能同步抛错或返回 Promise，统一 await 处理
+      sdkPromise = sdkPromise ?? Promise.resolve().then(() => loadSdk());
+      const sdk = await sdkPromise;
+      if (!sdk || typeof sdk.query !== 'function') {
         throw new Error('Claude Agent SDK 缺少 query 导出');
       }
       result.available = true;
       result.sdkVersion = readSdkVersion();
     } catch (error) {
+      // 失败原因写入 error，由调用方决定降级行为
       result.error = error instanceof Error ? error.message : String(error);
     }
 
