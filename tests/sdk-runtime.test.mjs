@@ -1089,6 +1089,13 @@ test('3.6 会话记录：不读写终端会话文件', async (t) => {
   assert.equal(fs.readFileSync(workspaceFile, 'utf8'), workspaceContent, '终端会话文件不应被读写');
 });
 
+test('4.3 全局设置：SDK 运行时源码不包含 settings.json 写入路径', () => {
+  // 实现层难以在单测中监视真实用户目录，按约定改为静态断言源码不含该文件
+  const source = fs.readFileSync(new URL('../sdk-runtime.mjs', import.meta.url), 'utf8');
+  assert.ok(!source.includes('settings.json'), 'sdk-runtime.mjs 不应引用全局 settings.json');
+  assert.ok(!/writeFileSync\([^)]*settings/i.test(source), 'sdk-runtime.mjs 不应写入全局设置文件');
+});
+
 test('3.4 重连续接：取消订阅不影响会话，重连收到完整回放并继续收新事件', async (t) => {
   const { sdk, calls } = createMockSdk();
   const dir = tempDir(t);
