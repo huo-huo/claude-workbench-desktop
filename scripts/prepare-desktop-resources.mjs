@@ -15,6 +15,8 @@ if (!fs.existsSync(path.join(dist, 'index.html'))) throw new Error('Build the fr
 fs.rmSync(destination, { recursive: true, force: true });
 fs.mkdirSync(destination, { recursive: true });
 fs.cpSync(path.join(root, 'server.mjs'), path.join(destination, 'server.mjs'));
+// 后端模块目录与入口同目录分发，server.mjs 通过相对路径导入
+fs.cpSync(path.join(root, 'server'), path.join(destination, 'server'), { recursive: true });
 fs.mkdirSync(path.join(destination, 'scripts'), { recursive: true });
 fs.copyFileSync(path.join(root, 'scripts', 'recycle-workspace-item.ps1'), path.join(destination, 'scripts', 'recycle-workspace-item.ps1'));
 fs.cpSync(dist, path.join(destination, 'dist'), {
