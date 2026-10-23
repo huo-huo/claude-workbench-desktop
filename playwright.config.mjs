@@ -1,6 +1,8 @@
+// Playwright 冒烟测试配置：工作区 + 管理页 E2E（固定端口 4199，本地启动 server.mjs）
 import { defineConfig } from '@playwright/test';
+import path from 'node:path';
+import process from 'node:process';
 
-// 冒烟测试：启动本地服务（随机范围内的固定端口），只访问只读端点与纯前端交互
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 60000,
@@ -12,7 +14,11 @@ export default defineConfig({
   },
   webServer: {
     command: 'node server.mjs',
-    env: { CLAUDE_WORKBENCH_PORT: '4199' },
+    env: {
+      CLAUDE_WORKBENCH_PORT: '4199',
+      // 显式覆盖用户级 CLAUDE_WORKBENCH_WEB_ROOT（可能指向已安装桌面应用的旧 dist），确保服务本仓库构建产物
+      CLAUDE_WORKBENCH_WEB_ROOT: path.resolve(process.cwd(), 'dist'),
+    },
     url: 'http://127.0.0.1:4199/api/workspace/projects',
     reuseExistingServer: false,
     timeout: 30000,

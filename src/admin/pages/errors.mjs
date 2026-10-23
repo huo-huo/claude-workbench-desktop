@@ -1,0 +1,7 @@
+// 管理页报错记录页：errorPage 渲染器（自 index.html 内联脚本逐字迁移）
+import { state } from '../state.mjs';
+import { esc, displayTime } from '../core/dom.mjs';
+import { filteredRows, toolbar } from '../common/cards.mjs';
+import { titleBlock } from './dashboard.mjs';
+
+export function errorPage(){const rows=filteredRows(state.data.errors.map(x=>({...x,name:x.category,description:x.message,scope:x.file})));const total=state.data.errors.reduce((n,x)=>n+(x.count||1),0);const categories=[...new Set(state.data.errors.map(x=>x.category))];return `${titleBlock('errors')}<div class="status-row"><b>${total}</b> 次报错　<span>${state.data.errors.length} 种摘要</span>${categories.map(c=>`<span>· ${esc(c)} ${state.data.errors.filter(e=>e.category===c).reduce((n,e)=>n+(e.count||1),0)} 次</span>`).join('')}</div>${toolbar(state.data.errors.length)}<div class="table-wrap"><table class="data-table error-table"><thead><tr><th>最近时间</th><th>分类</th><th>出现次数</th><th>错误摘要</th><th>来源会话</th></tr></thead><tbody>${rows.map(x=>`<tr><td class="mono">${displayTime(x.timestamp)}</td><td><span class="state error">${esc(x.category)}</span></td><td class="mono">${x.count||1}</td><td class="desc">${esc(x.message)}</td><td class="mono">${esc(x.file)}</td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">暂未扫描到匹配的历史报错</div></td></tr>'}</tbody></table></div><div class="status-row"><span>统计最近 30 个会话文件中的错误摘要；不展示对话正文，密钥和令牌会隐藏。</span></div>`}
