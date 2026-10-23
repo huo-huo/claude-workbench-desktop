@@ -1,0 +1,19 @@
+# Classic Coordination Checkpoint
+
+Generated from coordination.json; tasks.md remains the completion authority.
+
+Stage: done
+Tasks: 8d75b70f-8ee7-4c0a-bba3-9065e615205a, 55e08f54-3ffe-4630-b2bd-3505fd037766, a1ffb674-0a6c-438d-b116-06a0a3ae2781, 8d84ae17-e430-49f6-acfb-3a45fc86b69d, ac0f0eaa-2464-4e9a-b92b-021c632b634b, 5ad6f49d-c136-45b5-aa71-ae44024ffbf3, 25c4b01c-1606-40cd-af86-9ce60e3af1e9, 686b8513-dcc1-4477-8bd1-76dbea6b05d7, c8424226-73ec-456d-8a42-ca0e2c68147c, d2056bec-bcbd-4313-ae03-3a3400dbb950, 0c198392-b0da-4fdf-aa91-b2bcebf6a3c7, 4bc5cb8e-c65d-4f1c-87ad-25d9abe3f047, 9d7c1b98-a38a-44fd-b8a1-26156164de16
+Revision: 5a162174ae1c48432fd9b3f43403201c511c1a7746406ca35fa057e0abdbd902
+Session: sdd-2026-10-22-global-theme-session-groups-folder-picker
+Review rounds: 3
+
+## Evidence
+- build check: comet check run build --local exit=0, log docs/openspec/changes/global-theme-session-groups-folder-picker/.comet/checks/f6e2c124-0d8f-450e-b485-1b4ca907c67f.log
+- review A: 2 fix rounds, final clean (右键菜单深色可读、终端外壳跟随主题、开关选中态)
+- review B: 1 fix round, final clean (空 projectPath、localStorage 写保护、列宽)
+- review C: clean with minors (COM 接口探针 S_OK)
+- browser acceptance: 主题切换/持久化、工作站按钮位置、会话分组与折叠持久化全部 PASS
+
+## Unresolved
+- 系统文件夹选择对话框的实际弹窗样式与选择/取消行为未在浏览器自动化中验证，需桌面手工点击确认

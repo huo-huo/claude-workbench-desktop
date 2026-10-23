@@ -2,6 +2,8 @@
 comet_change: global-theme-session-groups-folder-picker
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-10-23-global-theme-session-groups-folder-picker
+status: final
 ---
 
 ## Context
