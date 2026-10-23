@@ -2,6 +2,7 @@
 change: global-theme-session-groups-folder-picker
 design-doc: docs/openspec/changes/global-theme-session-groups-folder-picker/design.md
 base-ref: abed933de7b5c595eb020b7aa0ab13653ebe54ee
+archived-with: 2026-10-23-global-theme-session-groups-folder-picker
 ---
 
 <!-- comet-task-authority: docs/openspec/changes/global-theme-session-groups-folder-picker/tasks.md -->

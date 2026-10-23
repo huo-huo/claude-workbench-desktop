@@ -1,0 +1,18 @@
+{
+  "change": "global-theme-session-groups-folder-picker",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "task_hash_policy": "task-content-v1",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "ba02149ae087f18710c1f21f9521b43bbd3695ed512b5853d5d7b078fdaaa049",
+  "files": [
+    { "path": "docs/openspec/changes/global-theme-session-groups-folder-picker/proposal.md", "sha256": "5d99cf7846eefc51f66fd5d6e137faa6a392cca913e1a72c918e54c89c27ab8e" },
+    { "path": "docs/openspec/changes/global-theme-session-groups-folder-picker/design.md", "sha256": "7e6d535673ab7600a99111bf6635c45fcd10692c7b6974babbf8a51866462106" },
+    { "path": "docs/openspec/changes/global-theme-session-groups-folder-picker/tasks.md", "sha256": "5a162174ae1c48432fd9b3f43403201c511c1a7746406ca35fa057e0abdbd902" },
+    { "path": "docs/openspec/changes/global-theme-session-groups-folder-picker/.openspec.yaml", "sha256": "0ad492a63d87e00a8bc135b0a1a2b19270dbb9ffd997a69b89fd4ab72015a944" },
+    { "path": "docs/openspec/changes/global-theme-session-groups-folder-picker/specs/global-appearance-theme/spec.md", "sha256": "7f0c1f92d6e3415c3c31321085faa63ccadbd1055d257081de007042f6b39b13" },
+    { "path": "docs/openspec/changes/global-theme-session-groups-folder-picker/specs/native-folder-picker/spec.md", "sha256": "9917fbf75654a3cf95c3e75bbc1b4f289a712d9fc72ac09788470f573c027d2d" },
+    { "path": "docs/openspec/changes/global-theme-session-groups-folder-picker/specs/session-project-grouping/spec.md", "sha256": "1e15931e7d2c482412b3a15e576b7fe1bb9905117fd4225a2d7b1cb128790675" }
+  ]
+}
