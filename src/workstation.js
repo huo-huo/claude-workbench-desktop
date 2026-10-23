@@ -11,9 +11,13 @@ const viewKey = 'claude-workbench-view';
 const themeKey = 'claude-workbench-workspace-theme';
 const terminalFontSizeKey = 'claude-workbench-terminal-font-size';
 const projectsExpandedKey = 'claude-workbench-projects-expanded';
+// 会话分组折叠状态：存规范化路径 key 的数组
+const collapsedProjectsKey = 'claude-workbench-collapsed-projects';
 const maxSessionActivityMonitors = 20;
 let projectPath = localStorage.getItem(projectKey) || '';
 let workspaceDark = localStorage.getItem(themeKey) === 'dark';
+// 启动时先同步 body 主题，避免管理页首屏闪回浅色
+document.body.classList.toggle('theme-dark', workspaceDark);
 let projectsExpanded = localStorage.getItem(projectsExpandedKey) === '1';
 let activeSession = null;
 let socket = null;
@@ -43,6 +47,21 @@ let contextProjectPath = '';
 let fileTreeContextTarget = { path: '', type: '' };
 const sessionActivityMonitors = new Map();
 const sessionActivityStates = new Map();
+
+// 终端配色：深色沿用原有配色，浅色使用浅底深字，跟随全局主题
+const terminalThemes = {
+  // 两套主题都补齐 ANSI 16 色，避免 xterm 回退到默认白色在浅底上不可见
+  dark: {
+    background: '#000000', foreground: '#d4d4d4', cursor: '#f2f2f2', selectionBackground: '#5a5a5a88',
+    black: '#000000', red: '#f44747', green: '#6a9955', yellow: '#d7ba7d', blue: '#569cd6', magenta: '#c678dd', cyan: '#56b6c2', white: '#d4d4d4',
+    brightBlack: '#767676', brightRed: '#f48771', brightGreen: '#89d185', brightYellow: '#e5c07b', brightBlue: '#9cdcfe', brightMagenta: '#d7a0ee', brightCyan: '#7fd6e0', brightWhite: '#ffffff',
+  },
+  light: {
+    background: '#fbfaf6', foreground: '#20211e', cursor: '#20211e', selectionBackground: '#d8ed83',
+    black: '#20211e', red: '#ad4937', green: '#2d7251', yellow: '#7a5a12', blue: '#2f5f9e', magenta: '#8b3a83', cyan: '#1f6f74', white: '#6e7067',
+    brightBlack: '#777970', brightRed: '#c05a48', brightGreen: '#3f8b63', brightYellow: '#946d18', brightBlue: '#3d78bd', brightMagenta: '#a34d97', brightCyan: '#2b8890', brightWhite: '#4f5149',
+  },
+};
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -91,12 +110,19 @@ function setView(view) {
 function applyWorkspaceTheme() {
   const shell = document.querySelector('.shell');
   workspace.classList.toggle('theme-dark', workspaceDark);
+  // 管理页与工作站共用主题：整个 body 一起切换
+  document.body.classList.toggle('theme-dark', workspaceDark);
   shell.classList.toggle('workspace-dark', workspaceDark && !workspace.hidden);
   const button = $('#toggleWorkspaceTheme');
   if (button) {
     button.textContent = workspaceDark ? '☀ 浅色' : '◐ 深色';
     button.title = workspaceDark ? '切换到浅色模式' : '切换到深色模式';
     button.setAttribute('aria-pressed', String(workspaceDark));
+  }
+  // 终端可能尚未创建；存在时同步配色并重新适配尺寸
+  if (terminal) {
+    terminal.options.theme = terminalThemes[workspaceDark ? 'dark' : 'light'];
+    requestAnimationFrame(() => fitTerminal());
   }
 }
 
@@ -134,6 +160,58 @@ function updateTerminalEmptyState() {
 
 function projectName(path) {
   return String(path || '').replace(/[\\/]+$/, '').split(/[\\/]/).filter(Boolean).at(-1) || '未命名项目';
+}
+
+// 会话分组 key：统一斜杠、去掉尾部斜杠、转小写；空路径返回空字符串
+function sessionGroupKey(path) {
+  return String(path || '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+}
+
+// 读取折叠的项目 key；内容非法（非 JSON 或非数组）时按空数组处理
+function readCollapsedProjects() {
+  try {
+    const value = JSON.parse(localStorage.getItem(collapsedProjectsKey) || '[]');
+    return Array.isArray(value) ? value.filter(item => typeof item === 'string') : [];
+  } catch { return []; }
+}
+
+// 写入折叠的项目 key（去重，保持顺序）；localStorage 写入失败时静默失败，不抛到点击处理器
+function writeCollapsedProjects(keys) {
+  try {
+    localStorage.setItem(collapsedProjectsKey, JSON.stringify([...new Set(keys)]));
+  } catch { /* 持久化失败不影响本次折叠交互 */ }
+}
+
+// 按项目路径聚合会话，组间按组内最近使用时间倒序；组内保持接口返回顺序
+function groupSessionsByProject(sessions) {
+  const groups = new Map();
+  for (const session of sessions) {
+    const key = sessionGroupKey(session.projectPath);
+    if (!groups.has(key)) groups.set(key, { key, path: session.projectPath || '', sessions: [] });
+    groups.get(key).sessions.push(session);
+  }
+  // 组内最新使用时间（毫秒），无法解析时按 0 处理
+  const latestTime = group => group.sessions.reduce(
+    (latest, item) => Math.max(latest, Date.parse(item.lastUsedAt || item.createdAt) || 0), 0,
+  );
+  return [...groups.values()].sort((a, b) => latestTime(b) - latestTime(a));
+}
+
+// 分组标题 + 组内会话行；折叠状态由 is-collapsed 类与 aria-expanded 同步表达
+function sessionGroupMarkup(group, collapsedKeys) {
+  const collapsed = collapsedKeys.includes(group.key);
+  return `<section class="session-group${collapsed ? ' is-collapsed' : ''}" data-session-group="${escapeHtml(group.key)}"><button class="session-group-head" type="button" aria-expanded="${String(!collapsed)}" title="${escapeHtml(group.path)}"><span class="session-group-caret" aria-hidden="true">▾</span><span class="session-group-name">${escapeHtml(projectName(group.path))}</span><span class="session-group-path">${escapeHtml(group.path)}</span><span class="session-group-count">${group.sessions.length}</span></button><div class="session-group-body">${group.sessions.map(sessionRowMarkup).join('')}</div></section>`;
+}
+
+// 切换分组折叠状态并持久化到 localStorage
+function toggleSessionGroup(groupElement) {
+  if (!groupElement) return;
+  const key = groupElement.dataset.sessionGroup || '';
+  const collapsed = groupElement.classList.toggle('is-collapsed');
+  groupElement.querySelector('.session-group-head')?.setAttribute('aria-expanded', String(!collapsed));
+  const keys = readCollapsedProjects().filter(item => item !== key);
+  if (collapsed) keys.push(key);
+  writeCollapsedProjects(keys);
 }
 
 function formatSessionTime(value) {
@@ -844,11 +922,16 @@ async function refreshSessions() {
   const result = await api('/api/workspace/sessions');
   const sessions = result.sessions || [];
   syncSessionActivityMonitors(sessions);
-  projectSessions = sessions.filter(item => item.projectPath.toLowerCase() === projectPath.toLowerCase());
+  const currentProjectKey = sessionGroupKey(projectPath);
+  projectSessions = sessions.filter(item => sessionGroupKey(item.projectPath) === currentProjectKey);
   updateTerminalEmptyState();
-  $('#sessionList').innerHTML = sessions.length ? sessions.map(sessionRowMarkup).join('') : '<div class="empty">还没有对话。选择项目文件夹后新建一个。</div>';
+  // 按项目目录分组渲染；折叠状态与分组 key 共用 sessionGroupKey 结果
+  const groups = groupSessionsByProject(sessions);
+  const collapsedKeys = readCollapsedProjects();
+  $('#sessionList').innerHTML = groups.length ? groups.map(group => sessionGroupMarkup(group, collapsedKeys)).join('') : '<div class="empty">还没有对话。选择项目文件夹后新建一个。</div>';
   document.querySelectorAll('[data-session-id]').forEach(button => button.onclick = () => openSavedSession(sessions.find(x => x.id === button.dataset.sessionId)));
   document.querySelectorAll('[data-remove-session]').forEach(button => button.onclick = event => { event.stopPropagation(); removeSession(button.dataset.removeSession).catch(error => toast(error.message)); });
+  document.querySelectorAll('.session-group-head').forEach(head => head.onclick = () => toggleSessionGroup(head.closest('.session-group')));
 }
 
 function sessionActivityFor(session) {
@@ -976,7 +1059,7 @@ function ensureTerminal() {
     // ConPTY emits VT line feeds that intentionally preserve the cursor column.
     // Adding a carriage return moves redraw fragments left and leaves stale cells.
     convertEol: false,
-    theme: { background: '#000000', foreground: '#d4d4d4', cursor: '#f2f2f2', selectionBackground: '#5a5a5a88', black: '#000000', brightBlack: '#767676', green: '#6a9955', brightGreen: '#89d185', yellow: '#d7ba7d', brightYellow: '#e5c07b', blue: '#569cd6', brightBlue: '#9cdcfe', red: '#f44747', brightRed: '#f48771' },
+    theme: terminalThemes[workspaceDark ? 'dark' : 'light'],
   });
   fitAddon = new FitAddon();
   terminal.loadAddon(fitAddon);
@@ -1424,7 +1507,8 @@ function setupWorkspace() {
   $('#closeSession').addEventListener('click', closeCurrentSession);
   $('#toggleWorkspaceTheme').addEventListener('click', () => {
     workspaceDark = !workspaceDark;
-    localStorage.setItem(themeKey, workspaceDark ? 'dark' : 'light');
+    // 持久化失败时静默：主题仍在当前会话生效
+    try { localStorage.setItem(themeKey, workspaceDark ? 'dark' : 'light'); } catch { /* 忽略写入异常 */ }
     applyWorkspaceTheme();
   });
   $('#terminalZoomOut').addEventListener('click', () => setTerminalFontSize(terminalFontSize - 1));
