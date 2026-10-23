@@ -1,0 +1,40 @@
+.prompt-manager-backdrop{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:18px;background:#11120fd1}
+.prompt-manager-backdrop[hidden]{display:none!important}
+.prompt-manager{width:min(820px,96vw);max-height:min(92vh,920px);overflow:auto;background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:0 24px 80px #0008}
+.prompt-manager-head{position:sticky;top:0;z-index:2;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:17px 20px 13px;border-bottom:1px solid var(--line);background:var(--surface)}
+.prompt-manager-head h2{margin:0;font-size:16px;font-weight:600}
+.prompt-manager-head p{margin:5px 0 0;color:var(--muted);font-size:10px}
+.prompt-manager-tabs{display:flex;gap:4px;padding:9px 18px 0;border-bottom:1px solid var(--line)}
+.prompt-manager-tabs button{border:0;border-bottom:2px solid transparent;background:transparent;padding:8px 10px;color:var(--muted);font-size:10px}
+.prompt-manager-tabs button.active{border-color:#a9bf77;color:var(--ink);font-weight:600}
+.prompt-manager-tabs span{margin-left:5px;font:9px var(--mono);opacity:.7}
+.prompt-manager-panel{padding:14px 20px 20px}
+.prompt-manager-panel[hidden]{display:none!important}
+.prompt-manager-note{margin-bottom:13px;padding:9px 11px;border:1px solid var(--line);background:var(--soft);color:var(--muted);font-size:9px;line-height:1.55}
+.prompt-field{display:grid;gap:5px;margin-bottom:11px;color:var(--muted);font-size:9px}
+.prompt-field>span{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.prompt-field>span>#promptUseTerminalSelection{width:auto;height:auto;flex:0 0 auto;display:inline-flex;place-items:initial;align-items:center;padding:4px 8px;border:1px solid var(--line);white-space:nowrap;font:9px/1.3 var(--sans)}
+.prompt-field textarea,.prompt-field input,.prompt-field select{width:100%;min-width:0;border:1px solid var(--line);background:var(--soft);color:var(--ink);padding:8px 10px;font:10px/1.55 var(--sans);outline:none}
+.prompt-field textarea{resize:vertical;min-height:55px;max-height:240px}
+.prompt-field textarea:focus,.prompt-field input:focus,.prompt-field select:focus{border-color:#98aa67;box-shadow:0 0 0 2px #9caf6c33}
+.prompt-field select{max-width:280px;padding:5px 7px;font-size:9px}
+.prompt-manager-actions{display:flex;align-items:center;gap:8px;margin:3px 0 11px}
+.prompt-manager-actions>span{margin-right:auto;color:var(--muted);font-size:9px}
+.prompt-manager-actions .btn{padding:6px 10px;font-size:9px}
+.prompt-manager-actions .btn.dark{background:#d8ed83;border-color:#d8ed83;color:#25261f}
+.prompt-draft-fields{display:grid;grid-template-columns:minmax(0,.75fr) minmax(0,1.25fr);gap:10px}
+.prompt-save-actions{border-top:1px solid var(--line);padding-top:10px}
+.prompt-library-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;color:var(--muted);font-size:9px}
+.prompt-library-list{display:grid;gap:8px}
+.prompt-library-empty{padding:26px 12px;text-align:center;color:var(--muted);font-size:10px;border:1px dashed var(--line)}
+.prompt-library-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 12px;border:1px solid var(--line);background:var(--surface)}
+.prompt-library-card h3{margin:0;font-size:11px;font-weight:600;color:var(--ink)}
+.prompt-library-card p{margin:4px 0 0;color:var(--muted);font-size:9px;line-height:1.5;overflow-wrap:anywhere}
+.prompt-library-card small{display:block;margin-top:5px;color:var(--muted);font:8px var(--mono)}
+.prompt-library-card-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px}
+.prompt-library-card-actions .btn{padding:5px 7px;font-size:8px}
+.prompt-library-card-actions .btn.insert{background:#d8ed83;border-color:#d8ed83;color:#25261f}
+.skill-translation-tools{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:9px 0;padding:8px 10px;border:1px solid var(--line);background:var(--soft)}
+.skill-translation-tools span{flex:1 1 240px;color:var(--muted);font-size:9px;line-height:1.5}
+.skill-translation-tools .btn{padding:5px 8px;font-size:9px}
+@media(max-width:680px){.prompt-manager-backdrop{padding:8px}.prompt-manager{width:100%;max-height:96vh}.prompt-manager-head,.prompt-manager-panel{padding-left:13px;padding-right:13px}.prompt-draft-fields{grid-template-columns:1fr}.prompt-library-card{grid-template-columns:1fr}.prompt-library-card-actions{justify-content:flex-start}}

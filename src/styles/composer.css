@@ -1,0 +1,17 @@
+.terminal-composer{padding:8px 12px 9px;border-top:1px solid var(--terminal-chrome-line);background:var(--terminal-chrome-bg);display:grid;gap:6px}
+.composer-dropzone{position:relative}
+.terminal-composer textarea{width:100%;min-height:54px;max-height:180px;resize:vertical;border:1px solid var(--terminal-input-line);background:var(--terminal-input-bg);color:var(--terminal-input-fg);padding:8px 10px;font:11px/1.5 var(--sans);outline:none}
+.terminal-composer textarea:focus{border-color:var(--terminal-focus-line);box-shadow:0 0 0 2px var(--terminal-accent-focus)}
+.terminal-composer textarea::placeholder{color:var(--terminal-chrome-muted)}
+.terminal-composer.is-dragging textarea{border-color:var(--terminal-accent);background:var(--terminal-input-drag-bg);box-shadow:inset 0 0 0 1px var(--terminal-accent)}
+.composer-attachments{display:flex;flex-wrap:wrap;gap:5px}
+.composer-attachments[hidden]{display:none}
+.composer-attachment{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:3px 7px 3px 9px;border:1px solid var(--terminal-control-line);background:var(--terminal-input-bg);color:var(--terminal-accent);font-size:9px}
+.composer-attachment>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:min(38vw,320px)}
+.composer-attachment button{width:17px;height:17px;padding:0;border:0;background:transparent;color:var(--terminal-chrome-muted);cursor:pointer;font:14px/1 var(--sans)}
+.composer-attachment button:hover{color:#f09586}
+.tree-row[draggable="true"]{cursor:grab}.tree-row[draggable="true"]:active{cursor:grabbing}
+.composer-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.composer-actions span{margin-right:auto;color:var(--terminal-chrome-muted);font-size:8px}
+.composer-actions .btn{border-color:var(--terminal-control-line);background:transparent;color:var(--terminal-control-fg);padding:5px 8px;font-size:9px}
+.composer-actions .btn.dark{background:#d8ed83;border-color:#d8ed83;color:#25261f}

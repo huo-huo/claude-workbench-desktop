@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test \"tests/**/*.test.mjs\"",
+    "test:e2e": "playwright test",
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
     "build:desktop": "vite build && node scripts/prepare-desktop-resources.mjs",
@@ -20,6 +21,7 @@
     "ws": "latest"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tauri-apps/cli": "latest",
     "vite": "latest"
   },

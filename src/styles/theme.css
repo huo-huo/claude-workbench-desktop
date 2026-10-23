@@ -1,0 +1,35 @@
+[hidden] { display: none !important; }
+:root{--workspace-header-height:32px;--terminal-bg:#fbfaf6;--terminal-chrome-bg:#f7f6f1;--terminal-chrome-line:#deded6;--terminal-chrome-fg:#20211e;--terminal-chrome-muted:#777970;--terminal-input-bg:#fbfaf6;--terminal-input-fg:#20211e;--terminal-input-line:#deded6;--terminal-input-drag-bg:#eff3dc;--terminal-control-line:#c9c8c0;--terminal-control-fg:#3f4039;--terminal-control-hover-bg:#e7e6df;--terminal-control-hover-line:#a9a89f;--terminal-control-strong-line:#a8bc71;--terminal-control-strong-fg:#20211e;--terminal-accent:#56682f;--terminal-accent-focus:#a8bc7133;--terminal-focus-line:#7f9448;--terminal-led:#777970}
+/* 全局深色主题：管理页与工作站共用的应用级变量覆盖 */
+body.theme-dark{--paper:#20211d;--surface:#2a2b25;--ink:#e9e8de;--muted:#a4a497;--line:#414239;--soft:#33342d;--chrome-bg:#272822;--hover-bg:#34352e;--active-bg:#3b3d32;--subtle-bg:#2f302a;--terminal-bg:#000000;--terminal-chrome-bg:#151515;--terminal-chrome-line:#292929;--terminal-chrome-fg:#d4d4d4;--terminal-chrome-muted:#aaa99e;--terminal-input-bg:#090909;--terminal-input-fg:#e5e5e5;--terminal-input-line:#3a3a3a;--terminal-input-drag-bg:#303329;--terminal-control-line:#484840;--terminal-control-fg:#d2d0c4;--terminal-control-hover-bg:#3a3a33;--terminal-control-hover-line:#66665a;--terminal-control-strong-line:#62634f;--terminal-control-strong-fg:#e2e1d6;--terminal-accent:#d8ed83;--terminal-accent-focus:#a8bc7122;--terminal-focus-line:#a8bc71;--terminal-led:#85867d}
+/* 管理页中无法变量化的固定色：深色下换成深色面板与可读文字 */
+body.theme-dark .nav-btn{color:#c2c1b6}
+body.theme-dark .nav-index{color:#a4a497}
+body.theme-dark .view-button{color:#c9c8bc}
+body.theme-dark .view-glyph{color:#aaa99d}
+body.theme-dark .btn.dark{background:var(--accent);border-color:var(--accent);color:#25261f}
+body.theme-dark .notice{background:#3a2a26;border-color:#5c4038;color:#e2c8bf}
+body.theme-dark .notice strong{color:#f0b3a3}
+body.theme-dark .notice.neutral{background:var(--subtle-bg);border-color:var(--line);color:var(--muted)}
+body.theme-dark .route-badge{background:#2c3a31;color:#9fd4b3}
+body.theme-dark .route-badge.custom{background:#3b3d32;color:#c2c1b6}
+body.theme-dark .alias-table tr:nth-child(even) td,body.theme-dark .data-table tr:nth-child(even) td{background:rgba(42,43,37,.55)}
+body.theme-dark .channel-card.active{background:#333729;border-color:#6f7d54}
+body.theme-dark .ai-result{background:var(--subtle-bg)}
+body.theme-dark .recommendation{background:#30342a;border-color:#4b5638}
+body.theme-dark .drawer-body pre{background:#2f302a;color:#d6d5c9}
+body.theme-dark .toast{background:#10110d;color:#e9e8de}
+body.theme-dark .mono,body.theme-dark .scope{color:#a9a99c}
+body.theme-dark .desc,body.theme-dark .logic-card p{color:#c2c1b5}
+body.theme-dark .logic-meta,body.theme-dark .flowarrow{color:#a4a497}
+body.theme-dark .state.on{color:#8fce9f}
+body.theme-dark .state.error{color:#e08b7c}
+body.theme-dark .disabled-note{color:#d9a98c}
+body.theme-dark .unavailable{color:#e0796b}
+body.theme-dark .testing{color:#b3c97a}
+/* 右键菜单与开关在深色下的可读性覆盖 */
+body.theme-dark .workspace-context-menu{background:var(--surface);border-color:var(--line);box-shadow:0 8px 24px #0007}
+body.theme-dark .workspace-context-menu button{color:var(--ink)}
+body.theme-dark .workspace-context-menu button:hover{background:var(--hover-bg)}
+body.theme-dark .workspace-context-menu button.menu-danger{color:#e39a8f}
+body.theme-dark .switch:not(:checked){background:var(--line)}
