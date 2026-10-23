@@ -206,7 +206,112 @@ function workspaceFileText(root, requested) {
   return { name: path.basename(real), path: requested, content: buffer.toString('utf8'), size: stat.size, modifiedAt: stat.mtime.toISOString() };
 }
 
-function selectWorkspaceFolder() {
+// PowerShell 以 UTF-8 Base64 输出所选路径，取消时输出为空。
+function decodeFolderSelection(result) {
+  const encoded = String(result.stdout || '').trim();
+  return encoded ? Buffer.from(encoded, 'base64').toString('utf8').trim() : '';
+}
+
+// 使用 IFileOpenDialog（FOS_PICKFOLDERS）弹出资源管理器风格的“打开”式文件夹选择框。
+// 返回 null 表示脚本启动失败（需要回退），返回空字符串表示用户取消。
+function selectWorkspaceFolderModern() {
+  // COM 接口的方法顺序必须与 ShObjIdl.h 的 vtable 完全一致，否则运行时会崩溃。
+  // 这里把 IModalWindow / IFileDialog / IFileOpenDialog 的方法按顺序扁平化到单个接口：
+  // Windows PowerShell 的旧版 C# 编译器下，接口继承形式会错位 vtable（实测 GetOptions 返回 E_INVALIDARG）。
+  // Windows PowerShell 5.1 的 Add-Type 使用旧版 C# 编译器，代码需兼容 C# 5。
+  const script = `
+$ErrorActionPreference = 'Stop'
+Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+
+[ComImport, Guid("d57c7288-d4ad-4768-be02-9d969532d960"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IFileOpenDialog {
+  // IModalWindow
+  [PreserveSig] int Show(IntPtr parent);
+  // IFileDialog
+  [PreserveSig] int SetFileTypes(uint count, IntPtr filterSpec);
+  [PreserveSig] int SetFileTypeIndex(uint index);
+  [PreserveSig] int GetFileTypeIndex(out uint index);
+  [PreserveSig] int Advise(IntPtr events, out uint cookie);
+  [PreserveSig] int Unadvise(uint cookie);
+  [PreserveSig] int SetOptions(uint options);
+  [PreserveSig] int GetOptions(out uint options);
+  [PreserveSig] int SetDefaultFolder(IShellItem folder);
+  [PreserveSig] int SetFolder(IShellItem folder);
+  [PreserveSig] int GetFolder(out IShellItem folder);
+  [PreserveSig] int GetCurrentSelection(out IShellItem item);
+  [PreserveSig] int SetFileName([MarshalAs(UnmanagedType.LPWStr)] string name);
+  [PreserveSig] int GetFileName(out IntPtr name);
+  [PreserveSig] int SetTitle([MarshalAs(UnmanagedType.LPWStr)] string title);
+  [PreserveSig] int SetOkButtonLabel([MarshalAs(UnmanagedType.LPWStr)] string text);
+  [PreserveSig] int SetFileNameLabel([MarshalAs(UnmanagedType.LPWStr)] string label);
+  [PreserveSig] int GetResult(out IShellItem item);
+  [PreserveSig] int AddPlace(IShellItem item, uint place);
+  [PreserveSig] int SetDefaultExtension([MarshalAs(UnmanagedType.LPWStr)] string extension);
+  [PreserveSig] int Close(int hr);
+  [PreserveSig] int SetClientGuid(ref Guid guid);
+  [PreserveSig] int ClearClientData();
+  [PreserveSig] int SetFilter(IntPtr filter);
+  // IFileOpenDialog
+  [PreserveSig] int GetResults(out IntPtr results);
+  [PreserveSig] int GetSelectedItems(out IntPtr items);
+}
+
+[ComImport, Guid("43826d1e-e718-42ee-bc55-a1e261c37bfe"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IShellItem {
+  [PreserveSig] int BindToHandler(IntPtr bindContext, ref Guid handler, ref Guid iid, out IntPtr result);
+  [PreserveSig] int GetParent(out IShellItem parent);
+  [PreserveSig] int GetDisplayName(uint format, out IntPtr name);
+  [PreserveSig] int GetAttributes(uint mask, out uint attributes);
+  [PreserveSig] int Compare(IShellItem item, uint hint, out int order);
+}
+
+public static class WorkbenchFolderPicker {
+  public static string Pick(string title) {
+    IFileOpenDialog dialog = null;
+    IShellItem item = null;
+    IntPtr name = IntPtr.Zero;
+    try {
+      // CLSID_FileOpenDialog
+      dialog = (IFileOpenDialog)Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("DC1C5A9C-E88A-4DDE-A5A1-60F82A20AEF7")));
+      uint options;
+      Marshal.ThrowExceptionForHR(dialog.GetOptions(out options));
+      // FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM
+      Marshal.ThrowExceptionForHR(dialog.SetOptions(options | 0x20 | 0x40));
+      Marshal.ThrowExceptionForHR(dialog.SetTitle(title));
+      Marshal.ThrowExceptionForHR(dialog.SetOkButtonLabel("打开"));
+      // 用户取消返回 HRESULT_FROM_WIN32(ERROR_CANCELLED)
+      int hr = dialog.Show(IntPtr.Zero);
+      if (hr == unchecked((int)0x800704C7)) return string.Empty;
+      Marshal.ThrowExceptionForHR(hr);
+      Marshal.ThrowExceptionForHR(dialog.GetResult(out item));
+      // SIGDN_FILESYSPATH
+      Marshal.ThrowExceptionForHR(item.GetDisplayName(0x80058000, out name));
+      string path = Marshal.PtrToStringUni(name);
+      return path == null ? string.Empty : path;
+    } finally {
+      if (name != IntPtr.Zero) Marshal.FreeCoTaskMem(name);
+      if (item != null) Marshal.FinalReleaseComObject(item);
+      if (dialog != null) Marshal.FinalReleaseComObject(dialog);
+    }
+  }
+}
+'@
+$selected = [WorkbenchFolderPicker]::Pick('打开')
+if (-not [string]::IsNullOrEmpty($selected)) {
+  $bytes = [System.Text.Encoding]::UTF8.GetBytes($selected)
+  [Console]::Out.Write([Convert]::ToBase64String($bytes))
+}
+`;
+  // 对话框需要可交互的 PowerShell 进程，不能加 `-NonInteractive`。
+  const result = spawnSync('powershell.exe', ['-NoProfile', '-STA', '-Command', script], { encoding: 'utf8', windowsHide: false, timeout: 120000 });
+  if (result.error || result.status !== 0) return null;
+  return decodeFolderSelection(result);
+}
+
+// 旧式“浏览文件夹”树形对话框，仅在 IFileOpenDialog 脚本失败时作为回退。
+function selectWorkspaceFolderLegacy() {
   const script = [
     'Add-Type -AssemblyName System.Windows.Forms',
     '[System.Windows.Forms.Application]::EnableVisualStyles()',
@@ -219,8 +324,13 @@ function selectWorkspaceFolder() {
   // can suppress UI behavior when the server is launched as a hidden desktop child.
   const result = spawnSync('powershell.exe', ['-NoProfile', '-STA', '-Command', script], { encoding: 'utf8', windowsHide: false, timeout: 120000 });
   if (result.error || result.status !== 0) throw new Error('无法打开文件夹选择窗口');
-  const encoded = String(result.stdout || '').trim();
-  const selected = encoded ? Buffer.from(encoded, 'base64').toString('utf8').trim() : '';
+  return decodeFolderSelection(result);
+}
+
+function selectWorkspaceFolder() {
+  // 现代对话框仅在实际启动失败时回退；用户取消返回空路径，不会再弹第二个对话框。
+  const modern = selectWorkspaceFolderModern();
+  const selected = modern === null ? selectWorkspaceFolderLegacy() : modern;
   return selected ? safeWorkspaceRoot(selected) : '';
 }
 
@@ -564,7 +674,13 @@ function pluginRows(hooks, skills, mcp) {
 
 function claudeInstallInfo() {
   const where = spawnSync('where.exe', ['claude'], { encoding: 'utf8', windowsHide: true, timeout: 5000 });
-  const executable = String(where.stdout || '').split(/\r?\n/).map(x => x.trim()).find(x => /claude\.exe$/i.test(x)) || '';
+  const candidates = String(where.stdout || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+  // node-pty 只能直接启动可执行文件；npm 安装的 claude.cmd 只是转调包内的 bin\claude.exe
+  const executable = candidates.find(x => /claude\.exe$/i.test(x))
+    || candidates.filter(x => /claude\.(cmd|bat)$/i.test(x))
+      .map(x => path.join(path.dirname(x), 'node_modules', '@anthropic-ai', 'claude-code', 'bin', 'claude.exe'))
+      .find(x => fs.existsSync(x))
+    || '';
   if (claudeInfoCache?.executable === executable && executable) return claudeInfoCache;
   let version = '';
   if (executable) {

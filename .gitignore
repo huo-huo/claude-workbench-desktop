@@ -31,5 +31,5 @@ docs/openspec/changes/*/.comet/
 docs/openspec/changes/archive/**/.comet/
 # 子代理开发协调产物
 .superpowers/
-# git worktree 目录
+# git worktree 工作目录（避免误提交工作树内容）
 .worktrees/
