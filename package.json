@@ -10,7 +10,8 @@
     "build:desktop": "vite build && node scripts/prepare-desktop-resources.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
-    "desktop:build": "tauri build"
+    "desktop:build": "tauri build",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "0.3.308",
@@ -20,6 +21,7 @@
     "ws": "latest"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tauri-apps/cli": "latest",
     "vite": "latest"
   },
