@@ -106,8 +106,6 @@ function closeArchivePanel() {
   $('#archivePanel').hidden = true;
   $('#sessionList').hidden = false;
   $('#sessionSearch').hidden = false;
-  $('#archiveToggle').classList.remove('is-open');
-  $('#archiveToggle').title = '查看归档对话';
 }
 
 /** 切换归档面板:打开时隐藏主列表与搜索框并拉取归档列表,关闭时还原 */
@@ -119,8 +117,6 @@ function toggleArchivePanel() {
   panel.hidden = false;
   $('#sessionList').hidden = true;
   $('#sessionSearch').hidden = true;
-  $('#archiveToggle').classList.add('is-open');
-  $('#archiveToggle').title = '返回对话列表';
   renderArchivePanel().catch(error => { closeArchivePanel(); toast(error.message); });
 }
 
@@ -328,8 +324,30 @@ export async function removeSession(id) {
   toast(result.transcriptPreserved ? '已从工作台移除，Claude 对话记录保留' : '这条对话已不在工作台列表中');
 }
 
-// 归档面板入口:切换主列表/归档面板显示,打开时拉取归档数据
-$('#archiveToggle').addEventListener('click', toggleArchivePanel);
+/** 收起「⋯」更多菜单 */
+function closeMoreMenu() {
+  $('#moreMenu').hidden = true;
+  $('#moreToggle').classList.remove('is-open');
+}
+
+/** 切换「⋯」更多菜单:批量管理与查看归档入口收进菜单,搜索与刷新保持常显 */
+function toggleMoreMenu() {
+  const menu = $('#moreMenu');
+  if (!menu.hidden) return closeMoreMenu();
+  menu.hidden = false;
+  $('#moreToggle').classList.add('is-open');
+}
+
+// 「⋯」更多菜单:点击项执行后收起,点击外部或 Esc 收起(交互模式同文件树右键菜单)
+$('#moreToggle').addEventListener('click', toggleMoreMenu);
+$('#moreBulk').addEventListener('click', () => { closeMoreMenu(); enterBulkMode(); });
+$('#moreArchive').addEventListener('click', () => { closeMoreMenu(); toggleArchivePanel(); });
+document.addEventListener('click', event => {
+  const menu = $('#moreMenu');
+  // moreToggle 不在菜单内,需显式排除,否则展开它的那次点击会立即触发外点收起
+  if (!menu.hidden && !menu.contains(event.target) && !$('#moreToggle').contains(event.target)) closeMoreMenu();
+});
+document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMoreMenu(); });
 
 // 搜索框输入即时过滤:数据已在内存缓存,直接重渲染,不发请求(脚本于 body 末尾加载,DOM 已就绪,模式同 state.mjs)
 $('#sessionSearch').addEventListener('input', event => {
@@ -337,8 +355,7 @@ $('#sessionSearch').addEventListener('input', event => {
   renderSessions();
 });
 
-// 批量管理:入口进入模式,操作栏全选/删除/退出
-$('#bulkToggle').addEventListener('click', enterBulkMode);
+// 批量管理:入口在「⋯」菜单(#moreBulk),操作栏全选/删除/退出
 $('#bulkSelectAll').addEventListener('click', toggleBulkSelectAll);
 $('#bulkDelete').addEventListener('click', () => { removeBulkSelected(); });
 $('#bulkExit').addEventListener('click', exitBulkMode);

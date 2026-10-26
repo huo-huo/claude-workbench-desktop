@@ -1,8 +1,6 @@
 .session-actions{padding:9px 10px;border-bottom:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .session-actions .btn{text-align:center;padding-left:5px;padding-right:5px;font-size:9px;white-space:nowrap}
 .session-actions .btn:disabled{opacity:.45;cursor:not-allowed}
-/* 批量管理入口独占一行 */
-#bulkToggle{grid-column:1/-1}
 /* 批量操作栏:已选计数与全选/删除/退出 */
 .bulk-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 13px;border-bottom:1px solid var(--line)}
 .bulk-bar>span{font:9px var(--mono);color:var(--muted)}
@@ -12,10 +10,15 @@
 .session-bulk-check{flex:none;align-self:center;margin:0 0 0 6px}
 .session-list-head{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:10px 13px 6px;color:var(--muted);font:9px var(--mono);letter-spacing:.04em;text-transform:uppercase}
 .session-list-head>span{flex:none;white-space:nowrap}
-/* 列表头部工具组:搜索框与图标按钮成组右靠;搜索框可收缩,窄栏不挤压左侧标题 */
-.session-list-tools{flex:1;min-width:0;display:flex;align-items:center;justify-content:flex-end;gap:4px}
+/* 列表头部工具组:搜索框与图标按钮成组右靠;搜索框可收缩,窄栏不挤压左侧标题;relative 供「⋯」菜单定位 */
+.session-list-tools{position:relative;flex:1;min-width:0;display:flex;align-items:center;justify-content:flex-end;gap:4px}
 #sessionSearch{flex:1 1 auto;width:auto;min-width:56px;max-width:140px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:3px 6px;font-size:10px;line-height:1.4}
 #sessionSearch::placeholder{color:var(--muted)}
+/* 「⋯」更多菜单:右对齐工具组浮于列表之上,变量随深色主题自动适配 */
+#moreToggle.is-open{background:var(--active-bg)}
+.session-more-menu{position:absolute;right:0;top:calc(100% + 4px);z-index:20;min-width:96px;padding:4px;background:var(--surface);border:1px solid var(--line);box-shadow:0 8px 24px #15161024}
+.session-more-menu button{width:100%;border:0;background:transparent;padding:7px 10px;text-align:left;color:var(--ink);font-size:10px;cursor:pointer;white-space:nowrap}
+.session-more-menu button:hover{background:var(--hover-bg)}
 .session-list{flex:1;min-height:80px;overflow:auto;padding:0 7px 12px;display:grid;align-content:start;gap:2px}
 .session-item{position:relative;display:flex;min-width:0}
 .session-row{width:100%;min-width:0;border:0;background:transparent;padding:9px 27px 9px 14px;text-align:left;display:grid;gap:3px;border-left:2px solid transparent;color:var(--ink);cursor:pointer}
@@ -33,8 +36,6 @@
 @media(prefers-reduced-motion:reduce){.session-spinner{animation:none}}
 .session-remove{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:21px;height:21px;border:0;background:transparent;color:#85867d;font-size:15px;cursor:pointer;opacity:.5}
 .session-item:hover .session-remove,.session-remove:focus-visible{opacity:1;background:#deddd5}
-/* 归档面板入口打开态高亮;变量随深色主题自动适配 */
-#archiveToggle.is-open{background:var(--active-bg)}
 /* 归档行是纯展示 span,不可点击打开,去掉悬停高亮 */
 .archive-row{cursor:default}
 .archive-row:hover{background:transparent}
