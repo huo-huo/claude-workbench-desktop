@@ -36,6 +36,22 @@ export function removeWorkspaceSession(id) {
   return { removed: true, transcriptPreserved: true };
 }
 
+/** 批量移除会话:逐个执行,部分失败不中断不回滚,失败项保留在列表 */
+export function removeWorkspaceSessionsBatch(ids) {
+  if (!Array.isArray(ids) || ids.length === 0) throw new Error('请选择要移除的会话');
+  const failed = [];
+  let removed = 0;
+  for (const id of ids) {
+    try {
+      if (removeWorkspaceSession(id).removed) removed += 1;
+      else failed.push({ id, error: '找不到该会话' });
+    } catch (error) {
+      failed.push({ id, error: error?.message || String(error) });
+    }
+  }
+  return { removed, failed, transcriptPreserved: true };
+}
+
 /** 按查找会话,找不到抛错(路由层统一转 400) */
 function findWorkspaceSession(id) {
   const session = workspaceState().sessions.find(x => x.id === String(id || ''));

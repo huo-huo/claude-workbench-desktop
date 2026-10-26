@@ -1,5 +1,5 @@
 import { hideWorkspaceProject, listWorkspaceProjects, recordWorkspaceProject, safeWorkspaceRoot } from '../workspace/state.mjs';
-import { listWorkspaceSessions, removeWorkspaceSession, renameWorkspaceSession, pinWorkspaceSession, archiveWorkspaceSession } from '../workspace/sessions.mjs';
+import { listWorkspaceSessions, removeWorkspaceSession, removeWorkspaceSessionsBatch, renameWorkspaceSession, pinWorkspaceSession, archiveWorkspaceSession } from '../workspace/sessions.mjs';
 import { workspaceAsset, workspaceFileText, workspaceTree } from '../workspace/files.mjs';
 import { openWorkspaceFile, readWorkspaceClipboard, recycleWorkspaceItem, revealWorkspaceFile, selectWorkspaceFolder } from '../workspace/native.mjs';
 import { createWorkspaceSession, workspaceTerminals } from '../terminal/sessions.mjs';
@@ -70,6 +70,7 @@ export const POST_ROUTES = new Map([
   ['/api/workspace/project/hide', body => ({ status: 200, body: hideWorkspaceProject(body.path) })],
   ['/api/workspace/session', body => ({ status: 200, body: createWorkspaceSession(body) })],
   ['/api/workspace/session/remove', body => ({ status: 200, body: removeWorkspaceSession(body.id) })],
+  ['/api/workspace/sessions/remove-batch', body => ({ status: 200, body: removeWorkspaceSessionsBatch(body.ids) })],
   ['/api/workspace/session/rename', body => ({ status: 200, body: renameWorkspaceSession(body.id, body.customName) })],
   ['/api/workspace/session/pin', body => ({ status: 200, body: pinWorkspaceSession(body.id, body.pinned !== false) })],
   ['/api/workspace/session/archive', body => ({ status: 200, body: archiveWorkspaceSession(body.id, body.archived !== false) })],

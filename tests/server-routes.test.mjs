@@ -109,3 +109,24 @@ test('会话状态接口对未知 id 返回 400 与错误信息', async () => {
     assert.ok((await res.json()).error);
   }
 });
+
+test('POST /api/workspace/sessions/remove-batch 批量删除混合存在与不存在的 id', async () => {
+  // 重写夹具:与前序测试的会话状态互不影响
+  atomicJson(path.join(tempDir, 'workspace.json'), { sessions: [fakeSession({ id: 'b1' }), fakeSession({ id: 'b2' })] });
+  const res = await post('/api/workspace/sessions/remove-batch', { ids: ['b1', 'b2', 'nope'] });
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.removed, 2);
+  assert.deepEqual(body.failed, [{ id: 'nope', error: '找不到该会话' }]);
+  assert.equal(body.transcriptPreserved, true);
+  const list = await (await fetch(`${base}/api/workspace/sessions`)).json();
+  assert.deepEqual(list.sessions.map(x => x.id), []);
+});
+
+test('POST /api/workspace/sessions/remove-batch 空 ids 返回 400', async () => {
+  for (const ids of [[], undefined]) {
+    const res = await post('/api/workspace/sessions/remove-batch', { ids });
+    assert.equal(res.status, 400);
+    assert.ok((await res.json()).error);
+  }
+});
