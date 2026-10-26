@@ -3,6 +3,12 @@ import path from 'node:path';
 import { WORKSPACE_FILE } from '../core/paths.mjs';
 import { atomicJson, safeReadJson } from '../core/storage.mjs';
 
+// 模块级可变引用:测试可重定向到临时文件,生产仍指向真实工作区数据文件
+let workspaceFile = WORKSPACE_FILE;
+
+/** 仅供测试重定向工作区数据文件;生产代码不得调用 */
+export function setWorkspaceFileForTest(file) { workspaceFile = file; }
+
 export function workspaceSessionName(session) {
   const folderName = path.basename(String(session.projectPath || '').replace(/[\\/]+$/, '')) || '未命名项目';
   const date = new Date(session.createdAt || Date.now());
@@ -12,17 +18,36 @@ export function workspaceSessionName(session) {
   return `${folderName} · ${stamp}`;
 }
 
+/** 规范化会话条目可选字段:customName 仅保留 string,pinned/archived 仅在为 true 时保留,旧数据零迁移 */
+function normalizeSessionFields(session) {
+  const { customName, pinned, archived, ...rest } = session;
+  return {
+    ...rest,
+    ...(typeof customName === 'string' ? { customName } : {}),
+    ...(pinned === true ? { pinned: true } : {}),
+    ...(archived === true ? { archived: true } : {}),
+  };
+}
+
+/** 会话显示名:自定义名(非空)优先,其次持久化名,最后实时推导自动名 */
+export function sessionDisplayName(session) {
+  return session.customName?.trim() || session.name || workspaceSessionName(session);
+}
+
 export function workspaceState() {
-  const saved = safeReadJson(WORKSPACE_FILE, {});
+  const saved = safeReadJson(workspaceFile, {});
   const sessions = Array.isArray(saved.sessions) ? saved.sessions : [];
   const projects = Array.isArray(saved.projects) ? saved.projects : [];
   const hiddenProjects = [...new Set((Array.isArray(saved.hiddenProjects) ? saved.hiddenProjects : []).filter(x => typeof x === 'string' && path.isAbsolute(x)))];
   const hiddenKeys = new Set(hiddenProjects.map(x => path.resolve(x).toLowerCase()));
   let changed = false;
   const namedSessions = sessions.map(session => {
-    if (!['新对话', '继续最近对话', ''].includes(String(session.name || '').trim())) return session;
-    changed = true;
-    return { ...session, name: workspaceSessionName(session) };
+    let next = session;
+    if (['新对话', '继续最近对话', ''].includes(String(session.name || '').trim())) {
+      changed = true;
+      next = { ...session, name: workspaceSessionName(session) };
+    }
+    return normalizeSessionFields(next);
   });
   const knownProjects = new Map(projects.filter(x => x?.path).map(x => [path.resolve(x.path).toLowerCase(), x]));
   for (const session of namedSessions) {
@@ -35,7 +60,7 @@ export function workspaceState() {
   }
   const allProjects = [...knownProjects.values()];
   const savedProjects = allProjects.filter(x => !hiddenKeys.has(path.resolve(x.path).toLowerCase()));
-  if (changed || !Array.isArray(saved.projects) || !Array.isArray(saved.hiddenProjects)) atomicJson(WORKSPACE_FILE, { ...saved, projects: allProjects, hiddenProjects, sessions: namedSessions });
+  if (changed || !Array.isArray(saved.projects) || !Array.isArray(saved.hiddenProjects)) atomicJson(workspaceFile, { ...saved, projects: allProjects, hiddenProjects, sessions: namedSessions });
   return { projects: savedProjects, hiddenProjects, sessions: namedSessions };
 }
 
@@ -57,7 +82,7 @@ export function recordWorkspaceProject(value, at = new Date().toISOString()) {
     ? saved.projects.map(x => path.resolve(x.path).toLowerCase() === key ? { ...x, lastUsedAt: at } : x)
     : [{ path: projectPath, addedAt: at, lastUsedAt: at }, ...saved.projects];
   const hiddenProjects = saved.hiddenProjects.filter(x => path.resolve(x).toLowerCase() !== key);
-  atomicJson(WORKSPACE_FILE, { projects, hiddenProjects, sessions: saved.sessions });
+  atomicJson(workspaceFile, { projects, hiddenProjects, sessions: saved.sessions });
   return projectPath;
 }
 
@@ -72,7 +97,7 @@ export function hideWorkspaceProject(value) {
   const projectPath = known.path || known.projectPath;
   const projects = saved.projects.filter(x => path.resolve(x.path).toLowerCase() !== key);
   const hiddenProjects = [...new Map([...saved.hiddenProjects, projectPath].map(x => [path.resolve(x).toLowerCase(), x])).values()];
-  atomicJson(WORKSPACE_FILE, { projects, hiddenProjects, sessions: saved.sessions });
+  atomicJson(workspaceFile, { projects, hiddenProjects, sessions: saved.sessions });
   return { hidden: true };
 }
 
