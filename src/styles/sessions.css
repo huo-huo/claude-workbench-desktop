@@ -10,10 +10,11 @@
 .bulk-bar .btn{padding:3px 7px;font-size:9px}
 /* 批量模式复选框:行首垂直居中;勾选是显式动作,不影响行点击打开 */
 .session-bulk-check{flex:none;align-self:center;margin:0 0 0 6px}
-.session-list-head{display:flex;align-items:center;justify-content:space-between;padding:10px 13px 6px;color:var(--muted);font:9px var(--mono);letter-spacing:.04em;text-transform:uppercase}
-/* 列表头部工具组:搜索框与图标按钮成组,避免 space-between 把输入框挤到行中间 */
-.session-list-tools{display:flex;align-items:center;gap:4px}
-#sessionSearch{width:112px;min-width:0;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:3px 6px;font-size:10px;line-height:1.4}
+.session-list-head{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:10px 13px 6px;color:var(--muted);font:9px var(--mono);letter-spacing:.04em;text-transform:uppercase}
+.session-list-head>span{flex:none;white-space:nowrap}
+/* 列表头部工具组:搜索框与图标按钮成组右靠;搜索框可收缩,窄栏不挤压左侧标题 */
+.session-list-tools{flex:1;min-width:0;display:flex;align-items:center;justify-content:flex-end;gap:4px}
+#sessionSearch{flex:1 1 auto;width:auto;min-width:56px;max-width:140px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:3px 6px;font-size:10px;line-height:1.4}
 #sessionSearch::placeholder{color:var(--muted)}
 .session-list{flex:1;min-height:80px;overflow:auto;padding:0 7px 12px;display:grid;align-content:start;gap:2px}
 .session-item{position:relative;display:flex;min-width:0}
@@ -38,10 +39,11 @@
 .archive-row{cursor:default}
 .archive-row:hover{background:transparent}
 /* 会话行内操作(重命名/置顶/归档):与移除按钮同风格,常显半透明、悬停加深 */
-.session-ops{position:absolute;right:26px;top:50%;transform:translateY(-50%);display:flex;gap:2px;opacity:.5}
+.session-ops{position:absolute;right:26px;top:50%;transform:translateY(-50%);display:flex;gap:2px;opacity:0;pointer-events:none;transition:opacity .12s}
 .session-ops .session-op{width:21px;height:21px;border:0;background:transparent;color:#85867d;font-size:11px;cursor:pointer;padding:0;display:grid;place-items:center}
 .session-item:hover .session-ops .session-op,.session-ops .session-op:focus-visible{background:#deddd5}
-.session-item:hover .session-ops{opacity:1}
+/* 操作按钮悬浮在行上,常态隐藏避免与文字重合;悬停或键盘聚焦时出现 */
+.session-item:hover .session-ops,.session-item:focus-within .session-ops{opacity:1;pointer-events:auto}
 /* 行内重命名输入框:贴合行内尺寸,聚焦描边与提示词输入一致 */
 .session-rename-input{flex:1;min-width:0;border:1px solid #98aa67;background:var(--surface);color:var(--ink);padding:2px 5px;font:500 10px var(--sans);outline:none}
 .session-rename-input:focus{box-shadow:0 0 0 2px #9caf6c33}
