@@ -11,7 +11,8 @@ import {
   workspaceSessionName,
   workspaceState,
 } from '../server/workspace/state.mjs';
-import { listWorkspaceSessions } from '../server/workspace/sessions.mjs';
+import { listWorkspaceSessions, renameWorkspaceSession, pinWorkspaceSession, archiveWorkspaceSession, removeWorkspaceSession } from '../server/workspace/sessions.mjs';
+import { workspaceTerminals } from '../server/terminal/sessions.mjs';
 
 /** 构造一条会话条目;projectPath 用绝对路径以满足 workspaceState 的登记逻辑 */
 function fakeSession(overrides = {}) {
@@ -115,5 +116,72 @@ test('listWorkspaceSessions:displayName 优先返回 customName', () => {
   ] });
   try {
     assert.equal(listWorkspaceSessions()[0].displayName, '我的调试会话');
+  } finally { restore(); }
+});
+
+test('renameWorkspaceSession:写入去空白后的 customName 并持久化', () => {
+  const restore = useTempWorkspace({ sessions: [fakeSession({ id: 'r1' })] });
+  try {
+    const renamed = renameWorkspaceSession('r1', '  我的新名字  ');
+    assert.equal(renamed.customName, '我的新名字');
+    assert.equal(workspaceState().sessions.find(x => x.id === 'r1').customName, '我的新名字');
+  } finally { restore(); }
+});
+
+test('renameWorkspaceSession:空白名删除 customName 回退自动名', () => {
+  const restore = useTempWorkspace({ sessions: [fakeSession({ id: 'r2', customName: '旧名字' })] });
+  try {
+    const renamed = renameWorkspaceSession('r2', '   ');
+    assert.ok(!('customName' in renamed), '清空后不应保留 customName 字段');
+    assert.equal(renamed.name, '自动名');
+    assert.ok(!('customName' in workspaceState().sessions.find(x => x.id === 'r2')));
+  } finally { restore(); }
+});
+
+test('pinWorkspaceSession:置顶与取消', () => {
+  const restore = useTempWorkspace({ sessions: [fakeSession({ id: 'p1' })] });
+  try {
+    assert.equal(pinWorkspaceSession('p1').pinned, true);
+    assert.ok(!('pinned' in pinWorkspaceSession('p1', false)), '取消置顶后不应保留 pinned 字段');
+  } finally { restore(); }
+});
+
+test('archiveWorkspaceSession:归档与恢复', () => {
+  const restore = useTempWorkspace({ sessions: [fakeSession({ id: 'a1' })] });
+  try {
+    assert.equal(archiveWorkspaceSession('a1').archived, true);
+    assert.ok(!('archived' in archiveWorkspaceSession('a1', false)), '恢复后不应保留 archived 字段');
+  } finally { restore(); }
+});
+
+test('archiveWorkspaceSession:归档在线会话先发送 Ctrl+C 终止终端', () => {
+  const restore = useTempWorkspace({ sessions: [fakeSession({ id: 'online' })] });
+  const writes = [];
+  workspaceTerminals.set('online', { proc: { write: data => writes.push(data), kill: () => {} } });
+  try {
+    archiveWorkspaceSession('online');
+    assert.deepEqual(writes, ['\u0003'], '应先向在线终端发送 Ctrl+C');
+    assert.equal(workspaceState().sessions.find(x => x.id === 'online').archived, true, '条目保留且已标记归档');
+  } finally {
+    workspaceTerminals.delete('online');
+    restore();
+  }
+});
+
+test('会话更新函数:未知 id 抛错', () => {
+  const restore = useTempWorkspace({ sessions: [fakeSession({ id: 'x' })] });
+  try {
+    assert.throws(() => renameWorkspaceSession('nope', '新名'), /找不到该会话/);
+    assert.throws(() => pinWorkspaceSession('nope'), /找不到该会话/);
+    assert.throws(() => archiveWorkspaceSession('nope'), /找不到该会话/);
+  } finally { restore(); }
+});
+
+test('removeWorkspaceSession:删除条目且保留 Claude 记录,未知 id 返回未移除', () => {
+  const restore = useTempWorkspace({ sessions: [fakeSession({ id: 'd1' }), fakeSession({ id: 'd2' })] });
+  try {
+    assert.deepEqual(removeWorkspaceSession('d1'), { removed: true, transcriptPreserved: true });
+    assert.deepEqual(workspaceState().sessions.map(x => x.id), ['d2']);
+    assert.deepEqual(removeWorkspaceSession('nope'), { removed: false, transcriptPreserved: true });
   } finally { restore(); }
 });

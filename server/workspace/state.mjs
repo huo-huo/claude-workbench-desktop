@@ -3,8 +3,9 @@ import path from 'node:path';
 import { WORKSPACE_FILE } from '../core/paths.mjs';
 import { atomicJson, safeReadJson } from '../core/storage.mjs';
 
-// 模块级可变引用:测试可重定向到临时文件,生产仍指向真实工作区数据文件
-let workspaceFile = WORKSPACE_FILE;
+// 模块级可变引用:测试可重定向到临时文件,生产仍指向真实工作区数据文件;
+// ESM 导出为活动绑定,依赖方(如 sessions.mjs)读到的始终是最新值
+export let workspaceFile = WORKSPACE_FILE;
 
 /** 仅供测试重定向工作区数据文件;生产代码不得调用 */
 export function setWorkspaceFileForTest(file) { workspaceFile = file; }
