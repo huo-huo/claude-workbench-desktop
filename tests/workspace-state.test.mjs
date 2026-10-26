@@ -11,7 +11,7 @@ import {
   workspaceSessionName,
   workspaceState,
 } from '../server/workspace/state.mjs';
-import { listWorkspaceSessions, renameWorkspaceSession, pinWorkspaceSession, archiveWorkspaceSession, removeWorkspaceSession } from '../server/workspace/sessions.mjs';
+import { listWorkspaceSessions, renameWorkspaceSession, pinWorkspaceSession, archiveWorkspaceSession, removeWorkspaceSession, removeWorkspaceSessionsBatch } from '../server/workspace/sessions.mjs';
 import { workspaceTerminals } from '../server/terminal/sessions.mjs';
 
 /** 构造一条会话条目;projectPath 用绝对路径以满足 workspaceState 的登记逻辑 */
@@ -184,4 +184,20 @@ test('removeWorkspaceSession:删除条目且保留 Claude 记录,未知 id 返�
     assert.deepEqual(workspaceState().sessions.map(x => x.id), ['d2']);
     assert.deepEqual(removeWorkspaceSession('nope'), { removed: false, transcriptPreserved: true });
   } finally { restore(); }
+});
+
+test('removeWorkspaceSessionsBatch:在线会话先发送 Ctrl+C 再删除', () => {
+  const restore = useTempWorkspace({ sessions: [fakeSession({ id: 'bulk-online' }), fakeSession({ id: 'bulk-idle' })] });
+  const writes = [];
+  workspaceTerminals.set('bulk-online', { proc: { write: data => writes.push(data), kill: () => {} } });
+  try {
+    const result = removeWorkspaceSessionsBatch(['bulk-online', 'bulk-idle']);
+    assert.deepEqual(writes, ['\u0003'], '应向在线终端发送 Ctrl+C');
+    assert.equal(result.removed, 2);
+    assert.deepEqual(result.failed, []);
+    assert.ok(!workspaceState().sessions.some(x => x.id === 'bulk-online'), '在线条目应被删除');
+  } finally {
+    workspaceTerminals.delete('bulk-online');
+    restore();
+  }
 });

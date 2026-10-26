@@ -2,10 +2,9 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import pty from 'node-pty';
 import { WebSocket, WebSocketServer } from 'ws';
-import { WORKSPACE_FILE } from '../core/paths.mjs';
 import { atomicJson } from '../core/storage.mjs';
 import { claudeInstallInfo } from '../platform/claude.mjs';
-import { recordWorkspaceProject, workspaceSessionName, workspaceState } from '../workspace/state.mjs';
+import { recordWorkspaceProject, workspaceFile, workspaceSessionName, workspaceState } from '../workspace/state.mjs';
 
 // 终端进程与 WebSocket 单例
 export const workspaceTerminals = new Map();
@@ -67,7 +66,7 @@ export function createWorkspaceSession(body) {
     createdAt: now, lastUsedAt: now, status: 'running',
   };
   saved.sessions = [record, ...saved.sessions.filter(x => x.id !== record.id)].slice(0, 300);
-  atomicJson(WORKSPACE_FILE, saved);
+  atomicJson(workspaceFile, saved);
   const terminal = { ...record, proc, clients: new Set(), outputTail: '' };
   workspaceTerminals.set(appSessionId, terminal);
   proc.onData(data => {
@@ -78,7 +77,7 @@ export function createWorkspaceSession(body) {
     terminal.status = 'exited';
     const current = workspaceState();
     const entry = current.sessions.find(x => x.id === appSessionId);
-    if (entry) { entry.status = 'exited'; entry.exitCode = exitCode; entry.lastUsedAt = new Date().toISOString(); atomicJson(WORKSPACE_FILE, current); }
+    if (entry) { entry.status = 'exited'; entry.exitCode = exitCode; entry.lastUsedAt = new Date().toISOString(); atomicJson(workspaceFile, current); }
     for (const client of terminal.clients) if (client.readyState === WebSocket.OPEN) client.send(JSON.stringify({ type: 'exit', exitCode }));
     workspaceTerminals.delete(appSessionId);
   });
