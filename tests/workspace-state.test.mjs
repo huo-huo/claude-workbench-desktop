@@ -11,6 +11,7 @@ import {
   workspaceSessionName,
   workspaceState,
 } from '../server/workspace/state.mjs';
+import { listWorkspaceSessions } from '../server/workspace/sessions.mjs';
 
 /** 构造一条会话条目;projectPath 用绝对路径以满足 workspaceState 的登记逻辑 */
 function fakeSession(overrides = {}) {
@@ -78,5 +79,41 @@ test('workspaceState:类型不合法的新字段被忽略,旧条目零迁移可�
     assert.ok(!('pinned' in c), '旧条目视为未置顶');
     assert.ok(!('archived' in c), '旧条目视为未归档');
     assert.equal(sessionDisplayName(c), '自动名');
+  } finally { restore(); }
+});
+
+test('listWorkspaceSessions:默认过滤归档条目且置顶优先排序,displayName 为自定义名优先', () => {
+  const restore = useTempWorkspace({ sessions: [
+    fakeSession({ id: 'normal-old', lastUsedAt: '2026-10-26T10:00:00.000Z' }),
+    fakeSession({ id: 'pinned', pinned: true, lastUsedAt: '2026-10-25T08:00:00.000Z' }),
+    fakeSession({ id: 'normal-new', lastUsedAt: '2026-10-26T12:00:00.000Z' }),
+    fakeSession({ id: 'archived', archived: true, lastUsedAt: '2026-10-26T13:00:00.000Z' }),
+  ] });
+  try {
+    const sessions = listWorkspaceSessions();
+    assert.deepEqual(sessions.map(x => x.id), ['pinned', 'normal-new', 'normal-old'], '归档被过滤且置顶排最前');
+    const pinned = sessions.find(x => x.id === 'pinned');
+    assert.equal(pinned.displayName, '自动名');
+    assert.equal(pinned.status, 'stopped');
+  } finally { restore(); }
+});
+
+test('listWorkspaceSessions:archived 选项只返回归档条目', () => {
+  const restore = useTempWorkspace({ sessions: [
+    fakeSession({ id: 'normal', lastUsedAt: '2026-10-26T10:00:00.000Z' }),
+    fakeSession({ id: 'archived', archived: true, lastUsedAt: '2026-10-26T13:00:00.000Z' }),
+  ] });
+  try {
+    const archived = listWorkspaceSessions('', { archived: true });
+    assert.deepEqual(archived.map(x => x.id), ['archived']);
+  } finally { restore(); }
+});
+
+test('listWorkspaceSessions:displayName 优先返回 customName', () => {
+  const restore = useTempWorkspace({ sessions: [
+    fakeSession({ id: 'renamed', customName: '我的调试会话' }),
+  ] });
+  try {
+    assert.equal(listWorkspaceSessions()[0].displayName, '我的调试会话');
   } finally { restore(); }
 });

@@ -25,7 +25,7 @@ import { deletePromptLibraryItem, promptLibraryRows, refinePromptLibraryItem, sa
 // GET handler 接收 URL，返回 { status, body, type? }
 export const GET_ROUTES = new Map([
   ['/api/workspace/projects', () => ({ status: 200, body: { projects: listWorkspaceProjects() } })],
-  ['/api/workspace/sessions', url => ({ status: 200, body: { sessions: listWorkspaceSessions(url.searchParams.get('projectPath')) } })],
+  ['/api/workspace/sessions', url => ({ status: 200, body: { sessions: listWorkspaceSessions(url.searchParams.get('projectPath'), { archived: url.searchParams.get('archived') === '1' }) } })],
   ['/api/workspace/files', url => ({ status: 200, body: workspaceTree(safeWorkspaceRoot(url.searchParams.get('projectPath')), url.searchParams.get('path') || '.') })],
   ['/api/workspace/file', url => ({ status: 200, body: workspaceFileText(safeWorkspaceRoot(url.searchParams.get('projectPath')), url.searchParams.get('path')) })],
   ['/api/workspace/asset', url => {

@@ -2,14 +2,16 @@ import path from 'node:path';
 import { WORKSPACE_FILE } from '../core/paths.mjs';
 import { atomicJson } from '../core/storage.mjs';
 import { workspaceTerminals } from '../terminal/sessions.mjs';
-import { safeWorkspaceRoot, workspaceState } from './state.mjs';
+import { safeWorkspaceRoot, sessionDisplayName, workspaceState } from './state.mjs';
 
-export function listWorkspaceSessions(root = '') {
+export function listWorkspaceSessions(root = '', options = {}) {
   const project = root ? safeWorkspaceRoot(root) : '';
   return workspaceState().sessions
     .filter(x => !project || path.resolve(x.projectPath).toLowerCase() === project.toLowerCase())
-    .map(x => ({ ...x, status: workspaceTerminals.has(x.id) ? 'running' : 'stopped' }))
-    .sort((a, b) => String(b.lastUsedAt).localeCompare(String(a.lastUsedAt)));
+    // 默认只返回未归档条目;archived: true 时只返回归档条目
+    .filter(x => options.archived === true ? x.archived === true : x.archived !== true)
+    .map(x => ({ ...x, status: workspaceTerminals.has(x.id) ? 'running' : 'stopped', displayName: sessionDisplayName(x) }))
+    .sort((a, b) => (Number(b.pinned === true) - Number(a.pinned === true)) || String(b.lastUsedAt || '').localeCompare(String(a.lastUsedAt)));
 }
 
 export function removeWorkspaceSession(id) {
