@@ -330,3 +330,10 @@ async function archiveSession(id)                    // POST /api/workspace/sess
 - Modify: `index.html`(#sessionRowMenu 共享行菜单容器)、`src/workspace/activity.mjs`(行尾常显 ⋯,移除悬停按钮组与 ×)、`src/workspace/sessions.mjs`(openRowMenu/runRowAction,菜单项复用既有操作函数)、`src/styles/sessions.css`、`src/styles/layout.css`
 **要点:** 普通会话菜单=重命名/置顶切换/归档/移除(自带二次确认);归档会话菜单=恢复/彻底移除;深浅主题变量;点击外部与 Esc 收起。
 **验证:** 走查菜单展开/各项操作/外点收起;npm test 无回归。
+
+## 任务 5.4 `<!-- comet-task-ref:6c94f6a6-be5d-49ed-b49f-7a954f6540e9 -->` 删除确认改用自定义弹窗(用户验收增补)
+
+**Files:**
+- Modify: `index.html`(通用确认模态容器)、`src/workspace/sessions.mjs`(confirmAction(message)→Promise<boolean>,三类删除改走模态)、`src/styles/sessions.css`(遮罩+卡片,深浅主题变量)
+**要点:** 参考既有浮层(fileTreeContextMenu)与 .menu-danger 样式;Esc/遮罩点击/取消按钮=取消;确认按钮为危险样式;替换原生 confirm(会话区)。
+**验证:** 走查三类删除弹窗的取消/确认;npm test 无回归。
