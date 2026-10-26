@@ -46,6 +46,10 @@
 - 行内操作按钮(✎📌📦)常态隐藏(pointer-events:none),悬停/键盘聚焦(`:hover`/`:focus-within`)时显示,消除与文字的重合
 - 回归:npm test 158/0;隔离走查 9/9(走查脚本点击行内按钮前先悬停,与真实操作一致)
 
+## 用户验收修复记录(第二轮 verify-fail)
+
+用户报告重命名"不能保存、不能持久化"——复证 API/持久化链路正常,根因是失焦交互(已改动失焦不提交,用户误以为未保存)。修复(提交 ecd8be8):**失焦即提交**(与 Enter 等效),Escape 仍为取消。回归:npm test 158/0;走查 12/12(新增"重命名失焦即保存"用例)。另提醒用户避免桌面版与验证服务双实例同时写工作区数据。
+
 ## Final Assessment
 
 无 CRITICAL/IMPORTANT 问题,3 条已接受偏差均有记录与理由。**All checks passed. Ready for archive.**
