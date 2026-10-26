@@ -1,7 +1,7 @@
 import { $, escapeHtml } from './core/dom.mjs';
 import { api, toast } from './core/api.mjs';
 import { app } from './state.mjs';
-import { projectName, sessionGroupKey, readCollapsedProjects, writeCollapsedProjects, updateTerminalEmptyState } from './preferences.mjs';
+import { projectName, sessionGroupKey, formatSessionTime, readCollapsedProjects, writeCollapsedProjects, updateTerminalEmptyState } from './preferences.mjs';
 import { connectTerminal } from './terminal.mjs';
 import { syncSessionActivityMonitors, sessionRowMarkup } from './activity.mjs';
 import { refreshProjects, activateProject } from './projects.mjs';
@@ -76,6 +76,51 @@ function renderSessions() {
   const collapsedKeys = readCollapsedProjects();
   $('#sessionList').innerHTML = groups.length ? groups.map(group => sessionGroupMarkup(group, collapsedKeys)).join('') : `<div class="empty">${String(app.sessionSearch || '').trim() ? '没有匹配的对话' : '还没有对话。选择项目文件夹后新建一个。'}</div>`;
   bindSessionRows(sessions);
+}
+
+/** 归档面板行:名称 + 最后活动时间(后端不记录归档时间,取最后活动时间)+ 恢复/彻底移除;复用 .session-list 行样式 */
+function archiveRowMarkup(item) {
+  return `<div class="session-item"><span class="session-row archive-row"><span class="session-row-title"><strong>${escapeHtml(item.displayName || item.name)}</strong></span><small><span class="session-row-detail">${escapeHtml(formatSessionTime(item.lastUsedAt || item.createdAt))}</span></small></span><span class="session-ops"><button class="session-op" data-restore-session="${escapeHtml(item.id)}" title="恢复到对话列表" aria-label="恢复归档对话">↩</button></span><button class="session-remove" data-remove-session="${escapeHtml(item.id)}" title="彻底移除；Claude 对话记录保留" aria-label="彻底移除归档对话">×</button></div>`;
+}
+
+/** 拉取归档条目并渲染面板;恢复/移除按钮在此绑定(面板行不在主列表缓存内) */
+async function renderArchivePanel() {
+  const result = await api('/api/workspace/sessions?archived=1');
+  const sessions = result.sessions || [];
+  $('#archivePanel').innerHTML = sessions.length ? sessions.map(archiveRowMarkup).join('') : '<div class="empty">没有归档的对话</div>';
+  document.querySelectorAll('[data-restore-session]').forEach(button => button.onclick = event => {
+    event.stopPropagation();
+    restoreSession(button.dataset.restoreSession).catch(error => toast(error.message));
+  });
+  document.querySelectorAll('#archivePanel [data-remove-session]').forEach(button => button.onclick = event => { event.stopPropagation(); removeSession(button.dataset.removeSession).catch(error => toast(error.message)); });
+}
+
+/** 关闭归档面板,还原主列表与搜索框 */
+function closeArchivePanel() {
+  $('#archivePanel').hidden = true;
+  $('#sessionList').hidden = false;
+  $('#sessionSearch').hidden = false;
+  $('#archiveToggle').classList.remove('is-open');
+  $('#archiveToggle').title = '查看归档对话';
+}
+
+/** 切换归档面板:打开时隐藏主列表与搜索框并拉取归档列表,关闭时还原 */
+function toggleArchivePanel() {
+  const panel = $('#archivePanel');
+  if (!panel.hidden) return closeArchivePanel();
+  panel.hidden = false;
+  $('#sessionList').hidden = true;
+  $('#sessionSearch').hidden = true;
+  $('#archiveToggle').classList.add('is-open');
+  $('#archiveToggle').title = '返回对话列表';
+  renderArchivePanel().catch(error => { closeArchivePanel(); toast(error.message); });
+}
+
+/** 恢复归档对话到主列表:成功后同时重拉主列表与归档面板 */
+async function restoreSession(id) {
+  await api('/api/workspace/session/archive', { method: 'POST', body: { id, archived: false } });
+  await Promise.all([refreshSessions(), renderArchivePanel()]);
+  toast('已恢复到对话列表');
 }
 
 export async function refreshSessions() {
@@ -217,8 +262,13 @@ export async function removeSession(id) {
     $('#stopSession').disabled = true;
   }
   await refreshSessions();
+  // 归档面板打开时同步重拉,面板中被移除的行立即消失
+  if (!$('#archivePanel').hidden) await renderArchivePanel();
   toast(result.transcriptPreserved ? '已从工作台移除，Claude 对话记录保留' : '这条对话已不在工作台列表中');
 }
+
+// 归档面板入口:切换主列表/归档面板显示,打开时拉取归档数据
+$('#archiveToggle').addEventListener('click', toggleArchivePanel);
 
 // 搜索框输入即时过滤:数据已在内存缓存,直接重渲染,不发请求(脚本于 body 末尾加载,DOM 已就绪,模式同 state.mjs)
 $('#sessionSearch').addEventListener('input', event => {

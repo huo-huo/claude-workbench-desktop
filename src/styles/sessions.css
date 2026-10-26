@@ -23,6 +23,11 @@
 @media(prefers-reduced-motion:reduce){.session-spinner{animation:none}}
 .session-remove{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:21px;height:21px;border:0;background:transparent;color:#85867d;font-size:15px;cursor:pointer;opacity:.5}
 .session-item:hover .session-remove,.session-remove:focus-visible{opacity:1;background:#deddd5}
+/* 归档面板入口打开态高亮;变量随深色主题自动适配 */
+#archiveToggle.is-open{background:var(--active-bg)}
+/* 归档行是纯展示 span,不可点击打开,去掉悬停高亮 */
+.archive-row{cursor:default}
+.archive-row:hover{background:transparent}
 /* 会话行内操作(重命名/置顶/归档):与移除按钮同风格,常显半透明、悬停加深 */
 .session-ops{position:absolute;right:26px;top:50%;transform:translateY(-50%);display:flex;gap:2px;opacity:.5}
 .session-ops .session-op{width:21px;height:21px;border:0;background:transparent;color:#85867d;font-size:11px;cursor:pointer;padding:0;display:grid;place-items:center}
