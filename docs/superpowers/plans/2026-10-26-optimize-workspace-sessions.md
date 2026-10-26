@@ -288,6 +288,30 @@ async function archiveSession(id)                    // POST /api/workspace/sess
 
 ---
 
+## 任务 5.1 `<!-- comet-task-ref:425858fe-7041-436d-b6e6-771b844d1c49 -->` 管理操作收进"⋯"更多菜单(用户验收增补)
+
+**Files:**
+- Modify: `index.html`(tools 加 #moreToggle 与 #moreMenu 菜单:批量管理 #moreBulk、查看归档 #moreArchive;移除原 #bulkToggle/#archiveToggle)
+- Modify: `src/workspace/sessions.mjs`(toggleMoreMenu/closeMoreMenu,菜单项执行后收起,点击外部关闭;清理旧按钮绑定)
+- Modify: `src/styles/sessions.css`(.session-more-menu 右对齐浮层,暗色适配)
+
+**要点:** 参考既有 fileTreeContextMenu 交互;搜索框与 ↻ 刷新保持常显;.session-actions 恢复两列。菜单是低频管理入口,收拢解决窄侧栏拥挤。
+
+**验证:** 走查菜单展开/执行/外部收起;npm test 无回归。
+
+---
+
+## 任务 5.2 `<!-- comet-task-ref:cf6b87a2-bbe2-4eb7-a98a-b949172fa498 -->` 删除操作统一二次确认(用户验收增补)
+
+**Files:**
+- Modify: `src/workspace/sessions.mjs`(removeSession 入口加 confirm,取消不执行)
+
+**要点:** 单条移除(×)与归档面板彻底移除共用 removeSession,一处生效;文案说明 Claude 记录保留;批量删除既有 confirm 不动。对应 delta spec 新增「删除操作二次确认」requirement。
+
+**验证:** 走查确认/取消两路径;npm test 无回归。
+
+---
+
 ## 自检记录
 
 - **Spec 覆盖**:session-list-management 7 个 requirement → 任务 3.3(搜索)、1.1+3.2(重命名)、3.1(元信息)、1.2+3.2(置顶)、1.3+3.4(归档含在线终止场景)、2.2+3.5(批量删除)、3.5(轮询稳定);session-project-grouping 修改项 → 1.2(排序)+3.1(缩进)。无缺口。
