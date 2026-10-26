@@ -2,7 +2,7 @@ import { Terminal } from '@xterm/xterm';
 import { escapeHtml } from './core/dom.mjs';
 import { api } from './core/api.mjs';
 import { app } from './state.mjs';
-import { projectName, formatSessionTime } from './preferences.mjs';
+import { formatSessionTime } from './preferences.mjs';
 
 // 同时监控的会话活动上限
 const maxSessionActivityMonitors = 20;
@@ -24,7 +24,9 @@ export function sessionStatusMarkup(session, activity = sessionActivityFor(sessi
 
 export function sessionRowMarkup(item) {
   const mode = item.mode === 'continue' ? '继续' : item.mode === 'picker' ? '选择已有' : '新建';
-  return `<div class="session-item"><button class="session-row ${app.activeSession?.id === item.id ? 'active' : ''}" data-session-id="${escapeHtml(item.id)}" title="${escapeHtml(item.name)}"><strong>${escapeHtml(projectName(item.projectPath))}</strong><small><span class="session-row-detail">${escapeHtml(formatSessionTime(item.createdAt || item.lastUsedAt))} · ${mode}</span>${sessionStatusMarkup(item)}</small></button><button class="session-remove" data-remove-session="${escapeHtml(item.id)}" title="从工作台移除；Claude 对话记录保留" aria-label="从工作台移除">×</button></div>`;
+  const pinned = item.pinned === true;
+  // 标题用显示名(自定义名优先,回退自动名);时间取最后活动时间;置顶行加 is-pinned 类与标记
+  return `<div class="session-item${pinned ? ' is-pinned' : ''}" data-session-pinned="${pinned}"><button class="session-row ${app.activeSession?.id === item.id ? 'active' : ''}" data-session-id="${escapeHtml(item.id)}" title="${escapeHtml(item.displayName || item.name)}"><span class="session-row-title">${pinned ? '<span class="pin-mark" title="已置顶">📌</span>' : ''}<strong>${escapeHtml(item.displayName || item.name)}</strong>${sessionStatusMarkup(item)}</span><small><span class="session-row-detail">${escapeHtml(formatSessionTime(item.lastUsedAt || item.createdAt))} · ${mode}</span></small></button><button class="session-remove" data-remove-session="${escapeHtml(item.id)}" title="从工作台移除；Claude 对话记录保留" aria-label="从工作台移除">×</button></div>`;
 }
 
 export async function refreshSessionStatuses() {

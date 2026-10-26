@@ -4,7 +4,7 @@
 .session-list-head{display:flex;align-items:center;justify-content:space-between;padding:10px 13px 6px;color:var(--muted);font:9px var(--mono);letter-spacing:.04em;text-transform:uppercase}
 .session-list{flex:1;min-height:80px;overflow:auto;padding:0 7px 12px;display:grid;align-content:start;gap:2px}
 .session-item{position:relative;display:flex;min-width:0}
-.session-row{width:100%;min-width:0;border:0;background:transparent;padding:9px 27px 9px 8px;text-align:left;display:grid;gap:3px;border-left:2px solid transparent;color:var(--ink);cursor:pointer}
+.session-row{width:100%;min-width:0;border:0;background:transparent;padding:9px 27px 9px 14px;text-align:left;display:grid;gap:3px;border-left:2px solid transparent;color:var(--ink);cursor:pointer}
 .session-row:hover{background:#e8e7e0}.session-row.active{border-left-color:#77834c;background:#e5e6dc}
 .session-row strong{font-size:10px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .session-row small{min-width:0;display:flex;align-items:center;gap:6px;font:8px var(--mono);color:var(--muted)}
@@ -19,6 +19,10 @@
 @media(prefers-reduced-motion:reduce){.session-spinner{animation:none}}
 .session-remove{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:21px;height:21px;border:0;background:transparent;color:#85867d;font-size:15px;cursor:pointer;opacity:.5}
 .session-item:hover .session-remove,.session-remove:focus-visible{opacity:1;background:#deddd5}
+/* 会话行信息主次:名称与状态为一级,时间与模式收进 small 弱化 */
+.session-row-title{min-width:0;display:flex;align-items:center;gap:5px}
+.session-row-title strong{flex:1;min-width:0}
+.pin-mark{flex:none;font-size:9px;line-height:1}
 /* 会话分组：标题紧凑可折叠，颜色全部走主题变量以同时适配浅色与深色 */
 .session-group{display:grid;gap:1px;min-width:0}
 .session-group-head{display:grid;grid-template-columns:10px minmax(0,1fr) minmax(0,1fr) auto;align-items:center;gap:5px;width:100%;min-width:0;border:0;background:transparent;padding:5px 8px;color:var(--muted);text-align:left;cursor:pointer}
@@ -29,6 +33,7 @@
 .session-group-name{font:9px var(--mono);font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .session-group-path{min-width:0;font:8px var(--mono);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .session-group-count{min-width:12px;font:8px var(--mono);color:var(--muted);text-align:right}
-.session-group-body{display:grid;align-content:start;gap:2px;min-width:0}
+/* 分组体相对组标题缩进,左侧细线强化层级 */
+.session-group-body{display:grid;align-content:start;gap:2px;min-width:0;margin-left:9px;border-left:1px solid var(--line);padding-left:5px}
 .session-group.is-collapsed .session-group-body{display:none}
 @media(prefers-reduced-motion:reduce){.session-group-caret{transition:none}}
