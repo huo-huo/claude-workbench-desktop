@@ -2,6 +2,7 @@
 change: statusline-app-display
 design-doc: docs/openspec/changes/statusline-app-display/design.md
 base-ref: 75db220c7099dad907953c9cafabced440ae8eba
+archived-with: 2026-10-26-statusline-app-display
 ---
 
 # 实施计划：statusline-app-display

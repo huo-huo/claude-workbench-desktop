@@ -2,6 +2,8 @@
 comet_change: statusline-app-display
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-10-26-statusline-app-display
+status: final
 ---
 
 # Design：statusLine 内容的软件原生显示
