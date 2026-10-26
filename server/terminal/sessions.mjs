@@ -9,6 +9,19 @@ import { recordWorkspaceProject, workspaceSessionName, workspaceState } from '..
 
 // 终端进程与 WebSocket 单例
 export const workspaceTerminals = new Map();
+
+/**
+ * 从继承环境中剥离 Claude Code 会话标记：工作台服务端可能运行在某个 Claude Code
+ * 会话内部（其环境含 CLAUDE_CODE_CHILD_SESSION 等标记），直接继承会让工作台开的
+ * claude 被误判为子会话而关闭 transcript 保存，statusLine 的会话数据也随之失效。
+ */
+export function sanitizeInheritedEnv(env) {
+  const clean = { ...env };
+  for (const key of ['CLAUDE_CODE_CHILD_SESSION', 'CLAUDECODE', 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDE_CODE_SSE_PORT']) {
+    delete clean[key];
+  }
+  return clean;
+}
 export const workspaceWs = new WebSocketServer({ noServer: true, maxPayload: 8 * 1024 * 1024 });
 export const workspaceHeartbeat = setInterval(() => {
   for (const client of workspaceWs.clients) {
@@ -41,7 +54,7 @@ export function createWorkspaceSession(body) {
   const args = mode === 'new' ? ['--session-id', sessionId] : mode === 'continue' ? ['--continue'] : mode === 'picker' ? ['--resume'] : ['--resume', sessionId];
   const proc = pty.spawn(info.executable, args, {
     name: 'xterm-256color', cols: 112, rows: 32, cwd: projectPath,
-    env: { ...process.env, TERM: 'xterm-256color', FORCE_COLOR: '1' },
+    env: sanitizeInheritedEnv({ ...process.env, TERM: 'xterm-256color', FORCE_COLOR: '1' }),
   });
   const now = new Date().toISOString();
   const record = existing ? {

@@ -8,6 +8,7 @@ import { terminalThemes } from './theme.mjs';
 import { refreshProjects } from './projects.mjs';
 import { refreshTree } from './files.mjs';
 import { refreshSessions } from './sessions.mjs';
+import { refreshStatusline } from './statusline.mjs';
 
 export function ensureTerminal() {
   if (app.terminal) return;
@@ -190,6 +191,7 @@ export function connectTerminal(session, { reconnecting = false } = {}) {
     updateProjectLabels();
     refreshProjects().catch(() => {});
     refreshTree().catch(error => toast(error.message));
+    refreshStatusline().catch(() => {});
   }
   app.terminal.reset();
   app.terminalCursorVisibilityPending = '';

@@ -17,6 +17,9 @@ fs.mkdirSync(destination, { recursive: true });
 fs.cpSync(path.join(root, 'server.mjs'), path.join(destination, 'server.mjs'));
 // 后端模块目录与入口同目录分发，server.mjs 通过相对路径导入
 fs.cpSync(path.join(root, 'server'), path.join(destination, 'server'), { recursive: true });
+// statusLine 包装器随包分发：启用时由 toggle 复制到用户目录，安装位置变化不影响已配置的路径
+fs.mkdirSync(path.join(destination, 'resources'), { recursive: true });
+fs.copyFileSync(path.join(root, 'resources', 'statusline-wrapper.mjs'), path.join(destination, 'resources', 'statusline-wrapper.mjs'));
 fs.mkdirSync(path.join(destination, 'scripts'), { recursive: true });
 fs.copyFileSync(path.join(root, 'scripts', 'recycle-workspace-item.ps1'), path.join(destination, 'scripts', 'recycle-workspace-item.ps1'));
 fs.cpSync(dist, path.join(destination, 'dist'), {

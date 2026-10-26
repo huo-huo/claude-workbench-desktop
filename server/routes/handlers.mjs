@@ -4,6 +4,10 @@ import { workspaceAsset, workspaceFileText, workspaceTree } from '../workspace/f
 import { openWorkspaceFile, readWorkspaceClipboard, recycleWorkspaceItem, revealWorkspaceFile, selectWorkspaceFolder } from '../workspace/native.mjs';
 import { createWorkspaceSession, workspaceTerminals } from '../terminal/sessions.mjs';
 import { sdkRuntime } from '../sdk/bridge.mjs';
+import { PORT } from '../core/paths.mjs';
+import { handleStatuslineReport } from '../statusline/report.mjs';
+import { handleStatuslineState, handleStatuslineSwitch } from '../statusline/state.mjs';
+import { enableStatusline, disableStatusline } from '../statusline/toggle.mjs';
 import { checkClaudeUpdate, upgradeClaudeCode } from '../platform/claude.mjs';
 import { activateChannel, saveChannel } from '../channels/store.mjs';
 import { pullChannelModels, pullDraftChannelModels, saveModels, setChannelFallbacks } from '../channels/models.mjs';
@@ -38,6 +42,7 @@ export const GET_ROUTES = new Map([
   }],
   ['/api/channel-models', async url => ({ status: 200, body: await pullChannelModels(url.searchParams.get('id')) })],
   ['/api/detail', url => ({ status: 200, body: fileDetail(url.searchParams.get('id'), null) })],
+  ['/api/statusline/state', url => handleStatuslineState(url)],
 ]);
 
 // POST handler 接收已解析的 body；返回 undefined 表示沿用原有“操作成功后返回 overview”的响应
@@ -46,6 +51,11 @@ export const POST_ROUTES = new Map([
   ['/api/sdk/sessions/message', body => ({ status: 202, body: sdkRuntime.send(body.id, body.prompt) })],
   ['/api/sdk/sessions/interrupt', async body => ({ status: 200, body: await sdkRuntime.interrupt(body.id) })],
   ['/api/sdk/sessions/close', async body => ({ status: 200, body: await sdkRuntime.close(body.id) })],
+  ['/api/statusline/report', body => handleStatuslineReport(body)],
+  ['/api/statusline/switch', body => handleStatuslineSwitch(body)],
+  // port 由前端按实际访问端口传入，保证包装器转发到正确的服务实例
+  ['/api/statusline/enable', body => enableStatusline({ port: Number(body?.port) || PORT })],
+  ['/api/statusline/disable', () => disableStatusline()],
   ['/api/prompt-library/refine', async body => ({ status: 200, body: await refinePromptLibraryItem(body) })],
   ['/api/prompt-library/save', body => ({ status: 200, body: savePromptLibraryItem(body) })],
   ['/api/prompt-library/delete', body => ({ status: 200, body: deletePromptLibraryItem(body) })],

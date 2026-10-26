@@ -30,4 +30,43 @@
 .terminal-empty .btn{font-size:10px}
 .terminal-empty-actions{display:flex;gap:8px;flex-wrap:wrap}
 .terminal-empty-actions [hidden]{display:none}
-.terminal-footer{display:flex;align-items:center;justify-content:space-between;border-top:0;padding:0 12px;color:var(--terminal-chrome-muted);font:8px var(--mono)}
+.terminal-footer{display:flex;flex-direction:column;justify-content:center;gap:2px;border-top:0;padding:3px 12px;color:var(--terminal-chrome-muted);font:8px var(--mono);position:relative}
+.footer-row{display:flex;align-items:center;gap:10px;min-height:14px}
+.statusline-bar{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:3px 8px;font-family:var(--mono)}
+.statusline-item{color:var(--terminal-chrome-fg)}
+.statusline-model{font-weight:inherit}
+.statusline-sep{color:var(--terminal-chrome-muted)}
+.statusline-context.is-low{color:#7fb069}
+.statusline-context.is-mid{color:#d1a13a}
+.statusline-context.is-high{color:#e06552}
+.statusline-placeholder{color:var(--terminal-chrome-muted)}
+.statusline-config{display:flex;flex-wrap:wrap;align-items:center;gap:3px 8px}
+.statusline-config-item{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;padding:2px 4px;color:var(--terminal-chrome-muted);font-family:var(--mono);font-size:inherit;cursor:pointer}
+.statusline-config-item:hover{color:var(--terminal-chrome-fg);background:var(--terminal-chrome-line)}
+.statusline-setting-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.statusline-setting-label{display:flex;flex-direction:column;gap:2px;font-size:10px}
+.statusline-setting-label small{color:var(--muted);font-size:8px;font-family:var(--mono)}
+.statusline-font-controls{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px}
+.statusline-setting-group{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+.statusline-detail-backdrop{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:18px;background:#11120fd1}
+.statusline-detail-panel{width:min(520px,94vw);max-height:min(80vh,700px);display:flex;flex-direction:column;background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:0 24px 80px #0008}
+.statusline-detail-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:15px 18px 12px;border-bottom:1px solid var(--line)}
+.statusline-detail-panel-head h2{margin:0;font-size:13px;font-weight:600}
+.statusline-detail-panel-head p{margin:4px 0 0;color:var(--muted);font-size:9px}
+.statusline-detail-panel-head .close{border:0;background:none;font:16px var(--mono);color:var(--muted);cursor:pointer}
+.statusline-detail-panel-body{padding:14px 18px;overflow:auto;display:grid;gap:5px;font:10px/1.7 var(--mono)}
+.statusline-detail-line b{font-weight:600}
+.statusline-detail-event{font-weight:600;border-bottom:1px solid var(--line);padding-bottom:2px;margin-top:4px}
+.statusline-detail-nested{padding-left:12px;color:var(--muted);word-break:break-all}
+.statusline-detail-command{color:var(--ink)}
+.statusline-model-clickable{cursor:pointer;border:0;background:transparent;padding:0;font-family:var(--mono);font-size:inherit;line-height:inherit;color:var(--terminal-chrome-fg);font-weight:inherit;vertical-align:baseline}
+.statusline-model-clickable:hover{background:var(--terminal-chrome-line)}
+.statusline-model-clickable:hover{background:var(--terminal-chrome-line)}
+.statusline-switch-body{gap:10px}
+.statusline-switch-group h3{margin:0 0 6px;font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.statusline-switch-group{display:grid;gap:4px}
+.statusline-switch-option{display:grid;gap:1px;border:1px solid var(--line);background:var(--surface);padding:7px 10px;text-align:left;cursor:pointer;color:var(--ink);font-size:10px}
+.statusline-switch-option small{font-family:var(--mono);font-size:8px;color:var(--muted)}
+.statusline-switch-option:hover{border-color:var(--terminal-control-strong-line)}
+.statusline-switch-option.is-current{border-color:var(--terminal-control-strong-line);background:var(--terminal-input-drag-bg)}
+.statusline-switch-warning{margin:0;padding:8px 10px;background:var(--terminal-input-drag-bg);border:1px solid #d1a13a;color:var(--ink);font-size:9px;line-height:1.6}

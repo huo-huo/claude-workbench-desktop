@@ -69,7 +69,7 @@
         <section class="terminal-column">
           <header class="terminal-toolbar">
             <div class="terminal-caption"><span class="terminal-led" id="terminalLed"></span><div><strong id="terminalTitle">Claude Code</strong><small id="terminalSubtitle">选择项目文件夹后开始对话</small></div></div>
-            <div class="terminal-actions"><button class="btn flat" id="toggleComposer" title="粘贴或语音输入一整段内容">粘贴/语音输入</button><button class="btn flat" id="clearTerminal" title="重绘终端画面，保留当前输入和对话内容">重绘屏幕</button><button class="btn flat" id="closeSession" title="收起中间终端视图；Claude 会话仍会运行" disabled>收起视图</button><button class="btn flat" id="stopSession" title="发送 Esc，停止 Claude 当前回复或工具操作；不退出会话" disabled>中断</button><div class="terminal-zoom" aria-label="终端文字大小"><button class="btn flat" id="terminalZoomOut" type="button" title="缩小终端文字" aria-label="缩小终端文字">A−</button><button class="btn flat terminal-zoom-level" id="terminalZoomLevel" type="button" title="恢复默认字号">12px</button><button class="btn flat" id="terminalZoomIn" type="button" title="放大终端文字" aria-label="放大终端文字">A+</button></div><button class="btn flat" id="toggleFiles">文件栏</button></div>
+            <div class="terminal-actions"><button class="btn flat" id="toggleComposer" title="粘贴或语音输入一整段内容">粘贴/语音输入</button><button class="btn flat" id="clearTerminal" title="重绘终端画面，保留当前输入和对话内容">重绘屏幕</button><button class="btn flat" id="closeSession" title="收起中间终端视图；Claude 会话仍会运行" disabled>收起视图</button><button class="btn flat" id="stopSession" title="发送 Esc，停止 Claude 当前回复或工具操作；不退出会话" disabled>中断</button><div class="terminal-zoom" aria-label="终端文字大小"><button class="btn flat" id="terminalZoomOut" type="button" title="缩小终端文字" aria-label="缩小终端文字">A−</button><button class="btn flat terminal-zoom-level" id="terminalZoomLevel" type="button" title="恢复默认字号">12px</button><button class="btn flat" id="terminalZoomIn" type="button" title="放大终端文字" aria-label="放大终端文字">A+</button></div><button class="btn flat" id="openStatuslineSettings" type="button" title="配置状态栏显示项与字体大小">状态栏配置</button><button class="btn flat" id="toggleFiles">文件栏</button></div>
           </header>
           <div class="terminal-host" id="terminalHost"><div class="terminal-empty" id="terminalEmpty"><span class="terminal-emblem">C</span><h2 id="terminalEmptyTitle">在项目里开始工作</h2><p id="terminalEmptyDescription">先添加一个项目文件夹，再新建对话。对话会记录所属文件夹和创建时间。</p><div class="terminal-empty-actions"><button class="btn dark" id="chooseProjectEmpty">＋ 添加项目文件夹</button><button class="btn dark" id="newSessionEmpty" hidden>＋ 新建对话</button></div></div></div>
           <section class="terminal-composer" id="terminalComposer" hidden><div class="composer-dropzone"><textarea id="composerInput" rows="3" placeholder="在这里输入或使用语音输入；可粘贴图片，或把图片拖到此处。"></textarea></div><div class="composer-attachments" id="composerAttachments" hidden aria-live="polite"></div><input id="composerImagePicker" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden><div class="composer-actions"><span>图片会作为文件路径附在消息里 · Ctrl+Enter 发送</span><button class="btn flat" id="openPromptManager" type="button" title="整理、保存和插入可复用提示词">提示词库</button><button class="btn flat" id="addComposerImage" type="button">＋ 添加图片</button><button class="btn flat" id="clearComposer">清空</button><button class="btn dark" id="sendComposer">发送到 Claude</button></div></section>
@@ -89,7 +89,29 @@
               <div class="prompt-manager-panel" id="promptLibraryPanel" hidden><div class="prompt-library-toolbar"><span>保存的提示词只保存在本机</span><button type="button" class="btn flat" id="newPromptDraft">＋ 整理新提示词</button></div><div class="prompt-library-list" id="promptLibraryList"></div></div>
             </section>
           </div>
-          <footer class="terminal-footer"><span id="terminalState">未连接</span><span>本机 Claude Code CLI</span></footer>
+          <footer class="terminal-footer"><div class="footer-row"><span id="terminalState">未连接</span><span class="statusline-bar" id="statuslineBar" hidden></span><span id="terminalCliLabel">本机 Claude Code CLI</span></div><div class="footer-row"><span class="statusline-config" id="statuslineConfig" hidden></span></div></footer>
+          <div class="statusline-detail-backdrop" id="statuslineDetailBackdrop" hidden>
+            <section class="statusline-detail-panel" role="dialog" aria-modal="true" aria-labelledby="statuslineDetailTitle">
+              <header class="statusline-detail-panel-head"><div><h2 id="statuslineDetailTitle">详情</h2><p id="statuslineDetailSubtitle"></p></div><button class="close" id="closeStatuslineDetail" aria-label="关闭">×</button></header>
+              <div class="statusline-detail-panel-body" id="statuslineDetailBody"></div>
+            </section>
+          </div>
+          <div class="statusline-detail-backdrop" id="statuslineSwitchBackdrop" hidden>
+            <section class="statusline-detail-panel" role="dialog" aria-modal="true" aria-labelledby="statuslineSwitchTitle">
+              <header class="statusline-detail-panel-head"><div><h2 id="statuslineSwitchTitle">切换模型与思考等级</h2><p>作用于当前激活的对话会话</p></div><button class="close" id="closeStatuslineSwitch" aria-label="关闭">×</button></header>
+              <div class="statusline-detail-panel-body statusline-switch-body" id="statuslineSwitchBody"></div>
+            </section>
+          </div>
+          <div class="statusline-detail-backdrop" id="statuslineSettingsBackdrop" hidden>
+            <section class="statusline-detail-panel" role="dialog" aria-modal="true" aria-labelledby="statuslineSettingsTitle">
+              <header class="statusline-detail-panel-head"><div><h2 id="statuslineSettingsTitle">状态栏配置</h2><p>显示项与字体大小保存在浏览器本地，仅影响本机界面</p></div><button class="close" id="closeStatuslineSettings" aria-label="关闭">×</button></header>
+              <div class="statusline-detail-panel-body" id="statuslineSettingsBody">
+                <label class="statusline-setting-row"><span class="statusline-setting-label">启用 statusLine 包装<small>接管终端 statusLine 的数据源转发给软件；终端内原状态栏由软件状态栏替代</small></span><input type="checkbox" class="switch" id="settingWrapper"></label>
+                <label class="statusline-setting-row"><span class="statusline-setting-label">状态栏字体大小</span><span class="statusline-font-controls"><button type="button" class="btn flat" id="statuslineFontMinus">A−</button><span id="statuslineFontSize">8px</span><button type="button" class="btn flat" id="statuslineFontPlus">A+</button></span></label>
+                <div class="statusline-setting-group" id="statuslineItemToggles"></div>
+              </div>
+            </section>
+          </div>
         </section>
         <aside class="file-inspector" id="fileInspector">
           <header class="file-heading"><div class="file-heading-title"><span class="kicker">项目浏览器</span><h2>文件</h2></div><div class="file-heading-actions"><button class="mini-icon" id="refreshFiles" title="刷新文件列表（每 5 秒自动刷新）" aria-label="刷新文件列表"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 17.9 17"/></svg></button><button class="mini-icon" id="collapseFiles" title="收起文件栏" aria-label="收起文件栏">›</button></div></header>

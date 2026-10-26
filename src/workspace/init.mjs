@@ -19,6 +19,7 @@ import {
   resetPromptDraft,
 } from './prompts.mjs';
 import { applyWorkspaceTheme } from './theme.mjs';
+import { refreshStatusline, openStatuslineSettings } from './statusline.mjs';
 
 // 启动时先同步 body 主题，避免管理页首屏闪回浅色
 document.body.classList.toggle('theme-dark', app.workspaceDark);
@@ -43,6 +44,7 @@ export function setView(view) {
   if (isWorkspace) {
     updateProjectLabels();
     refreshProjects().then(refreshSessions).then(() => app.projectPath ? refreshTree() : null).catch(error => toast(error.message));
+    refreshStatusline().catch(() => {});
     requestAnimationFrame(() => fitTerminal());
   }
 }
@@ -62,8 +64,12 @@ function wireProjects() {
 /** 会话列表、新建与停止绑定 */
 function wireSessions() {
   setInterval(() => {
-    if (!app.workspace.hidden) refreshSessionStatuses().catch(() => {});
+    if (!app.workspace.hidden) {
+      refreshSessionStatuses().catch(() => {});
+      refreshStatusline().catch(() => {});
+    }
   }, 3000);
+  $('#openStatuslineSettings').addEventListener('click', () => openStatuslineSettings());
   $('#newSession').addEventListener('click', () => startSession('new'));
   $('#newSessionEmpty').addEventListener('click', () => startSession('new'));
   $('#continueSession').addEventListener('click', continueLastConversation);
