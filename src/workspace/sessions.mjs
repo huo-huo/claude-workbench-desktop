@@ -66,6 +66,12 @@ function bindSessionRows(sessions) {
     archiveSession(button.dataset.archiveSession).catch(error => toast(error.message));
   });
   document.querySelectorAll('.session-group-head').forEach(head => head.onclick = () => toggleSessionGroup(head.closest('.session-group')));
+  // 批量模式复选框:勾选写入 app.bulkSelected,重绘后由行标记恢复(轮询只替换状态节点,不清勾选)
+  document.querySelectorAll('[data-bulk-id]').forEach(box => box.onchange = () => {
+    if (box.checked) app.bulkSelected.add(box.dataset.bulkId);
+    else app.bulkSelected.delete(box.dataset.bulkId);
+    updateBulkBar();
+  });
 }
 
 /** 按搜索关键字过滤缓存数据并渲染主列表(搜索输入只重渲染,不发请求) */
@@ -121,6 +127,58 @@ async function restoreSession(id) {
   await api('/api/workspace/session/archive', { method: 'POST', body: { id, archived: false } });
   await Promise.all([refreshSessions(), renderArchivePanel()]);
   toast('已恢复到对话列表');
+}
+
+/** 刷新批量操作栏的已选计数 */
+function updateBulkBar() {
+  $('#bulkCount').textContent = `已选 ${app.bulkSelected.size} 条`;
+}
+
+/** 进入批量模式:归档面板与批量互斥先关面板;显示操作栏并重渲染出复选框 */
+function enterBulkMode() {
+  if (!$('#archivePanel').hidden) closeArchivePanel();
+  app.bulkMode = true;
+  app.bulkSelected = new Set();
+  $('#bulkBar').hidden = false;
+  updateBulkBar();
+  renderSessions();
+}
+
+/** 退出批量模式:隐藏操作栏、清空勾选并重渲染去掉复选框 */
+function exitBulkMode() {
+  app.bulkMode = false;
+  app.bulkSelected = new Set();
+  $('#bulkBar').hidden = true;
+  renderSessions();
+}
+
+/** 全选/取消全选当前过滤结果(跟随搜索框) */
+function toggleBulkSelectAll() {
+  const ids = filterSessions(app.cachedSessions, app.sessionSearch).map(item => item.id);
+  const allSelected = ids.length > 0 && ids.every(id => app.bulkSelected.has(id));
+  app.bulkSelected = allSelected ? new Set() : new Set(ids);
+  updateBulkBar();
+  renderSessions();
+}
+
+/** 批量删除所选:confirm 确认后请求 remove-batch 并 toast 汇总;请求期间禁用删除按钮防重复提交 */
+async function removeBulkSelected() {
+  const ids = [...app.bulkSelected];
+  if (!ids.length) return toast('先勾选要移除的对话');
+  if (!confirm(`确认移除所选 ${ids.length} 条对话?Claude 记录将保留`)) return;
+  $('#bulkDelete').disabled = true;
+  try {
+    const result = await api('/api/workspace/sessions/remove-batch', { method: 'POST', body: { ids } });
+    const failed = result.failed || [];
+    // 汇总:成功条数 + 失败清单(如有);删除作用于全部勾选项,与当前搜索过滤无关
+    toast(failed.length ? `成功移除 ${result.removed} 条，失败 ${failed.length} 条：${failed.map(item => item.id).join('、')}` : `成功移除 ${result.removed} 条`);
+    exitBulkMode();
+    await refreshSessions();
+  } catch (error) {
+    toast(error.message);
+  } finally {
+    $('#bulkDelete').disabled = false;
+  }
 }
 
 export async function refreshSessions() {
@@ -275,4 +333,10 @@ $('#sessionSearch').addEventListener('input', event => {
   app.sessionSearch = event.target.value;
   renderSessions();
 });
+
+// 批量管理:入口进入模式,操作栏全选/删除/退出
+$('#bulkToggle').addEventListener('click', enterBulkMode);
+$('#bulkSelectAll').addEventListener('click', toggleBulkSelectAll);
+$('#bulkDelete').addEventListener('click', () => { removeBulkSelected(); });
+$('#bulkExit').addEventListener('click', exitBulkMode);
 

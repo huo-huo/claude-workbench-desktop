@@ -1,6 +1,15 @@
 .session-actions{padding:9px 10px;border-bottom:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .session-actions .btn{text-align:center;padding-left:5px;padding-right:5px;font-size:9px;white-space:nowrap}
 .session-actions .btn:disabled{opacity:.45;cursor:not-allowed}
+/* 批量管理入口独占一行 */
+#bulkToggle{grid-column:1/-1}
+/* 批量操作栏:已选计数与全选/删除/退出 */
+.bulk-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 13px;border-bottom:1px solid var(--line)}
+.bulk-bar>span{font:9px var(--mono);color:var(--muted)}
+.bulk-bar-actions{display:flex;gap:4px}
+.bulk-bar .btn{padding:3px 7px;font-size:9px}
+/* 批量模式复选框:行首垂直居中;勾选是显式动作,不影响行点击打开 */
+.session-bulk-check{flex:none;align-self:center;margin:0 0 0 6px}
 .session-list-head{display:flex;align-items:center;justify-content:space-between;padding:10px 13px 6px;color:var(--muted);font:9px var(--mono);letter-spacing:.04em;text-transform:uppercase}
 /* 列表头部工具组:搜索框与图标按钮成组,避免 space-between 把输入框挤到行中间 */
 .session-list-tools{display:flex;align-items:center;gap:4px}

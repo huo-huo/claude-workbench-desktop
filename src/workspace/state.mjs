@@ -25,6 +25,8 @@ export const app = {
   projectSessions: [],
   cachedSessions: [], // 主列表全量缓存;搜索过滤只重渲染这份数据,不发请求
   sessionSearch: '', // 搜索关键字;批量全选基于当前过滤结果
+  bulkMode: false, // 批量管理模式:行首显示复选框
+  bulkSelected: new Set(), // 批量模式勾选的会话 id;innerHTML 全量重建后据此恢复 checked
   projects: [],
   lastFileOpen: { path: '', at: 0 },
   fileTreeRefreshJob: null,
