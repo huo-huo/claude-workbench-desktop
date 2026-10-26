@@ -1,0 +1,25 @@
+# 任务清单:优化项目与会话区域
+
+## 1. 数据层与会话状态
+
+- [x] 1.1 会话条目支持 `customName`/`pinned`/`archived` 可选字段:读取缺省回退现有行为,显示名取 `customName` 非空优先(空则自动命名);验证:新增 `tests/workspace-state.test.mjs` 覆盖自定义名、清空回退自动名、旧数据(无新字段)兼容 <!-- comet-task:06c19a6a-2dba-4829-836f-fb1f9ab87d80 -->
+- [x] 1.2 `listWorkspaceSessions` 组内排序改为置顶优先、其余按 `lastUsedAt` 倒序,主列表默认过滤 `archived`;新增归档列表查询参数;验证:单测覆盖置顶排序、归档过滤与归档区列表 <!-- comet-task:7b7e1287-1a19-41e9-9d0c-cee1540d3304 -->
+- [x] 1.3 实现重命名/置顶/归档状态更新(只改对应字段,`atomicJson` 原子写回);验证:单测覆盖字段写入与原子性(文件内容断言) <!-- comet-task:8f5f864f-3f88-44f3-84fb-12330863d7f1 -->
+
+## 2. 后端路由
+
+- [x] 2.1 注册 `POST /api/workspace/session/rename`、`/session/pin`、`/session/archive` 三条路由(校验会话存在,非法 id 返回错误);验证:`tests/server-routes.test.mjs` 增加用例或接口手工验证 <!-- comet-task:ecec0c42-c2e2-465a-ae99-19b2adf61951 -->
+- [x] 2.2 新增 `POST /api/workspace/sessions/remove-batch`:逐个复用 `removeWorkspaceSession`(在线会话 Ctrl+C 后延时 kill),返回逐条成功/失败汇总;验证:单测覆盖批量删除含不存在的 id、在线会话终止路径 <!-- comet-task:88272c1b-3f55-44e5-ac7a-5f7c140d9396 -->
+
+## 3. 前端会话列表
+
+- [x] 3.1 会话行展示:自定义名优先显示、最后活动时间元信息、置顶标记、分组头与会话行缩进层级及信息主次样式(纯 CSS + 行标记);验证:页面渲染走查,缩进与层级可见 <!-- comet-task:f85c978b-3a00-40e4-af67-a17e6b9a8212 -->
+- [x] 3.2 会话行操作接线:重命名(可清空回退自动名)、置顶/取消置顶、归档(从主列表消失,分组空时消失);验证:手工操作走查三项操作及列表刷新 <!-- comet-task:7d1c99ae-b2c1-4e97-88cf-080f3ac819f4 -->
+- [x] 3.3 会话搜索框:按会话名(customName 优先)+ 项目名过滤,大小写不敏感,无匹配显示空态,清空恢复;验证:手工走查三种过滤场景 <!-- comet-task:a3146234-8978-4a9c-af33-f0a982b2f15e -->
+- [x] 3.4 归档面板:会话区入口打开,展示归档会话并支持恢复到主列表;验证:手工走查归档→恢复闭环 <!-- comet-task:205811d3-de1a-4c19-bb33-c51127f48f38 -->
+- [x] 3.5 批量选择模式:进入/退出,勾选状态存 `app.bulkSelected` 并在全量重绘后恢复(轮询不清勾选),批量删除调用 remove-batch 并展示结果汇总;验证:手工走查勾选→轮询等待→批量删除闭环 <!-- comet-task:a624f09e-816e-46eb-90f1-e18485dc1ad3 -->
+
+## 4. 集成验证
+
+- [x] 4.1 运行完整测试套件(`node --test tests/`)全部通过;验证:命令输出无失败 <!-- comet-task:fcce8805-9448-4061-8d09-b7b2d5914bc4 -->
+- [x] 4.2 端到端走查规格验收场景:多项目多会话下搜索、重命名、置顶、归档恢复、批量删除、缩进层级逐项核对;验证:对照 specs 场景逐条记录通过 <!-- comet-task:43979bee-ceba-468e-ad9e-17b5b5e31958 -->
