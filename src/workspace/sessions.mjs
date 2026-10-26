@@ -114,6 +114,8 @@ function closeArchivePanel() {
 function toggleArchivePanel() {
   const panel = $('#archivePanel');
   if (!panel.hidden) return closeArchivePanel();
+  // 与批量模式双向互斥:面板上下文下批量栏可删除不可见的勾选项,先退出批量
+  if (app.bulkMode) exitBulkMode();
   panel.hidden = false;
   $('#sessionList').hidden = true;
   $('#sessionSearch').hidden = true;
@@ -152,11 +154,12 @@ function exitBulkMode() {
   renderSessions();
 }
 
-/** 全选/取消全选当前过滤结果(跟随搜索框) */
+/** 全选/取消全选当前过滤结果(跟随搜索框);以过滤结果为操作面,过滤外的勾选保持不动 */
 function toggleBulkSelectAll() {
   const ids = filterSessions(app.cachedSessions, app.sessionSearch).map(item => item.id);
   const allSelected = ids.length > 0 && ids.every(id => app.bulkSelected.has(id));
-  app.bulkSelected = allSelected ? new Set() : new Set(ids);
+  if (allSelected) ids.forEach(id => app.bulkSelected.delete(id));
+  else ids.forEach(id => app.bulkSelected.add(id));
   updateBulkBar();
   renderSessions();
 }
