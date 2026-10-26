@@ -37,7 +37,7 @@ function loadStatuslineConfig() {
   try {
     const raw = JSON.parse(localStorage.getItem(CONFIG_STORAGE_KEY) || '');
     if (!raw || typeof raw !== 'object') return fallback;
-    return { fontSize: Number(raw.fontSize) || FONT_RANGE.default, items: raw.items && typeof raw.items === 'object' ? raw.items : {} };
+    return { fontSize: Math.max(FONT_RANGE.min, Math.min(FONT_RANGE.max, Number(raw.fontSize) || FONT_RANGE.default)), items: raw.items && typeof raw.items === 'object' ? raw.items : {} };
   } catch {
     return fallback;
   }

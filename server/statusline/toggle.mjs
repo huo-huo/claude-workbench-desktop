@@ -59,15 +59,17 @@ export function enableStatusline(options = {}) {
   // 源脚本缺失时绝不写 settings，避免把配置指向死路径
   if (!fs.existsSync(paths.wrapperSource)) throw httpError(500, `包装器脚本缺失：${paths.wrapperSource}`);
 
-  // 已指向包装器但备份丢失：没有可信的原命令可恢复，拒绝启用引导用户手动处理
-  if (isWrapperCommand(current) && !readJsonStrict(paths.backupFile)?.originalCommand) {
+  // 已指向包装器但备份丢失：没有可信的原命令可恢复，拒绝启用引导用户手动处理。
+  // originalCommand 允许为空串（启用前本无 statusLine），因此用类型判断而非 falsy 判断
+  const existingBackup = readJsonStrict(paths.backupFile);
+  if (isWrapperCommand(current) && (typeof existingBackup?.originalCommand !== 'string')) {
     throw httpError(409, 'statusLine 已指向包装器但缺少备份记录，请手动恢复原命令后再启用');
   }
 
-  // 已有备份不覆盖 originalCommand，防止把包装器自己当成原命令；
+  // 已有备份不覆盖 originalCommand，防止把包装器自己当成原命令（空串也是合法的原命令状态）；
   // 已指向包装器的重复启用同样重写副本/配置/settings，刷新端口与脚本版本
   const existing = readJsonStrict(paths.backupFile);
-  const backup = existing?.originalCommand
+  const backup = typeof existing?.originalCommand === 'string'
     ? { ...existing, enabled: true, port: options.port }
     : { originalCommand: current || '', enabled: true, port: options.port };
   // 先写备份、包装器副本与配置，最后才替换 settings；前面的写入失败时 settings 未被触碰

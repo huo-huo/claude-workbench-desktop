@@ -156,3 +156,19 @@ test('原本没有 statusLine 时也可启用（无需先配置状态栏）', ()
   assert.equal(settings.model, 'x');
   env.cleanup();
 });
+
+test('空原命令时重复启用不污染备份也不被 409 卡死', () => {
+  const env = createEnv({ model: 'x' });
+  enableStatusline({ port: 4173, paths: env.paths });
+  // 重复启用（如换端口刷新）：不得把包装器命令写进备份
+  const again = enableStatusline({ port: 5000, paths: env.paths });
+  assert.equal(again.enabled, true);
+  const backup = JSON.parse(fs.readFileSync(env.paths.backupFile, 'utf8'));
+  assert.equal(backup.originalCommand, '', '空原命令保持空串，不被包装器命令污染');
+  assert.equal(backup.port, 5000);
+  // 禁用仍能恢复"原本没有 statusLine"的状态
+  const disabled = disableStatusline({ paths: env.paths });
+  assert.equal(disabled.enabled, false);
+  assert.equal(env.readSettings().statusLine, undefined);
+  env.cleanup();
+});

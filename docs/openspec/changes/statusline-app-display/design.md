@@ -22,7 +22,7 @@ canonical_spec: openspec
 - 不改变会话运行方式（保持 CLI + pty），不引入 SDK 会话驱动的工作站
 - 不解析或重绘终端画面来推测状态（现有"工作中/在线"检测保持不变）
 - 不做多用户、远程部署或鉴权（本机回环，与现有服务一致）
-- 不追求跨平台（Windows 优先；bash 不可用时拒绝启用并提示）
+- 不追求跨平台（Windows 优先；接管模式下包装器不执行原命令，无 shell 依赖）
 
 ## Decisions
 
@@ -68,7 +68,7 @@ canonical_spec: openspec
 
 ## Risks / Trade-offs
 
-- [Claude Code 执行 statusLine command 的 shell 语义随版本变化] → 启用前探测 bash；包装器任何异常都以"透传失败"收尾并保持静默，最坏结果是终端 statusLine 暂时不渲染，绝不阻塞会话
+- [包装器自身异常] → 接管模式下包装器不执行外部命令、无 shell 依赖；任何异常静默退出，最坏结果是终端 statusLine 暂时不渲染，绝不阻塞会话
 - [包装器增加 statusLine 刷新延迟（Node 冷启动 + 转发）] → 转发超时 300ms 且 fire-and-forget；原命令执行是主路径
 - [statusLine stdin JSON 字段随版本差异] → 全部字段按可选处理，缺失即省略对应显示项
 - [用户手动改写 `settings.json` 或 Claude Code 更新重写配置] → 恢复以备份文件为准；备份文件不受 settings.json 变化影响
@@ -76,7 +76,7 @@ canonical_spec: openspec
 
 ## Migration Plan
 
-启用：探测 bash → 备份原命令 → 写包装器配置（原命令 + 端口）→ 替换 `statusLine.command`。
+启用：备份原命令 → 写包装器配置（原命令 + 端口）→ 替换 `statusLine.command`。
 禁用：读备份 → 原样写回 `statusLine.command` → 保留备份文件供再次启用。
 回滚：直接禁用即恢复原状；删除备份文件与包装器文件不影响 Claude Code。
 

@@ -129,8 +129,8 @@ function readTranscriptStats(transcriptPath, expectedSessionId) {
   if (skillSet.size) stats.skills = [...skillSet].sort();
   if (mcpServerSet.size) stats.mcpServers = [...mcpServerSet].sort();
 
-  // 缓存上限防护：只保留最近的 8 个 transcript
-  if (transcriptCache.size > 8) {
+  // 缓存上限防护：只保留最近的 8 个 transcript（先删后写，驻留不超过 8 个）
+  if (transcriptCache.size >= 8) {
     const oldest = transcriptCache.keys().next().value;
     transcriptCache.delete(oldest);
   }

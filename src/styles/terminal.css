@@ -61,7 +61,7 @@
 .statusline-detail-command{color:var(--ink)}
 .statusline-model-clickable{cursor:pointer;border:0;background:transparent;padding:0;font-family:var(--mono);font-size:inherit;line-height:inherit;color:var(--terminal-chrome-fg);font-weight:inherit;vertical-align:baseline}
 .statusline-model-clickable:hover{background:var(--terminal-chrome-line)}
-.statusline-model-clickable:hover{background:var(--terminal-chrome-line)}
+
 .statusline-switch-body{gap:10px}
 .statusline-switch-group h3{margin:0 0 6px;font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
 .statusline-switch-group{display:grid;gap:4px}

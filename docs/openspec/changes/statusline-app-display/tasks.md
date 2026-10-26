@@ -13,11 +13,11 @@
 ## 3. 查询 API 与会话映射
 
 - [x] 3.1 新增 `GET /api/statusline/state?id=<workbench-session-id>`：会话关联按两级匹配——先按 CLI `sessionId` 精确匹配，再按转发数据的 `workspace.current_dir` 兜底匹配项目下最近活动会话；返回合并状态（store + enrich + `git branch --show-current` 现取）与启用标志（含 wrapper 文件存在性自检）；冒烟测试覆盖有状态、无状态、continue 会话兜底匹配与无匹配四种返回 <!-- comet-task:5b25f57e-0e35-473b-80c1-015c1d8dd2ba -->
-- [x] 3.2 新增 `POST /api/statusline/enable` / `POST /api/statusline/disable`：启用前探测 bash，备份原命令到 `~/.claude/workbench-statusline.json`（含端口），替换 `settings.json` 的 `statusLine.command`；禁用按备份原样恢复；重复启用不覆盖备份；用临时 HOME 目录的 settings 副本做单测，覆盖启用、重复启用、禁用恢复与写入失败不破坏配置 <!-- comet-task:6376d625-52e7-4e7c-b400-12105d165c5b -->
+- [x] 3.2 新增 `POST /api/statusline/enable` / `POST /api/statusline/disable`：备份原命令到 `~/.claude/workbench-statusline.json`（含端口），替换 `settings.json` 的 `statusLine.command` 为包装器副本；禁用按备份原样恢复（空原命令时移除 statusLine 键）；重复启用刷新端口与副本且不覆盖备份；用临时 HOME 目录的 settings 副本做单测，覆盖启用、重复启用、禁用恢复与写入失败不破坏配置（实现为接管模式后 bash 探测已移除） <!-- comet-task:6376d625-52e7-4e7c-b400-12105d165c5b -->
 
 ## 4. statusLine 包装器脚本
 
-- [x] 4.1 新建 `resources/statusline-wrapper.mjs`：读 stdin 全量 → fire-and-forget POST（300ms 超时、任何失败静默）→ `bash -c` 以相同 stdin 执行旁置配置 `statusline-wrapper.json` 中的原命令并透传 stdout 与退出码；bash 不可用时输出空并以非零退出 <!-- comet-task:49559647-b9a6-4933-81c4-3e2ae0759f33 -->
+- [x] 4.1 新建 `resources/statusline-wrapper.mjs`（接管模式）：读 stdin 全量 → fire-and-forget POST（300ms 超时、任何失败静默）→ 直接退出，不执行原命令——终端内原状态栏由软件状态栏替代显示；配置缺失或损坏时静默成功 <!-- comet-task:49559647-b9a6-4933-81c4-3e2ae0759f33 -->
 - [x] 4.2 编写包装器自检测试：用假原命令验证 stdout/退出码透传、stdin 内容一致、服务端不可达时不阻塞不报错，运行 `node --test tests/statusline-wrapper.test.mjs` 通过 <!-- comet-task:839cc9b8-030e-491d-9dfd-c3c0954a4ad0 -->
 
 ## 5. 前端状态栏
