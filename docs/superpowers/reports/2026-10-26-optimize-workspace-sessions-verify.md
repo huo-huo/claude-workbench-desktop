@@ -38,6 +38,14 @@
 4. `filterSessions` 匹配范围含 projectPath(比规格「名称与项目名」略宽,放宽无害);`data-session-pinned` 属性暂无消费方——集成审查 MINOR-3
 5. B1/B2 任务级审查遗留 MINOR:重命名请求重复 Enter 无进行中标志(后端幂等)、`is-renaming` 点击穿透打开会话、button 嵌 input 的内容模型、删除请求飞行中退出批量不禁用
 
+## 用户验收修复记录(verify-fail 一轮)
+
+用户实测发现列表头文字与搜索框重叠、行内悬浮按钮叠字 → archive-reopen → verify-fail 回 build 修复(提交 `fix(workspace): 修复列表头文字与搜索框重叠,行内操作按钮改为悬停显示`):
+
+- `.session-list-head` 加 gap 与标题 nowrap 保护,搜索框改为可收缩(flex 1、min 56px、max 140px)
+- 行内操作按钮(✎📌📦)常态隐藏(pointer-events:none),悬停/键盘聚焦(`:hover`/`:focus-within`)时显示,消除与文字的重合
+- 回归:npm test 158/0;隔离走查 9/9(走查脚本点击行内按钮前先悬停,与真实操作一致)
+
 ## Final Assessment
 
 无 CRITICAL/IMPORTANT 问题,3 条已接受偏差均有记录与理由。**All checks passed. Ready for archive.**
