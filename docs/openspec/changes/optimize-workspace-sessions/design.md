@@ -42,6 +42,11 @@ canonical_spec: openspec
 10. **批量删除执行前弹确认(提示数量),结果 toast 汇总(成功 n / 失败 m)**——破坏性操作常规防护;失败项保留在列表,不回滚。
 11. **勾选与过滤共存:批量删除作用于全部勾选项,与当前过滤无关**——勾选是显式动作;操作后清空勾选并刷新。
 
+用户验收阶段增补(verify-fail 回 build):
+
+12. **管理操作收进"⋯"入口**——"批量管理"与"查看归档"收进列表头"⋯"更多菜单,点击展开、点击项执行并收起、点击外部关闭(参考既有 fileTreeContextMenu 交互);搜索框与刷新保持常显(高频)。理由:窄侧栏常显按钮过多导致拥挤与重叠,管理是低频操作。
+13. **删除操作统一二次确认**——单条移除与归档面板彻底移除补 confirm(文案说明 Claude 记录保留),与批量删除既有确认语义一致。
+
 ## 测试策略
 
 - **后端**:新增 `tests/workspace-state.test.mjs`(customName 回退、旧数据兼容、pinned 排序、archived 过滤、rename/pin/archive 原子写回);扩展 `tests/server-routes.test.mjs`(三个新路由、remove-batch 含不存在 id 与在线会话路径)
