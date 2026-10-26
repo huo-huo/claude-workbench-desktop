@@ -23,6 +23,8 @@ export const app = {
   selectedFile: '',
   lastManagementCrumb: '运行概览',
   projectSessions: [],
+  cachedSessions: [], // 主列表全量缓存;搜索过滤只重渲染这份数据,不发请求
+  sessionSearch: '', // 搜索关键字;批量全选基于当前过滤结果
   projects: [],
   lastFileOpen: { path: '', at: 0 },
   fileTreeRefreshJob: null,

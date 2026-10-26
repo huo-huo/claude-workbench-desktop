@@ -38,17 +38,16 @@ export function toggleSessionGroup(groupElement) {
 }
 
 
-export async function refreshSessions() {
-  const result = await api('/api/workspace/sessions');
-  const sessions = result.sessions || [];
-  syncSessionActivityMonitors(sessions);
-  const currentProjectKey = sessionGroupKey(app.projectPath);
-  app.projectSessions = sessions.filter(item => sessionGroupKey(item.projectPath) === currentProjectKey);
-  updateTerminalEmptyState();
-  // 按项目目录分组渲染；折叠状态与分组 key 共用 sessionGroupKey 结果
-  const groups = groupSessionsByProject(sessions);
-  const collapsedKeys = readCollapsedProjects();
-  $('#sessionList').innerHTML = groups.length ? groups.map(group => sessionGroupMarkup(group, collapsedKeys)).join('') : '<div class="empty">还没有对话。选择项目文件夹后新建一个。</div>';
+/** 按关键字过滤会话:匹配显示名/名称/项目名/项目路径;空关键字返回全量 */
+function filterSessions(sessions, keyword) {
+  const key = String(keyword || '').trim().toLowerCase();
+  if (!key) return sessions;
+  return sessions.filter(item => [item.displayName, item.name, projectName(item.projectPath), item.projectPath]
+    .some(field => String(field || '').toLowerCase().includes(key)));
+}
+
+/** 绑定行级事件:打开/移除/重命名/置顶/归档/分组折叠(innerHTML 全量重建后调用) */
+function bindSessionRows(sessions) {
   document.querySelectorAll('[data-session-id]').forEach(button => button.onclick = () => openSavedSession(sessions.find(x => x.id === button.dataset.sessionId)));
   document.querySelectorAll('[data-remove-session]').forEach(button => button.onclick = event => { event.stopPropagation(); removeSession(button.dataset.removeSession).catch(error => toast(error.message)); });
   // 行内操作:重命名/置顶/归档;stopPropagation 防止冒泡触发会话行打开(模式同上方移除绑定)
@@ -67,6 +66,28 @@ export async function refreshSessions() {
     archiveSession(button.dataset.archiveSession).catch(error => toast(error.message));
   });
   document.querySelectorAll('.session-group-head').forEach(head => head.onclick = () => toggleSessionGroup(head.closest('.session-group')));
+}
+
+/** 按搜索关键字过滤缓存数据并渲染主列表(搜索输入只重渲染,不发请求) */
+function renderSessions() {
+  const sessions = filterSessions(app.cachedSessions, app.sessionSearch);
+  // 按项目目录分组渲染;折叠状态与分组 key 共用 sessionGroupKey 结果
+  const groups = groupSessionsByProject(sessions);
+  const collapsedKeys = readCollapsedProjects();
+  $('#sessionList').innerHTML = groups.length ? groups.map(group => sessionGroupMarkup(group, collapsedKeys)).join('') : `<div class="empty">${String(app.sessionSearch || '').trim() ? '没有匹配的对话' : '还没有对话。选择项目文件夹后新建一个。'}</div>`;
+  bindSessionRows(sessions);
+}
+
+export async function refreshSessions() {
+  const result = await api('/api/workspace/sessions');
+  const sessions = result.sessions || [];
+  syncSessionActivityMonitors(sessions);
+  const currentProjectKey = sessionGroupKey(app.projectPath);
+  app.projectSessions = sessions.filter(item => sessionGroupKey(item.projectPath) === currentProjectKey);
+  updateTerminalEmptyState();
+  // 缓存全量列表后统一走 renderSessions,保证搜索过滤与刷新共用单一渲染入口
+  app.cachedSessions = sessions;
+  renderSessions();
 }
 
 
@@ -198,4 +219,10 @@ export async function removeSession(id) {
   await refreshSessions();
   toast(result.transcriptPreserved ? '已从工作台移除，Claude 对话记录保留' : '这条对话已不在工作台列表中');
 }
+
+// 搜索框输入即时过滤:数据已在内存缓存,直接重渲染,不发请求(脚本于 body 末尾加载,DOM 已就绪,模式同 state.mjs)
+$('#sessionSearch').addEventListener('input', event => {
+  app.sessionSearch = event.target.value;
+  renderSessions();
+});
 
