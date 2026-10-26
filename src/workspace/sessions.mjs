@@ -302,6 +302,8 @@ async function archiveSession(id) {
 }
 
 export async function removeSession(id) {
+  // 删除统一二次确认:单条 × 与归档面板「彻底移除」共用本函数,一处生效;取消不做任何变更(批量删除另有确认)
+  if (!confirm('确认从工作台移除该对话?Claude 记录将保留')) return;
   const result = await api('/api/workspace/session/remove', { method: 'POST', body: { id } });
   if (app.activeSession?.id === id) {
     clearTimeout(app.terminalReconnectTimer);
