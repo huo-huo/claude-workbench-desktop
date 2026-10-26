@@ -51,6 +51,21 @@ export async function refreshSessions() {
   $('#sessionList').innerHTML = groups.length ? groups.map(group => sessionGroupMarkup(group, collapsedKeys)).join('') : '<div class="empty">还没有对话。选择项目文件夹后新建一个。</div>';
   document.querySelectorAll('[data-session-id]').forEach(button => button.onclick = () => openSavedSession(sessions.find(x => x.id === button.dataset.sessionId)));
   document.querySelectorAll('[data-remove-session]').forEach(button => button.onclick = event => { event.stopPropagation(); removeSession(button.dataset.removeSession).catch(error => toast(error.message)); });
+  // 行内操作:重命名/置顶/归档;stopPropagation 防止冒泡触发会话行打开(模式同上方移除绑定)
+  document.querySelectorAll('[data-rename-session]').forEach(button => button.onclick = event => {
+    event.stopPropagation();
+    const session = sessions.find(x => x.id === button.dataset.renameSession);
+    if (session) renameSessionPrompt(session.id, session.displayName || session.name).catch(error => toast(error.message));
+  });
+  document.querySelectorAll('[data-pin-session]').forEach(button => button.onclick = event => {
+    event.stopPropagation();
+    const session = sessions.find(x => x.id === button.dataset.pinSession);
+    if (session) togglePinSession(session.id, session.pinned === true).catch(error => toast(error.message));
+  });
+  document.querySelectorAll('[data-archive-session]').forEach(button => button.onclick = event => {
+    event.stopPropagation();
+    archiveSession(button.dataset.archiveSession).catch(error => toast(error.message));
+  });
   document.querySelectorAll('.session-group-head').forEach(head => head.onclick = () => toggleSessionGroup(head.closest('.session-group')));
 }
 
@@ -118,6 +133,27 @@ export function interruptCurrentSession() {
   toast('已发送 Esc，用于停止 Claude 当前回复或工具操作');
 }
 
+
+/** 重命名对话:原生 prompt 预填当前显示名,取消(返回 null)不动作;空串由后端回退自动名 */
+async function renameSessionPrompt(id, currentName) {
+  const customName = window.prompt('重命名对话', currentName);
+  if (customName === null) return;
+  await api('/api/workspace/session/rename', { method: 'POST', body: { id, customName } });
+  await refreshSessions();
+}
+
+/** 切换置顶状态并刷新列表(置顶会话由后端排序置前) */
+async function togglePinSession(id, pinned) {
+  await api('/api/workspace/session/pin', { method: 'POST', body: { id, pinned: !pinned } });
+  await refreshSessions();
+}
+
+/** 归档对话:在线终端由后端自动终止,成功后从主列表消失 */
+async function archiveSession(id) {
+  await api('/api/workspace/session/archive', { method: 'POST', body: { id, archived: true } });
+  await refreshSessions();
+  toast('已归档');
+}
 
 export async function removeSession(id) {
   const result = await api('/api/workspace/session/remove', { method: 'POST', body: { id } });

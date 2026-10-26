@@ -19,6 +19,11 @@
 @media(prefers-reduced-motion:reduce){.session-spinner{animation:none}}
 .session-remove{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:21px;height:21px;border:0;background:transparent;color:#85867d;font-size:15px;cursor:pointer;opacity:.5}
 .session-item:hover .session-remove,.session-remove:focus-visible{opacity:1;background:#deddd5}
+/* 会话行内操作(重命名/置顶/归档):与移除按钮同风格,常显半透明、悬停加深 */
+.session-ops{position:absolute;right:26px;top:50%;transform:translateY(-50%);display:flex;gap:2px;opacity:.5}
+.session-ops .session-op{width:21px;height:21px;border:0;background:transparent;color:#85867d;font-size:11px;cursor:pointer;padding:0;display:grid;place-items:center}
+.session-item:hover .session-ops .session-op,.session-ops .session-op:focus-visible{background:#deddd5}
+.session-item:hover .session-ops{opacity:1}
 /* 会话行信息主次:名称与状态为一级,时间与模式收进 small 弱化 */
 .session-row-title{min-width:0;display:flex;align-items:center;gap:5px}
 .session-row-title strong{flex:1;min-width:0}
