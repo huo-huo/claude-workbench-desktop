@@ -34,22 +34,22 @@
 .session-spinner{width:8px;height:8px;flex:none;border:1px solid currentColor;border-right-color:transparent;border-radius:50%;animation:session-spin .85s linear infinite}
 @keyframes session-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.session-spinner{animation:none}}
-.session-remove{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:21px;height:21px;border:0;background:transparent;color:#85867d;font-size:15px;cursor:pointer;opacity:.5}
-.session-item:hover .session-remove,.session-remove:focus-visible{opacity:1;background:#deddd5}
+/* 行级「⋯」操作菜单入口:常显(不用 hover 才出现),变量随深浅主题,深色下可辨 */
+.session-more{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:21px;height:21px;border:0;background:transparent;color:var(--muted);font-size:13px;cursor:pointer;padding:0;display:grid;place-items:center}
+.session-item:hover .session-more,.session-more:focus-visible{background:var(--hover-bg)}
+/* 行级操作菜单:fixed 定位由 JS 按触发按钮设置;变量随深浅主题,深色下清晰可读 */
+.session-row-menu{position:fixed;z-index:20;min-width:112px;padding:4px;background:var(--surface);border:1px solid var(--line);box-shadow:0 8px 24px #15161024}
+.session-row-menu button{width:100%;border:0;background:transparent;padding:7px 10px;text-align:left;color:var(--ink);font-size:10px;cursor:pointer;white-space:nowrap}
+.session-row-menu button:hover{background:var(--hover-bg)}
 /* 归档行是纯展示 span,不可点击打开,去掉悬停高亮 */
 .archive-row{cursor:default}
 .archive-row:hover{background:transparent}
-/* 会话行内操作(重命名/置顶/归档):与移除按钮同风格,常显半透明、悬停加深 */
-.session-ops{position:absolute;right:26px;top:50%;transform:translateY(-50%);display:flex;gap:2px;opacity:0;pointer-events:none;transition:opacity .12s}
-.session-ops .session-op{width:21px;height:21px;border:0;background:transparent;color:#85867d;font-size:11px;cursor:pointer;padding:0;display:grid;place-items:center}
-.session-item:hover .session-ops .session-op,.session-ops .session-op:focus-visible{background:#deddd5}
-/* 操作按钮悬浮在行上,常态隐藏避免与文字重合;悬停或键盘聚焦时出现 */
-.session-item:hover .session-ops,.session-item:focus-within .session-ops{opacity:1;pointer-events:auto}
+/* 会话行内操作已收进行尾「⋯」菜单(.session-more),不再有独立悬停按钮组 */
 /* 行内重命名输入框:贴合行内尺寸,聚焦描边与提示词输入一致 */
 .session-rename-input{flex:1;min-width:0;border:1px solid #98aa67;background:var(--surface);color:var(--ink);padding:2px 5px;font:500 10px var(--sans);outline:none}
 .session-rename-input:focus{box-shadow:0 0 0 2px #9caf6c33}
-/* 编辑中屏蔽该行其他按钮,防止误触置顶/归档/移除 */
-.session-item.is-renaming .session-op,.session-item.is-renaming .session-remove{pointer-events:none}
+/* 编辑中屏蔽行尾「⋯」,防止编辑期间误开操作菜单 */
+.session-item.is-renaming .session-more{pointer-events:none}
 /* 会话行信息主次:名称与状态为一级,时间与模式收进 small 弱化 */
 .session-row-title{min-width:0;display:flex;align-items:center;gap:5px}
 .session-row-title strong{flex:1;min-width:0}

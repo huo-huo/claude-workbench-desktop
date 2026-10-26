@@ -41,8 +41,6 @@
 .workspace.theme-dark .session-row:hover{background:#34352e}
 .workspace.theme-dark .session-row.active{background:#3b3d32;border-left-color:#c1d77a;color:#f4f3eb}
 .workspace.theme-dark .session-row small{color:#aaa99d}
-.workspace.theme-dark .session-remove{color:#aaa99d}
-.workspace.theme-dark .session-remove:hover,.workspace.theme-dark .session-remove:focus-visible{background:#42443a;color:#f4f3eb}
 .workspace.theme-dark .file-tree{background:#272822}
 .workspace.theme-dark .tree-row{color:#cbcbbf}
 .workspace.theme-dark .tree-row:hover{background:#35362f;color:#f2f1e9}

@@ -46,24 +46,14 @@ function filterSessions(sessions, keyword) {
     .some(field => String(field || '').toLowerCase().includes(key)));
 }
 
-/** 绑定行级事件:打开/移除/重命名/置顶/归档/分组折叠(innerHTML 全量重建后调用) */
+/** 绑定行级事件:打开/行级「⋯」菜单/分组折叠/批量勾选(innerHTML 全量重建后调用) */
 function bindSessionRows(sessions) {
   document.querySelectorAll('[data-session-id]').forEach(button => button.onclick = () => openSavedSession(sessions.find(x => x.id === button.dataset.sessionId)));
-  document.querySelectorAll('[data-remove-session]').forEach(button => button.onclick = event => { event.stopPropagation(); removeSession(button.dataset.removeSession).catch(error => toast(error.message)); });
-  // 行内操作:重命名/置顶/归档;stopPropagation 防止冒泡触发会话行打开(模式同上方移除绑定)
-  document.querySelectorAll('[data-rename-session]').forEach(button => button.onclick = event => {
+  // 行内操作统一走「⋯」菜单:闭包携带会话数据,菜单项点击时执行对应动作(限定 #sessionList,避免误绑归档面板行)
+  document.querySelectorAll('#sessionList [data-session-menu]').forEach(button => button.onclick = event => {
     event.stopPropagation();
-    const session = sessions.find(x => x.id === button.dataset.renameSession);
-    if (session) renameSessionInline(button, session.displayName || session.name);
-  });
-  document.querySelectorAll('[data-pin-session]').forEach(button => button.onclick = event => {
-    event.stopPropagation();
-    const session = sessions.find(x => x.id === button.dataset.pinSession);
-    if (session) togglePinSession(session.id, session.pinned === true).catch(error => toast(error.message));
-  });
-  document.querySelectorAll('[data-archive-session]').forEach(button => button.onclick = event => {
-    event.stopPropagation();
-    archiveSession(button.dataset.archiveSession).catch(error => toast(error.message));
+    const session = sessions.find(x => x.id === button.dataset.sessionMenu);
+    if (session) openRowMenu(button, session, false);
   });
   document.querySelectorAll('.session-group-head').forEach(head => head.onclick = () => toggleSessionGroup(head.closest('.session-group')));
   // 批量模式复选框:勾选写入 app.bulkSelected,重绘后由行标记恢复(轮询只替换状态节点,不清勾选)
@@ -84,21 +74,21 @@ function renderSessions() {
   bindSessionRows(sessions);
 }
 
-/** 归档面板行:名称 + 最后活动时间(后端不记录归档时间,取最后活动时间)+ 恢复/彻底移除;复用 .session-list 行样式 */
+/** 归档面板行:名称 + 最后活动时间(后端不记录归档时间,取最后活动时间)+ 行尾「⋯」菜单(恢复/彻底移除);复用 .session-list 行样式 */
 function archiveRowMarkup(item) {
-  return `<div class="session-item"><span class="session-row archive-row"><span class="session-row-title"><strong>${escapeHtml(item.displayName || item.name)}</strong></span><small><span class="session-row-detail">${escapeHtml(formatSessionTime(item.lastUsedAt || item.createdAt))}</span></small></span><span class="session-ops"><button class="session-op" data-restore-session="${escapeHtml(item.id)}" title="恢复到对话列表" aria-label="恢复归档对话">↩</button></span><button class="session-remove" data-remove-session="${escapeHtml(item.id)}" title="彻底移除；Claude 对话记录保留" aria-label="彻底移除归档对话">×</button></div>`;
+  return `<div class="session-item"><span class="session-row archive-row"><span class="session-row-title"><strong>${escapeHtml(item.displayName || item.name)}</strong></span><small><span class="session-row-detail">${escapeHtml(formatSessionTime(item.lastUsedAt || item.createdAt))}</span></small></span><button class="session-more" data-session-menu="${escapeHtml(item.id)}" title="会话操作" aria-label="会话操作">⋯</button></div>`;
 }
 
-/** 拉取归档条目并渲染面板;恢复/移除按钮在此绑定(面板行不在主列表缓存内) */
+/** 拉取归档条目并渲染面板;「⋯」菜单在此绑定(闭包携带归档会话数据,菜单项为恢复/彻底移除) */
 async function renderArchivePanel() {
   const result = await api('/api/workspace/sessions?archived=1');
   const sessions = result.sessions || [];
   $('#archivePanel').innerHTML = sessions.length ? sessions.map(archiveRowMarkup).join('') : '<div class="empty">没有归档的对话</div>';
-  document.querySelectorAll('[data-restore-session]').forEach(button => button.onclick = event => {
+  document.querySelectorAll('#archivePanel [data-session-menu]').forEach(button => button.onclick = event => {
     event.stopPropagation();
-    restoreSession(button.dataset.restoreSession).catch(error => toast(error.message));
+    const session = sessions.find(x => x.id === button.dataset.sessionMenu);
+    if (session) openRowMenu(button, session, true);
   });
-  document.querySelectorAll('#archivePanel [data-remove-session]').forEach(button => button.onclick = event => { event.stopPropagation(); removeSession(button.dataset.removeSession).catch(error => toast(error.message)); });
 }
 
 /** 关闭归档面板,还原主列表与搜索框 */
@@ -258,8 +248,8 @@ export function interruptCurrentSession() {
 
 
 /** 重命名对话:行内编辑(Tauri WebView2 不支持 window.prompt)。Enter 确认;Escape 取消;失焦且未改动时恢复原显示 */
-function renameSessionInline(button, currentName) {
-  const nameBox = button.closest('.session-item')?.querySelector('.session-row-title');
+function renameSessionInline(row, id, currentName) {
+  const nameBox = row?.querySelector('.session-row-title');
   if (!nameBox) return;
   const item = nameBox.closest('.session-item');
   const original = nameBox.innerHTML;
@@ -274,7 +264,7 @@ function renameSessionInline(button, currentName) {
   const submit = () => {
     input.onblur = null;
     if (input.value === currentName) return restore();
-    api('/api/workspace/session/rename', { method: 'POST', body: { id: button.dataset.renameSession, customName: input.value } })
+    api('/api/workspace/session/rename', { method: 'POST', body: { id, customName: input.value } })
       .then(restore)
       .then(() => refreshSessions())
       .catch(error => { restore(); toast(error.message); });
@@ -340,6 +330,45 @@ function toggleMoreMenu() {
   $('#moreToggle').classList.add('is-open');
 }
 
+/** 收起行级「⋯」操作菜单 */
+function closeRowMenu() {
+  const menu = $('#sessionRowMenu');
+  menu.hidden = true;
+  menu.innerHTML = '';
+  delete menu.dataset.rowId;
+}
+
+/** 打开行级「⋯」操作菜单:fixed 定位到触发按钮右下,同一时间只开一个;再点同一行 ⋯ 收起 */
+function openRowMenu(button, item, archived) {
+  const menu = $('#sessionRowMenu');
+  if (!menu.hidden && menu.dataset.rowId === item.id) return closeRowMenu();
+  // 菜单项按行类型渲染:普通会话=重命名/置顶(随状态)/归档/移除;归档会话=恢复/彻底移除(移除自带二次确认)
+  menu.innerHTML = archived
+    ? `<button type="button" role="menuitem" data-row-action="restore">恢复到对话列表</button><button type="button" role="menuitem" data-row-action="remove">彻底移除</button>`
+    : `<button type="button" role="menuitem" data-row-action="rename">重命名</button><button type="button" role="menuitem" data-row-action="pin">${item.pinned === true ? '取消置顶' : '置顶'}</button><button type="button" role="menuitem" data-row-action="archive">归档</button><button type="button" role="menuitem" data-row-action="remove">从工作台移除</button>`;
+  menu.dataset.rowId = item.id;
+  const rect = button.getBoundingClientRect();
+  menu.hidden = false;
+  // 右缘对齐按钮右缘、贴按钮下方;translateX(-100%) 免量菜单宽度
+  menu.style.left = `${rect.right}px`;
+  menu.style.top = `${rect.bottom + 2}px`;
+  menu.style.transform = 'translateX(-100%)';
+  // 每次打开重绑菜单项,闭包携带触发行的 ⋯ 按钮与会话数据
+  menu.querySelectorAll('[data-row-action]').forEach(actionButton => actionButton.onclick = () => {
+    closeRowMenu();
+    runRowAction(actionButton.dataset.rowAction, button, item);
+  });
+}
+
+/** 执行行级菜单动作:重命名走行内编辑,其余复用既有操作函数(移除含二次确认) */
+function runRowAction(action, moreButton, item) {
+  if (action === 'rename') return renameSessionInline(moreButton.closest('.session-item'), item.id, item.displayName || item.name);
+  if (action === 'pin') return togglePinSession(item.id, item.pinned === true).catch(error => toast(error.message));
+  if (action === 'archive') return archiveSession(item.id).catch(error => toast(error.message));
+  if (action === 'restore') return restoreSession(item.id).catch(error => toast(error.message));
+  if (action === 'remove') return removeSession(item.id).catch(error => toast(error.message));
+}
+
 // 「⋯」更多菜单:点击项执行后收起,点击外部或 Esc 收起(交互模式同文件树右键菜单)
 $('#moreToggle').addEventListener('click', toggleMoreMenu);
 $('#moreBulk').addEventListener('click', () => { closeMoreMenu(); enterBulkMode(); });
@@ -348,8 +377,13 @@ document.addEventListener('click', event => {
   const menu = $('#moreMenu');
   // moreToggle 不在菜单内,需显式排除,否则展开它的那次点击会立即触发外点收起
   if (!menu.hidden && !menu.contains(event.target) && !$('#moreToggle').contains(event.target)) closeMoreMenu();
+  // 行级菜单:点击 ⋯ 本身交给其 onclick 切换,其余外部点击收起
+  const rowMenu = $('#sessionRowMenu');
+  if (!rowMenu.hidden && !rowMenu.contains(event.target) && !event.target.closest('[data-session-menu]')) closeRowMenu();
 });
-document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMoreMenu(); });
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') { closeMoreMenu(); closeRowMenu(); }
+});
 
 // 搜索框输入即时过滤:数据已在内存缓存,直接重渲染,不发请求(脚本于 body 末尾加载,DOM 已就绪,模式同 state.mjs)
 $('#sessionSearch').addEventListener('input', event => {
