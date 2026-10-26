@@ -247,7 +247,7 @@ export function interruptCurrentSession() {
 }
 
 
-/** 重命名对话:行内编辑(Tauri WebView2 不支持 window.prompt)。Enter 确认;Escape 取消;失焦且未改动时恢复原显示 */
+/** 重命名对话:行内编辑(Tauri WebView2 不支持 window.prompt)。Enter 或失焦提交(匹配输入习惯),Escape 取消;值未改动失焦恢复原显示 */
 function renameSessionInline(row, id, currentName) {
   const nameBox = row?.querySelector('.session-row-title');
   if (!nameBox) return;
@@ -275,7 +275,8 @@ function renameSessionInline(row, id, currentName) {
   };
   // 阻止点击输入框冒泡到会话行触发打开
   input.onclick = event => event.stopPropagation();
-  input.onblur = () => { if (input.value === currentName) restore(); };
+  // 失焦即提交:已改动走与 Enter 相同的提交路径(submit 先解绑 onblur,请求进行中失焦不误触),未改动恢复原显示
+  input.onblur = () => submit();
 }
 
 /** 切换置顶状态并刷新列表(置顶会话由后端排序置前) */
