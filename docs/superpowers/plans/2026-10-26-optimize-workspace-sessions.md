@@ -323,3 +323,10 @@ async function archiveSession(id)                    // POST /api/workspace/sess
 - 任务 3.1 样式落点:index.html 内联 `<style>` → `src/styles/sessions.css`(该块仅管理页样式,构建 CSS 会覆盖内联;见 rulings style-location)。
 - 任务 3.2 重命名:原生 `prompt()` → 行内 input 编辑(Tauri WebView2 不支持 prompt;见 rulings no-window-prompt)。
 - 任务 3.4 归档行时间:显示最后活动时间(`lastUsedAt||createdAt`)而非计划所写「归档时间」——规格未要求归档时间,后端无 `archivedAt` 字段;规格优先于计划文字,判定可接受(审查复核确认)。
+
+## 任务 5.3 `<!-- comet-task-ref:77b6f13d-4a7c-4c21-8fc1-f3147edb6485 -->` 会话行操作收进行级"⋯"菜单(用户验收澄清)
+
+**Files:**
+- Modify: `index.html`(#sessionRowMenu 共享行菜单容器)、`src/workspace/activity.mjs`(行尾常显 ⋯,移除悬停按钮组与 ×)、`src/workspace/sessions.mjs`(openRowMenu/runRowAction,菜单项复用既有操作函数)、`src/styles/sessions.css`、`src/styles/layout.css`
+**要点:** 普通会话菜单=重命名/置顶切换/归档/移除(自带二次确认);归档会话菜单=恢复/彻底移除;深浅主题变量;点击外部与 Esc 收起。
+**验证:** 走查菜单展开/各项操作/外点收起;npm test 无回归。
