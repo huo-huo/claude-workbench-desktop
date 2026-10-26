@@ -24,6 +24,11 @@
 .session-ops .session-op{width:21px;height:21px;border:0;background:transparent;color:#85867d;font-size:11px;cursor:pointer;padding:0;display:grid;place-items:center}
 .session-item:hover .session-ops .session-op,.session-ops .session-op:focus-visible{background:#deddd5}
 .session-item:hover .session-ops{opacity:1}
+/* 行内重命名输入框:贴合行内尺寸,聚焦描边与提示词输入一致 */
+.session-rename-input{flex:1;min-width:0;border:1px solid #98aa67;background:var(--surface);color:var(--ink);padding:2px 5px;font:500 10px var(--sans);outline:none}
+.session-rename-input:focus{box-shadow:0 0 0 2px #9caf6c33}
+/* 编辑中屏蔽该行其他按钮,防止误触置顶/归档/移除 */
+.session-item.is-renaming .session-op,.session-item.is-renaming .session-remove{pointer-events:none}
 /* 会话行信息主次:名称与状态为一级,时间与模式收进 small 弱化 */
 .session-row-title{min-width:0;display:flex;align-items:center;gap:5px}
 .session-row-title strong{flex:1;min-width:0}

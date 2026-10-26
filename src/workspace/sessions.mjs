@@ -55,7 +55,7 @@ export async function refreshSessions() {
   document.querySelectorAll('[data-rename-session]').forEach(button => button.onclick = event => {
     event.stopPropagation();
     const session = sessions.find(x => x.id === button.dataset.renameSession);
-    if (session) renameSessionPrompt(session.id, session.displayName || session.name).catch(error => toast(error.message));
+    if (session) renameSessionInline(button, session.displayName || session.name);
   });
   document.querySelectorAll('[data-pin-session]').forEach(button => button.onclick = event => {
     event.stopPropagation();
@@ -134,12 +134,35 @@ export function interruptCurrentSession() {
 }
 
 
-/** 重命名对话:原生 prompt 预填当前显示名,取消(返回 null)不动作;空串由后端回退自动名 */
-async function renameSessionPrompt(id, currentName) {
-  const customName = window.prompt('重命名对话', currentName);
-  if (customName === null) return;
-  await api('/api/workspace/session/rename', { method: 'POST', body: { id, customName } });
-  await refreshSessions();
+/** 重命名对话:行内编辑(Tauri WebView2 不支持 window.prompt)。Enter 确认;Escape 取消;失焦且未改动时恢复原显示 */
+function renameSessionInline(button, currentName) {
+  const nameBox = button.closest('.session-item')?.querySelector('.session-row-title');
+  if (!nameBox) return;
+  const item = nameBox.closest('.session-item');
+  const original = nameBox.innerHTML;
+  item.classList.add('is-renaming');
+  nameBox.innerHTML = `<input class="session-rename-input" type="text" value="${escapeHtml(currentName)}" aria-label="重命名对话">`;
+  const input = nameBox.querySelector('input');
+  input.focus();
+  input.select();
+  // 恢复原行显示并解除编辑态(状态节点随 innerHTML 还原,轮询恢复可见)
+  const restore = () => { input.onblur = null; item.classList.remove('is-renaming'); nameBox.innerHTML = original; };
+  // 提交:未改动直接恢复不请求;空串仍交后端回退自动名;请求期间保留编辑态,完成或失败后恢复
+  const submit = () => {
+    input.onblur = null;
+    if (input.value === currentName) return restore();
+    api('/api/workspace/session/rename', { method: 'POST', body: { id: button.dataset.renameSession, customName: input.value } })
+      .then(restore)
+      .then(() => refreshSessions())
+      .catch(error => { restore(); toast(error.message); });
+  };
+  input.onkeydown = event => {
+    if (event.key === 'Enter') { event.preventDefault(); submit(); }
+    if (event.key === 'Escape') { event.preventDefault(); restore(); }
+  };
+  // 阻止点击输入框冒泡到会话行触发打开
+  input.onclick = event => event.stopPropagation();
+  input.onblur = () => { if (input.value === currentName) restore(); };
 }
 
 /** 切换置顶状态并刷新列表(置顶会话由后端排序置前) */
