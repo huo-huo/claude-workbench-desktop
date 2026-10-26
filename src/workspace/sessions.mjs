@@ -150,13 +150,13 @@ function toggleBulkSelectAll() {
   renderSessions();
 }
 
-/** 批量删除所选:confirm 确认后请求 remove-batch 并 toast 汇总;请求期间禁用删除按钮防重复提交 */
+/** 批量删除所选:自定义确认模态确认后请求 remove-batch 并 toast 汇总;确认前置灰删除按钮防模态期间重复进入 */
 async function removeBulkSelected() {
   const ids = [...app.bulkSelected];
   if (!ids.length) return toast('先勾选要移除的对话');
-  if (!confirm(`确认移除所选 ${ids.length} 条对话?Claude 记录将保留`)) return;
   $('#bulkDelete').disabled = true;
   try {
+    if (!await confirmAction(`确认移除所选 ${ids.length} 条对话?Claude 记录将保留`)) return;
     const result = await api('/api/workspace/sessions/remove-batch', { method: 'POST', body: { ids } });
     const failed = result.failed || [];
     // 汇总:成功条数 + 失败清单(如有);删除作用于全部勾选项,与当前搜索过滤无关
@@ -292,9 +292,34 @@ async function archiveSession(id) {
   toast('已归档');
 }
 
+/** 自定义确认模态:替代原生 confirm(Tauri WebView2 下样式可控、层级高于行菜单);resolve true=确认 false=取消 */
+function confirmAction(message) {
+  return new Promise(resolve => {
+    const backdrop = $('#sessionConfirmBackdrop');
+    const ok = $('#sessionConfirmOk');
+    const cancel = $('#sessionConfirmCancel');
+    // 关闭时解绑全部入口,避免悬空的 onclick/keydown 影响下一次弹窗
+    const close = value => {
+      backdrop.hidden = true;
+      ok.onclick = cancel.onclick = backdrop.onclick = null;
+      document.removeEventListener('keydown', onKey);
+      resolve(value);
+    };
+    const onKey = event => { if (event.key === 'Escape') close(false); };
+    $('#sessionConfirmMessage').textContent = message;
+    backdrop.hidden = false;
+    ok.onclick = () => close(true);
+    cancel.onclick = () => close(false);
+    // 点击遮罩空白处取消;点击卡片内部不关闭
+    backdrop.onclick = event => { if (event.target === backdrop) close(false); };
+    document.addEventListener('keydown', onKey);
+    ok.focus();
+  });
+}
+
 export async function removeSession(id) {
-  // 删除统一二次确认:单条 × 与归档面板「彻底移除」共用本函数,一处生效;取消不做任何变更(批量删除另有确认)
-  if (!confirm('确认从工作台移除该对话?Claude 记录将保留')) return;
+  // 删除统一二次确认(自定义模态):单条 × 与归档面板「彻底移除」共用本函数,一处生效;取消不做任何变更(批量删除另有确认)
+  if (!await confirmAction('确认从工作台移除该对话?Claude 对话记录将保留')) return;
   const result = await api('/api/workspace/session/remove', { method: 'POST', body: { id } });
   if (app.activeSession?.id === id) {
     clearTimeout(app.terminalReconnectTimer);

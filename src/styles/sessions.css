@@ -41,6 +41,14 @@
 .session-row-menu{position:fixed;z-index:20;min-width:112px;padding:4px;background:var(--surface);border:1px solid var(--line);box-shadow:0 8px 24px #15161024}
 .session-row-menu button{width:100%;border:0;background:transparent;padding:7px 10px;text-align:left;color:var(--ink);font-size:10px;cursor:pointer;white-space:nowrap}
 .session-row-menu button:hover{background:var(--hover-bg)}
+/* 删除确认模态:遮罩 + 居中卡片,层级高于行菜单;变量随深浅主题,红底确认按钮两主题通用 */
+.session-confirm-backdrop{position:fixed;inset:0;z-index:30;background:#20211e33;display:grid;place-items:center;padding:20px}
+.session-confirm{width:min(340px,92vw);background:var(--surface);border:1px solid var(--line);box-shadow:0 12px 32px #1516102e;padding:16px}
+.session-confirm p{margin:0;font-size:11px;line-height:1.6;color:var(--ink);overflow-wrap:anywhere}
+.session-confirm-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:14px}
+.session-confirm-actions .btn{padding:6px 12px;font-size:10px}
+.session-confirm-danger{background:var(--red);border-color:var(--red);color:#faf9f3}
+.session-confirm-danger:hover{background:#9a422f;border-color:#9a422f}
 /* 归档行是纯展示 span,不可点击打开,去掉悬停高亮 */
 .archive-row{cursor:default}
 .archive-row:hover{background:transparent}

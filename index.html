@@ -126,6 +126,7 @@
   <div class="workspace-context-menu" id="projectContextMenu" hidden><button id="hideProjectFromList">从项目列表隐藏</button></div>
   <div class="workspace-context-menu" id="fileTreeContextMenu" role="menu" hidden><button id="fileTreeRevealPath" role="menuitem">在文件夹中显示</button><button id="fileTreeAddToConversation" role="menuitem">添加到对话</button><button id="fileTreeCopyPath" role="menuitem">复制路径</button><div class="menu-separator" role="separator"></div><button id="fileTreeRecycle" class="menu-danger" role="menuitem">移到回收站</button></div>
   <div class="session-row-menu" id="sessionRowMenu" role="menu" hidden></div>
+  <div class="session-confirm-backdrop" id="sessionConfirmBackdrop" hidden><section class="session-confirm" role="alertdialog" aria-modal="true" aria-labelledby="sessionConfirmMessage"><p id="sessionConfirmMessage"></p><div class="session-confirm-actions"><button class="btn" type="button" id="sessionConfirmCancel">取消</button><button class="btn session-confirm-danger" type="button" id="sessionConfirmOk">确认</button></div></section></div>
   <div class="toast" id="toast" role="status"></div>
   <script type="module" src="/src/admin/index.mjs"></script>
   <script type="module" src="/src/workstation.js"></script>
