@@ -1,7 +1,7 @@
 # 验证报告:optimize-workspace-sessions
 
 - 日期:2026-10-26
-- 验证模式:full(规模评估:12 任务 / 2 delta specs / 18 变更文件)
+- 验证模式:full(规模评估:18 任务 / 2 delta specs / 22 变更文件)
 - 基线:d66dc2822104a07be6bcb96308452f809c7710f5 → HEAD(14 提交,含 docs 产物)
 - 工作区:worktree `.worktrees/optimize-workspace-sessions`(分支 `comet/optimize-workspace-sessions`)
 
@@ -9,9 +9,9 @@
 
 | 维度 | 状态 |
 | --- | --- |
-| Completeness | 12/12 任务勾选;2 能力 8 requirement 全部有实现与验证证据 |
-| Correctness | 15 个规格场景全部通过(自动化走查 9 用例 + 后端单测);0 CRITICAL/IMPORTANT |
-| Coherence | design 11 项决策全部落实;3 条实施偏离已记录且与规格无矛盾 |
+| Completeness | 18/18 任务勾选;2 能力 9 requirement 全部有实现与验证证据 |
+| Correctness | 23 个规格场景全部通过(自动化走查 12 用例 + 后端单测);0 CRITICAL/IMPORTANT |
+| Coherence | design 14 项决策全部落实;3 条实施偏离已记录且与规格无矛盾 |
 
 ## 检查结果(full 七项)
 
@@ -54,6 +54,31 @@
 
 用户两轮反馈驱动:①重命名"不能保存"根因是失焦不提交(ecd8be8 修复,见上);②删除确认改用自定义弹窗(任务 5.4,提交 3d62168):通用模态 #sessionConfirmBackdrop(遮罩+卡片+危险样式确认按钮,Esc/遮罩/取消关闭,role=alertdialog),单条移除/批量删除/归档彻底移除全部改走模态,批量删除禁用提前至确认前防双触发。回归:npm test 158/0;走查 12/12(单条移除用例改为模态取消/确认两路径,批量用例改为模态确认)。
 
+## 用户验收修复记录(第四轮 verify-fail)
+
+用户判定「继续上次对话」按钮冗余(点已有会话本身即继续)、会话行「· 新建/继续/选择已有」创建方式标签冗余。修复为任务 5.5:
+
+- 删除会话区头部 `#continueSession` 按钮、事件绑定、禁用逻辑与 `continueLastConversation`;`app.projectSessions` 随之成为孤儿,一并删除
+- 会话行第二行只保留最后活动时间,右侧「会话在线/工作中/已结束」状态徽标不变
+- 后端 `mode=continue` 保留,仅作为无 CLI 会话 ID 旧会话点开时的兜底(`openSavedSession`),`--continue` 分支与 statusline 兜底匹配未删除
+- 回归:`npm test` 158 pass / 0 fail;vite build 成功
+
+## 最终集成审查与修复(本轮)
+
+独立审查者对 `d66dc28 → 当前工作区` 的全部 22 个变更文件做最终集成审查,结论 NEEDS_FIXES(0 Critical / 1 Important),修复后复查通过:
+
+- **I-1(Important,已修复)**:会话行「⋯」菜单固定向下展开,长列表底部与归档面板底部的菜单越出视口且无法滚动,导致重命名/置顶/归档/移除不可点。修复为任务 5.6:`openRowMenu` 先量菜单实际尺寸,下方空间不足时向上翻转,左右边缘夹紧到视口内(参考 `files.mjs` 既有做法);复原审查确认 ADDRESSED
+- **D-1(需用户决策,已定口径)**:规格「任意会话条目可重命名」措辞过宽,归档面板行为只有恢复/彻底移除。按用户选择收紧规格为「主列表中的任意会话条目」,不改代码
+- 文档同步:本报告计数更新为 18 任务 / 9 requirement / 23 场景 / 14 项决策;design 风险条「恢复时校验项目仍登记」改为按 `projectPath` 归属分组的实际实现;`sessions.css` 注释去掉已移除的「模式」
+
+**本轮记录但未修复(用户确认本轮不处理,不影响验收)**:
+
+1. 批量删除/归档命中当前打开会话时,前端不释放终端与 `app.activeSession`(单条移除有清理)
+2. 行内重命名 Enter 未过滤输入法组合态(`isComposing`/keyCode 229)
+3. 搜索框继承列表头 `text-transform:uppercase` 与字距
+4. 顶部「⋯」与行级「⋯」菜单可能同时打开,菜单打开后未接管焦点
+5. `#bulkDelete` 的 disabled 无视觉反馈(非本轮引入)
+
 ## Final Assessment
 
-无 CRITICAL/IMPORTANT 问题,3 条已接受偏差均有记录与理由。**All checks passed. Ready for archive.**
+最终集成审查的 0 Critical / 1 Important 问题已修复并复查通过;9 条 requirement、23 个场景全部有实现与验证证据;3 条实施偏离与 5 条 Minor 均有记录与理由。**All checks passed. Ready for archive.**

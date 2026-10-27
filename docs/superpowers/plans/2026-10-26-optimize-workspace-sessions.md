@@ -2,6 +2,7 @@
 change: optimize-workspace-sessions
 design-doc: docs/openspec/changes/optimize-workspace-sessions/design.md
 base-ref: d66dc2822104a07be6bcb96308452f809c7710f5
+archived-with: 2026-10-27-optimize-workspace-sessions
 ---
 <!-- comet-task-authority: docs/openspec/changes/optimize-workspace-sessions/tasks.md -->
 
@@ -337,3 +338,17 @@ async function archiveSession(id)                    // POST /api/workspace/sess
 - Modify: `index.html`(通用确认模态容器)、`src/workspace/sessions.mjs`(confirmAction(message)→Promise<boolean>,三类删除改走模态)、`src/styles/sessions.css`(遮罩+卡片,深浅主题变量)
 **要点:** 参考既有浮层(fileTreeContextMenu)与 .menu-danger 样式;Esc/遮罩点击/取消按钮=取消;确认按钮为危险样式;替换原生 confirm(会话区)。
 **验证:** 走查三类删除弹窗的取消/确认;npm test 无回归。
+
+## 任务 5.5 `<!-- comet-task-ref:56f21b30-ab73-4d75-8250-bc50887c91fa -->` 移除「继续上次对话」按钮与行内创建方式标签(用户验收增补)
+
+**Files:**
+- Modify: `index.html`(会话区头部只留 `#newSession`)、`src/styles/sessions.css`(`.session-actions` 改单列并删除禁用态死样式)、`src/workspace/init.mjs`(移除绑定与 import)、`src/workspace/preferences.mjs`(移除禁用逻辑)、`src/workspace/sessions.mjs`(删除 continueLastConversation 及 projectSessions 孤儿)、`src/workspace/activity.mjs`(行第二行只留最后活动时间)、`src/workspace/state.mjs`(删除 projectSessions 字段)
+**要点:** 点已有会话本身即继续,按钮与创建方式标签冗余;后端 `mode=continue` 保留为无 CLI 会话 ID 旧会话的兜底,不得删除 `--continue` 分支。
+**验证:** 头部单按钮占满宽度、行内不再出现「新建/继续/选择已有」、旧会话点开可续接;npm test 与 vite build 通过。
+
+## 任务 5.6 `<!-- comet-task-ref:f073638c-77de-4089-9219-0826e972aa27 -->` 会话行「⋯」菜单视口夹紧与向上翻转(集成审查修复)
+
+**Files:**
+- Modify: `src/workspace/sessions.mjs`(`openRowMenu` 先量菜单尺寸,下方空间不足时向上翻转,左右边缘夹紧到视口内)、`src/styles/sessions.css`(第 60 行注释去掉已移除的「模式」)
+**要点:** 参考 `src/workspace/files.mjs:15-19` 的夹紧写法;保持同一时间只开一个菜单、再点同一行收起、外点/Esc 收起等既有行为不变。
+**验证:** 列表滚到底部打开菜单四项均可见可点且不越界;npm test 与 vite build 通过。

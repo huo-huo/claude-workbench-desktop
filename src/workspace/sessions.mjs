@@ -174,8 +174,6 @@ export async function refreshSessions() {
   const result = await api('/api/workspace/sessions');
   const sessions = result.sessions || [];
   syncSessionActivityMonitors(sessions);
-  const currentProjectKey = sessionGroupKey(app.projectPath);
-  app.projectSessions = sessions.filter(item => sessionGroupKey(item.projectPath) === currentProjectKey);
   updateTerminalEmptyState();
   // 缓存全量列表后统一走 renderSessions,保证搜索过滤与刷新共用单一渲染入口
   app.cachedSessions = sessions;
@@ -194,14 +192,6 @@ export async function startSession(mode, saved = null) {
     $('#terminalEmpty').hidden = true;
     Promise.all([refreshProjects(), refreshSessions()]).catch(() => {});
   } catch (error) { toast(error.message); }
-}
-
-export async function continueLastConversation() {
-  if (!app.projectPath) return toast('先选择项目文件夹');
-  const latest = [...app.projectSessions].sort((a, b) => String(b.lastUsedAt || b.createdAt).localeCompare(String(a.lastUsedAt || a.createdAt)))[0];
-  if (latest?.status === 'running') return connectTerminal(latest);
-  if (latest?.sessionId) return startSession('resume', latest);
-  return startSession(latest?.mode === 'picker' ? 'picker' : 'continue', latest || null);
 }
 
 export async function openSavedSession(session) {
@@ -364,7 +354,7 @@ function closeRowMenu() {
   delete menu.dataset.rowId;
 }
 
-/** 打开行级「⋯」操作菜单:fixed 定位到触发按钮右下,同一时间只开一个;再点同一行 ⋯ 收起 */
+/** 打开行级「⋯」操作菜单:fixed 定位到触发按钮右下方,空间不足时向上翻转并左右夹紧;同一时间只开一个,再点同一行 ⋯ 收起 */
 function openRowMenu(button, item, archived) {
   const menu = $('#sessionRowMenu');
   if (!menu.hidden && menu.dataset.rowId === item.id) return closeRowMenu();
@@ -374,10 +364,19 @@ function openRowMenu(button, item, archived) {
     : `<button type="button" role="menuitem" data-row-action="rename">重命名</button><button type="button" role="menuitem" data-row-action="pin">${item.pinned === true ? '取消置顶' : '置顶'}</button><button type="button" role="menuitem" data-row-action="archive">归档</button><button type="button" role="menuitem" data-row-action="remove">从工作台移除</button>`;
   menu.dataset.rowId = item.id;
   const rect = button.getBoundingClientRect();
+  // 必须先取消 hidden 再量尺寸:隐藏状态下 offsetWidth/offsetHeight 恒为 0
   menu.hidden = false;
-  // 右缘对齐按钮右缘、贴按钮下方;translateX(-100%) 免量菜单宽度
-  menu.style.left = `${rect.right}px`;
-  menu.style.top = `${rect.bottom + 2}px`;
+  const menuHeight = menu.offsetHeight;
+  const menuWidth = menu.offsetWidth;
+  // 纵向:默认贴按钮下方展开;下方剩余空间不足时翻转到按钮上方,再夹紧顶部不越界
+  let top = rect.bottom + 2;
+  if (top + menuHeight > window.innerHeight - 8) top = rect.top - menuHeight - 2;
+  top = Math.max(8, top);
+  // 横向:沿用 translateX(-100%) 让菜单右缘对齐按钮右缘,再把 left 夹紧到 [8+菜单宽, innerWidth-8]
+  // 这样左边缘(left - 菜单宽)≥8,右边缘(left)≤innerWidth-8,避免贴边溢出
+  const left = Math.max(8 + menuWidth, Math.min(rect.right, window.innerWidth - 8));
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
   menu.style.transform = 'translateX(-100%)';
   // 每次打开重绑菜单项,闭包携带触发行的 ⋯ 按钮与会话数据
   menu.querySelectorAll('[data-row-action]').forEach(actionButton => actionButton.onclick = () => {

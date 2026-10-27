@@ -5,7 +5,7 @@ import { fitTerminal } from './terminal.mjs';
 import { setTerminalFontSize, updateProjectLabels } from './preferences.mjs';
 import { refreshProjects, selectProject, hideProjectFromList, closeProjectContextMenu, renderProjects } from './projects.mjs';
 import {
-  refreshSessions, startSession, continueLastConversation,
+  refreshSessions, startSession,
   closeCurrentSession, interruptCurrentSession,
 } from './sessions.mjs';
 import { closeSessionActivityMonitors, refreshSessionStatuses } from './activity.mjs';
@@ -72,7 +72,6 @@ function wireSessions() {
   $('#openStatuslineSettings').addEventListener('click', () => openStatuslineSettings());
   $('#newSession').addEventListener('click', () => startSession('new'));
   $('#newSessionEmpty').addEventListener('click', () => startSession('new'));
-  $('#continueSession').addEventListener('click', continueLastConversation);
   $('#refreshSessions').addEventListener('click', () => refreshSessions().catch(error => toast(error.message)));
   $('#closeSession').addEventListener('click', closeCurrentSession);
   $('#stopSession').addEventListener('click', interruptCurrentSession);

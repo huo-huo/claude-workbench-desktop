@@ -2,6 +2,8 @@
 comet_change: optimize-workspace-sessions
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-10-27-optimize-workspace-sessions
+status: final
 ---
 
 # 设计:优化项目与会话区域
@@ -47,6 +49,10 @@ canonical_spec: openspec
 12. **管理操作收进"⋯"入口**——"批量管理"与"查看归档"收进列表头"⋯"更多菜单,点击展开、点击项执行并收起、点击外部关闭(参考既有 fileTreeContextMenu 交互);搜索框与刷新保持常显(高频)。理由:窄侧栏常显按钮过多导致拥挤与重叠,管理是低频操作。
 13. **删除操作统一二次确认**——单条移除与归档面板彻底移除补 confirm(文案说明 Claude 记录保留),与批量删除既有确认语义一致。
 
+用户验收阶段增补(第二轮 verify-fail 后):
+
+14. **移除「继续上次对话」按钮与会话行创建方式标签**——用户判定:点击已有会话本身就是继续,头部按钮冗余;会话行第二行只保留最后活动时间,右侧"会话在线/已结束"状态保留。后端 `mode=continue` 仍保留,仅作为无 CLI 会话 ID 旧会话点开时的兜底(`openSavedSession`),因此不删除 `--continue` 分支与 statusline 的兜底匹配逻辑。
+
 ## 测试策略
 
 - **后端**:新增 `tests/workspace-state.test.mjs`(customName 回退、旧数据兼容、pinned 排序、archived 过滤、rename/pin/archive 原子写回);扩展 `tests/server-routes.test.mjs`(三个新路由、remove-batch 含不存在 id 与在线会话路径)
@@ -59,7 +65,7 @@ canonical_spec: openspec
 - [批量删除中途失败] → 逐个执行、汇总成功/失败清单返回,失败项保留在列表;不回滚已删除项
 - [全量重绘丢勾选/滚动位置] → 勾选集合入 app 状态并在重绘后恢复;滚动位置维持现状策略
 - [搜索大小写] → 统一 `toLowerCase()` 匹配
-- [归档会话被项目隐藏逻辑(hiddenProjects)波及] → 归档过滤独立于项目隐藏;恢复时校验项目仍登记,未登记则恢复到最近已知项目分组
+- [归档会话被项目隐藏逻辑(hiddenProjects)波及] → 归档过滤独立于项目隐藏;恢复时按记录的 `projectPath` 回到其所属分组(分组按路径生成,不要求项目仍登记在工作区列表)
 
 ## Migration Plan
 

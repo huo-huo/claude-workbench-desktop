@@ -52,7 +52,6 @@ export function updateTerminalEmptyState() {
     : '先添加一个项目文件夹，再新建对话。对话会记录所属文件夹和创建时间。';
   $('#chooseProjectEmpty').textContent = hasProject ? '添加另一个项目' : '＋ 添加项目文件夹';
   $('#newSessionEmpty').hidden = !hasProject;
-  $('#continueSession').disabled = !hasProject;
 }
 
 /** 设置终端字号并持久化；范围限制为 10-24px */

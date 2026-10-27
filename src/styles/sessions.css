@@ -1,6 +1,5 @@
-.session-actions{padding:9px 10px;border-bottom:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.session-actions{padding:9px 10px;border-bottom:0;display:grid;grid-template-columns:1fr;gap:6px}
 .session-actions .btn{text-align:center;padding-left:5px;padding-right:5px;font-size:9px;white-space:nowrap}
-.session-actions .btn:disabled{opacity:.45;cursor:not-allowed}
 /* 批量操作栏:已选计数与全选/删除/退出 */
 .bulk-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 13px;border-bottom:1px solid var(--line)}
 .bulk-bar>span{font:9px var(--mono);color:var(--muted)}
@@ -58,7 +57,7 @@
 .session-rename-input:focus{box-shadow:0 0 0 2px #9caf6c33}
 /* 编辑中屏蔽行尾「⋯」,防止编辑期间误开操作菜单 */
 .session-item.is-renaming .session-more{pointer-events:none}
-/* 会话行信息主次:名称与状态为一级,时间与模式收进 small 弱化 */
+/* 会话行信息主次:名称与状态为一级,时间收进 small 弱化 */
 .session-row-title{min-width:0;display:flex;align-items:center;gap:5px}
 .session-row-title strong{flex:1;min-width:0}
 .pin-mark{flex:none;font-size:9px;line-height:1}

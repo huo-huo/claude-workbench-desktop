@@ -1,10 +1,9 @@
-# session-list-management 变更规格
+# session-list-management Specification
 
 ## Purpose
-
 让用户在项目与会话列表中高效管理历史会话:通过搜索过滤快速定位、自定义重命名取代自动命名、置顶常用会话、归档闲置会话、批量删除冗余会话,并在多会话场景下保持列表操作稳定流畅。
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: 会话搜索过滤
 
@@ -27,7 +26,7 @@
 
 ### Requirement: 会话自定义重命名
 
-用户 SHALL 能对任意会话条目进行重命名,重命名后的名称立即在列表中生效,并持久保存到本机;应用重启后仍显示自定义名称。重命名 SHALL 保留原会话的打开与移除行为,不改变 Claude 原始对话记录。
+用户 SHALL 能对主列表中的任意会话条目进行重命名,重命名后的名称立即在列表中生效,并持久保存到本机;应用重启后仍显示自定义名称。重命名 SHALL 保留原会话的打开与移除行为,不改变 Claude 原始对话记录。
 
 #### Scenario: 重命名会话
 

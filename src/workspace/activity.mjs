@@ -23,13 +23,12 @@ export function sessionStatusMarkup(session, activity = sessionActivityFor(sessi
 }
 
 export function sessionRowMarkup(item) {
-  const mode = item.mode === 'continue' ? '继续' : item.mode === 'picker' ? '选择已有' : '新建';
   const pinned = item.pinned === true;
   // 批量模式行首加复选框;checked 由 app.bulkSelected 恢复(innerHTML 全量重建后不丢勾选)
   const bulkCheck = app.bulkMode ? `<input type="checkbox" class="session-bulk-check" data-bulk-id="${escapeHtml(item.id)}" aria-label="选择对话"${app.bulkSelected.has(item.id) ? ' checked' : ''}>` : '';
   // 标题用显示名(自定义名优先,回退自动名);时间取最后活动时间;置顶行加 is-pinned 类与标记
   // 行内操作统一收进行尾常显「⋯」菜单(sessions.mjs 按会话状态渲染菜单项并绑定),深浅主题下均可辨
-  return `<div class="session-item${pinned ? ' is-pinned' : ''}" data-session-pinned="${pinned}">${bulkCheck}<button class="session-row ${app.activeSession?.id === item.id ? 'active' : ''}" data-session-id="${escapeHtml(item.id)}" title="${escapeHtml(item.displayName || item.name)}"><span class="session-row-title">${pinned ? '<span class="pin-mark" title="已置顶">📌</span>' : ''}<strong>${escapeHtml(item.displayName || item.name)}</strong>${sessionStatusMarkup(item)}</span><small><span class="session-row-detail">${escapeHtml(formatSessionTime(item.lastUsedAt || item.createdAt))} · ${mode}</span></small></button><button class="session-more" data-session-menu="${escapeHtml(item.id)}" title="会话操作" aria-label="会话操作">⋯</button></div>`;
+  return `<div class="session-item${pinned ? ' is-pinned' : ''}" data-session-pinned="${pinned}">${bulkCheck}<button class="session-row ${app.activeSession?.id === item.id ? 'active' : ''}" data-session-id="${escapeHtml(item.id)}" title="${escapeHtml(item.displayName || item.name)}"><span class="session-row-title">${pinned ? '<span class="pin-mark" title="已置顶">📌</span>' : ''}<strong>${escapeHtml(item.displayName || item.name)}</strong>${sessionStatusMarkup(item)}</span><small><span class="session-row-detail">${escapeHtml(formatSessionTime(item.lastUsedAt || item.createdAt))}</span></small></button><button class="session-more" data-session-menu="${escapeHtml(item.id)}" title="会话操作" aria-label="会话操作">⋯</button></div>`;
 }
 
 export async function refreshSessionStatuses() {
