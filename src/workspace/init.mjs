@@ -12,8 +12,10 @@ import { closeSessionActivityMonitors, refreshSessionStatuses } from './activity
 import { refreshTree, runFileTreeContextAction, closeFileTreeContextMenu } from './files.mjs';
 import {
   sendComposerToTerminal, toggleComposer, renderComposerAttachments, addComposerImageFiles,
-  pasteIntoComposer, handleComposerDrop,
+  pasteIntoComposer, handleComposerDrop, autoSizeComposer,
 } from './composer.mjs';
+import { setupToolbarOverflow } from './toolbar.mjs';
+import { matchComposerShortcut } from './shortcuts.mjs';
 import {
   openPromptManager, closePromptManager, setPromptManagerTab, analyzePromptDraft, savePromptDraft,
   resetPromptDraft,
@@ -117,6 +119,7 @@ function wireTerminal() {
   $('#terminalZoomIn').addEventListener('click', () => setTerminalFontSize(app.terminalFontSize + 1, fitTerminal));
   $('#terminalZoomLevel').addEventListener('click', () => setTerminalFontSize(12, fitTerminal));
   setTerminalFontSize(app.terminalFontSize, fitTerminal);
+  setupToolbarOverflow();
 }
 
 /** 输入区、图片附件与拖放绑定 */
@@ -126,6 +129,7 @@ function wireComposer() {
     $('#composerInput').value = '';
     app.composerAttachments = [];
     renderComposerAttachments();
+    autoSizeComposer();
     $('#composerInput').focus();
   });
   $('#sendComposer').addEventListener('click', sendComposerToTerminal);
@@ -138,7 +142,27 @@ function wireComposer() {
     composerImagePicker.value = '';
   });
   composerInput.addEventListener('paste', event => { pasteIntoComposer(event).catch(error => toast(error.message)); });
-  composerInput.addEventListener('keydown', event => { if (event.ctrlKey && event.key === 'Enter') { event.preventDefault(); sendComposerToTerminal(); } });
+  composerInput.addEventListener('input', autoSizeComposer);
+  composerInput.addEventListener('keydown', event => {
+    const shortcut = matchComposerShortcut(event);
+    if (shortcut === 'send') {
+      event.preventDefault();
+      sendComposerToTerminal();
+    } else if (shortcut === 'focus-terminal') {
+      event.preventDefault();
+      // 终端尚未初始化时（无活动会话）至少让输入区失焦
+      if (app.terminal) app.terminal.focus();
+      else composerInput.blur();
+    }
+  });
+  // 文档级 Ctrl+`：焦点在终端内时交给 xterm，避免抢占终端按键
+  document.addEventListener('keydown', event => {
+    if (!$('#promptManagerBackdrop').hidden) return;
+    const inTerminal = $('#terminalHost').contains(document.activeElement);
+    if (matchComposerShortcut(event, { inTerminal }) !== 'toggle-composer') return;
+    event.preventDefault();
+    toggleComposer();
+  });
   composer.addEventListener('dragenter', event => {
     event.preventDefault();
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';

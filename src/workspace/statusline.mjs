@@ -1,6 +1,9 @@
 import { $, escapeHtml } from './core/dom.mjs';
 import { api, toast } from './core/api.mjs';
 import { app } from './state.mjs';
+import {
+  clampStatuslineFontSize, normalizeStatuslineConfig, statuslineItemEnabled,
+} from './statusline-config.mjs';
 
 /** 上次渲染的会话 ID，切换会话后强制重绘一次 */
 let renderedForSession = '';
@@ -29,17 +32,13 @@ const STATUSLINE_ITEMS = [
 ];
 
 const CONFIG_STORAGE_KEY = 'claude-workbench-statusline-config';
-const FONT_RANGE = { min: 8, max: 14, default: 8 };
 
-/** 读取持久化配置；缺省全部显示、字号 8px */
+/** 读取持久化配置；旧版 8px 字号会按当前下限夹紧 */
 function loadStatuslineConfig() {
-  const fallback = { fontSize: FONT_RANGE.default, items: {} };
   try {
-    const raw = JSON.parse(localStorage.getItem(CONFIG_STORAGE_KEY) || '');
-    if (!raw || typeof raw !== 'object') return fallback;
-    return { fontSize: Math.max(FONT_RANGE.min, Math.min(FONT_RANGE.max, Number(raw.fontSize) || FONT_RANGE.default)), items: raw.items && typeof raw.items === 'object' ? raw.items : {} };
+    return normalizeStatuslineConfig(JSON.parse(localStorage.getItem(CONFIG_STORAGE_KEY) || 'null'));
   } catch {
-    return fallback;
+    return normalizeStatuslineConfig(null);
   }
 }
 
@@ -50,14 +49,14 @@ function saveStatuslineConfig(config) {
   } catch { /* 忽略写入异常 */ }
 }
 
-/** 某个显示单元是否启用；未配置过默认显示 */
+/** 某个显示单元是否启用；未配置过时，重复项默认隐藏 */
 function itemEnabled(config, key) {
-  return config.items[key] !== false;
+  return statuslineItemEnabled(config.items, key);
 }
 
 /** 应用字体大小到状态栏区域 */
 function applyFontSize(size) {
-  const clamped = Math.max(FONT_RANGE.min, Math.min(FONT_RANGE.max, size));
+  const clamped = clampStatuslineFontSize(size);
   document.querySelector('.terminal-footer')?.style.setProperty('font-size', `${clamped}px`);
   return clamped;
 }
@@ -393,7 +392,7 @@ document.addEventListener('click', event => {
   const dir = event.target.closest?.('#statuslineFontMinus') ? -1 : event.target.closest?.('#statuslineFontPlus') ? 1 : 0;
   if (!dir) return;
   const config = loadStatuslineConfig();
-  config.fontSize = Math.max(FONT_RANGE.min, Math.min(FONT_RANGE.max, config.fontSize + dir));
+  config.fontSize = clampStatuslineFontSize(config.fontSize + dir);
   saveStatuslineConfig(config);
   applyFontSize(config.fontSize);
   $('#statuslineFontSize').textContent = `${config.fontSize}px`;
