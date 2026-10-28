@@ -35,6 +35,8 @@ export const app = {
   bulkSelected: new Set(), // 批量模式勾选的会话 id;innerHTML 全量重建后据此恢复 checked
   projects: [],
   lastFileOpen: { path: '', at: 0 },
+  // 内置查看器状态：path 非空表示面板已打开
+  viewer: { path: '', name: '', size: 0, modifiedAt: '', content: '', loading: false },
   fileTreeRefreshJob: null,
   fileTreeSignature: '',
   fileTreeInteractionAt: 0,
