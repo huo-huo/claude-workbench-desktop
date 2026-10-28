@@ -66,3 +66,15 @@
 @media(max-width:1100px){.workspace{grid-template-columns:minmax(180px,22%) minmax(0,1fr) minmax(205px,24%)}.workspace.sessions-collapsed{grid-template-columns:38px minmax(0,1fr) minmax(205px,24%)}.workspace.files-collapsed{grid-template-columns:minmax(180px,22%) minmax(0,1fr) 38px}.workspace.sessions-collapsed.files-collapsed{grid-template-columns:38px minmax(0,1fr) 38px}}
 @media(max-width:900px){.aside-bottom>i,.aside-bottom>span{display:none}.aside-bottom .rail-toggle{margin:0}}
 @media(max-width:760px){.workspace{grid-template-columns:minmax(0,1fr)}.session-rail{display:none}.workspace.sessions-collapsed{grid-template-columns:minmax(0,1fr)}.file-inspector{position:absolute;right:0;top:var(--workspace-header-height);bottom:0;width:min(310px,82vw);z-index:4;box-shadow:-12px 0 35px #20211e25}.workspace.files-collapsed .file-inspector{width:38px;box-shadow:none}.workspace.sessions-collapsed.files-collapsed{grid-template-columns:minmax(0,1fr)}.workspace .terminal-column{grid-column:1/-1}.shell.nav-collapsed .workspace,.shell.nav-collapsed .workspace.sessions-collapsed,.shell.nav-collapsed .workspace.files-collapsed,.shell.nav-collapsed .workspace.sessions-collapsed.files-collapsed{grid-template-columns:minmax(0,1fr)}}
+
+/* 文件查看器：与终端同行重叠显示，不改变终端网格行高 */
+.terminal-column .file-viewer{grid-row:2;grid-column:1;z-index:3;display:flex;flex-direction:column;min-height:0;background:var(--terminal-bg);color:var(--terminal-chrome-fg);border-top:1px solid var(--terminal-chrome-line)}
+/* 工具栏隐藏后终端位于第 1 行，查看器随之上移，避免盖住输入区 */
+.terminal-column.toolbar-hidden .file-viewer{grid-row:1}
+.file-viewer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;border-bottom:1px solid var(--terminal-chrome-line);background:var(--terminal-chrome-bg)}
+.file-viewer-title{display:flex;flex-direction:column;min-width:0;gap:2px}
+.file-viewer-title strong{font:600 13px/1.3 var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-viewer-title span{font:9px var(--mono);color:var(--terminal-chrome-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-viewer-actions{display:flex;align-items:center;gap:8px;flex:none}
+.file-viewer-size{font:9px var(--mono);color:var(--terminal-chrome-muted)}
+.file-viewer-body{flex:1;min-height:0;margin:0;padding:10px 12px;overflow:auto;white-space:pre;font:12px/1.6 var(--mono);tab-size:2}

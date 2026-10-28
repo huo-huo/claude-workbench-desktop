@@ -29,8 +29,8 @@ export function workspaceTree(root, requested = '.', depth = 0, budget = { count
   const entries = fs.readdirSync(real, { withFileTypes: true });
   const folders = [], files = [];
   for (const entry of entries) {
+    // 只跳过 Office 临时文件；隐藏文件与隐藏文件夹照常展示
     if (entry.isFile() && entry.name.startsWith('~$')) continue;
-    if (entry.name.startsWith('.') && entry.name !== '.claude') continue;
     if (WORKSPACE_SKIP.has(entry.name.toLowerCase())) continue;
     const fullPath = path.join(real, entry.name);
     let childStat;

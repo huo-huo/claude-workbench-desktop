@@ -5,6 +5,7 @@ import { projectName, updateProjectLabels } from './preferences.mjs';
 import { saveWorkspaceSettings } from './settings.mjs';
 import { refreshSessions } from './sessions.mjs';
 import { refreshTree } from './files.mjs';
+import { closeViewer } from './viewer.mjs';
 
 export async function refreshProjects() {
   const result = await api('/api/workspace/projects');
@@ -71,6 +72,7 @@ export async function hideProjectFromList() {
 
 export async function activateProject(path) {
   app.projectPath = path;
+  closeViewer();
   saveWorkspaceSettings({ projectPath: app.projectPath });
   app.selectedFile = '';
   await refreshProjects();
@@ -90,6 +92,7 @@ export async function selectProject() {
     const result = await api('/api/workspace/select-folder', { method: 'POST', body: {} });
     if (!result.projectPath) return;
     app.projectPath = result.projectPath;
+    closeViewer();
     saveWorkspaceSettings({ projectPath: app.projectPath });
     app.selectedFile = '';
     updateProjectLabels();
