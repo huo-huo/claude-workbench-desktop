@@ -1,0 +1,2015 @@
+# comet-execution: managed-run
+change_id: 5c7e31db-c739-48b4-ab72-3d27ee39f360
+workflow: full
+language: zh-CN
+phase: build
+context_compression: off
+build_mode: subagent-driven-development
+build_pause: null
+subagent_dispatch: confirmed
+tdd_mode: tdd
+review_mode: standard
+isolation: worktree
+verify_mode: null
+auto_transition: true
+base_ref: 2135863108c6cf793189fdb91e4c7593ddbe55bd
+design_doc: docs/openspec/changes/workspace-file-browser/design.md
+plan: docs/superpowers/plans/2026-10-28-workspace-file-browser.md
+verify_result: pending
+verify_failures: 0
+verification_report: null
+branch_status: pending
+created_at: 2026-10-28
+verified_at: null
+archive_confirmation: null
+archived: false
+bound_branch: comet/workspace-file-browser
+direct_override: false
+handoff_context: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+handoff_hash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+classic_profile: null
+classic_migration: null
+run_checkpoint:
+  schema: comet.workflow-run-checkpoint.v1
+  hash: 527875f35ec40fe8b63999bb44a91cf6c099630fc97ff0a53a5520f9fa291e1a
+  run:
+    protocolVersion: 1
+    schemaVersion: 1
+    runId: workspace-file-browser
+    revision: 1
+    workflow:
+      id: comet-classic-full
+      version: "1"
+      hash: ee198afdb53add0c23f98202aae8cdbe4079b9f4ebf7a62ed4ab8411ed591db5
+    definitionHashes:
+      '["comet-classic-full","1"]': ee198afdb53add0c23f98202aae8cdbe4079b9f4ebf7a62ed4ab8411ed591db5
+    initialStateHash: b4ef8687d078a49e4678b17fc137f85d7b86d712535b891f1760239a861a7be8
+    input:
+      change: workspace-file-browser
+      changeDir: docs/openspec/changes/workspace-file-browser
+    state:
+      archiveConfirmation: null
+      archived: false
+      autoTransition: true
+      baseRef: 2135863108c6cf793189fdb91e4c7593ddbe55bd
+      boundBranch: comet/workspace-file-browser
+      branchStatus: pending
+      buildMode: subagent-driven-development
+      buildPause: null
+      checkEpoch: 2
+      classicMigration: null
+      classicProfile: null
+      contextCompression: off
+      createdAt: 2026-10-28
+      designDoc: docs/openspec/changes/workspace-file-browser/design.md
+      directOverride: false
+      handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+      handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+      isolation: worktree
+      language: zh-CN
+      phase: build
+      plan: docs/superpowers/plans/2026-10-28-workspace-file-browser.md
+      reviewMode: standard
+      subagentDispatch: confirmed
+      tddMode: tdd
+      verificationReport: null
+      verifiedAt: null
+      verifyFailures: 0
+      verifyMode: null
+      verifyResult: pending
+      workflow: full
+    status: running
+    sequence: 13
+    actions:
+      - attempt: 1
+        claim:
+          executorId: comet-classic-guard
+          token: portable-b0cf5d8e5e159888d0d2731e3d66dc670a2970dd7d3c1a033453319726b6bd14
+        executionOrigin:
+          workflow:
+            hash: ee198afdb53add0c23f98202aae8cdbe4079b9f4ebf7a62ed4ab8411ed591db5
+            id: comet-classic-full
+            version: "1"
+        id: workspace-file-browser:1
+        input:
+          input:
+            change: workspace-file-browser
+            changeDir: docs/openspec/changes/workspace-file-browser
+          outputs: {}
+        inputHash: 245ea0b2f040390abe63a2c1156a8db20e84b924cd3d6c5724f3856201f5110a
+        outcome:
+          actionId: workspace-file-browser:1
+          attempt: 1
+          claimToken: portable-b0cf5d8e5e159888d0d2731e3d66dc670a2970dd7d3c1a033453319726b6bd14
+          inputHash: 245ea0b2f040390abe63a2c1156a8db20e84b924cd3d6c5724f3856201f5110a
+          outcomeId: 58bbc02a-b873-46e8-b3cf-8ec2cced4196
+          output:
+            event: open-complete
+          status: succeeded
+        protocolVersion: 1
+        receipts:
+          - hash: 6848f97b52070d986a5dbc9260e84901189836456a01ebc707c1e492ed9a83b1
+            outcomeId: 58bbc02a-b873-46e8-b3cf-8ec2cced4196
+        reconciliations: []
+        ref: comet-open
+        requiredCapabilities: []
+        retry: manual
+        runId: workspace-file-browser
+        status: succeeded
+        stepId: full.open
+        type: invoke_skill
+      - attempt: 1
+        claim:
+          executorId: comet-classic-open-revalidate
+          token: portable-6de9b3676320c06d9cb92b84d8bfaa8fc77101ebf165ac254d73063ce06dc698
+        executionOrigin:
+          workflow:
+            hash: ee198afdb53add0c23f98202aae8cdbe4079b9f4ebf7a62ed4ab8411ed591db5
+            id: comet-classic-full
+            version: "1"
+        id: workspace-file-browser:4
+        input:
+          input:
+            change: workspace-file-browser
+            changeDir: docs/openspec/changes/workspace-file-browser
+          outputs:
+            full.open:
+              event: open-complete
+            full.open.confirm:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.open:
+                    event: open-complete
+                  full.open.evidence:
+                    contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                    ref: docs/openspec/changes/workspace-file-browser
+            full.open.evidence:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+        inputHash: 545a70124970bf187d131991cabf91bf76cd8888c330ed3d876fca71c0bf1fc7
+        outcome:
+          actionId: workspace-file-browser:4
+          attempt: 1
+          claimToken: portable-6de9b3676320c06d9cb92b84d8bfaa8fc77101ebf165ac254d73063ce06dc698
+          inputHash: 545a70124970bf187d131991cabf91bf76cd8888c330ed3d876fca71c0bf1fc7
+          outcomeId: workspace-file-browser:4:1:executor-result
+          output:
+            contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+          status: succeeded
+        protocolVersion: 1
+        receipts:
+          - hash: f30e7c79adad5fc8688a1bb1b0b2128ae670fd4bb6dd68e405ff3f37e1ecdf40
+            outcomeId: workspace-file-browser:4:1:executor-result
+        reconciliations: []
+        ref: classic-open-revalidate
+        requiredCapabilities: []
+        retry: manual
+        runId: workspace-file-browser
+        status: succeeded
+        stepId: full.open.revalidate
+        type: call_tool
+      - attempt: 1
+        claim:
+          executorId: comet-classic-state
+          token: portable-20ad59e0f489bdac680f60f59c9b3b911e3c00f3b3f7fbc9549c03723769542c
+        executionOrigin:
+          workflow:
+            hash: ee198afdb53add0c23f98202aae8cdbe4079b9f4ebf7a62ed4ab8411ed591db5
+            id: comet-classic-full
+            version: "1"
+        id: workspace-file-browser:5
+        input:
+          input:
+            change: workspace-file-browser
+            changeDir: docs/openspec/changes/workspace-file-browser
+          outputs:
+            full.open:
+              event: open-complete
+            full.open.confirm:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.open:
+                    event: open-complete
+                  full.open.evidence:
+                    contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                    ref: docs/openspec/changes/workspace-file-browser
+            full.open.evidence:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+            full.open.revalidate:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+        inputHash: 98ff03b1dbfebebe387a48f585463f1acb32a4947b94edaf440a9d59dfe07f48
+        outcome:
+          actionId: workspace-file-browser:5
+          attempt: 1
+          claimToken: portable-20ad59e0f489bdac680f60f59c9b3b911e3c00f3b3f7fbc9549c03723769542c
+          inputHash: 98ff03b1dbfebebe387a48f585463f1acb32a4947b94edaf440a9d59dfe07f48
+          outcomeId: 7d7cd787-6d0b-43cd-878f-41613836d2e7
+          output:
+            handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+            handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+            proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+              的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+              WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+              index.html 的 .terminal-column 内、#terminalHost 之后新增 #fileViewer
+              覆盖层，.terminal-column 设 position:relative，绝对定位覆盖终端区域，不改 Grid
+              行定义，xterm 尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+              上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+              openViewer/closeViewer/renderViewer，src/workspace/state.mjs 增加
+              app.viewer 状态，样式追加到
+              src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩包）继续走
+              openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与 Enter 改为
+              activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+              渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+              Patch：无，delta spec 已覆盖全部行为。测试策略：新增 tests/workspace-files.test.mjs
+              覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm run
+              build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍挡住；覆盖层不触\
+              发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+            requirementsEvidence:
+              contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+              ref: docs/openspec/changes/workspace-file-browser
+            sourceEvidence:
+              contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+              ref: docs/openspec/changes/workspace-file-browser
+          status: succeeded
+        protocolVersion: 1
+        receipts:
+          - hash: ff23e2c08fee4c2594ed7621554e49fc2fd572338b627bb8e97f8180ed081bcd
+            outcomeId: 7d7cd787-6d0b-43cd-878f-41613836d2e7
+        reconciliations: []
+        ref: comet-design
+        requiredCapabilities: []
+        retry: manual
+        runId: workspace-file-browser
+        status: succeeded
+        stepId: full.design.handoff
+        type: invoke_skill
+      - attempt: 1
+        claim:
+          executorId: comet-classic-state
+          token: portable-88273ad1f8920976d7808f83cfc74682cca9de1e8567645e648fec3c529157c9
+        executionOrigin:
+          workflow:
+            hash: ee198afdb53add0c23f98202aae8cdbe4079b9f4ebf7a62ed4ab8411ed591db5
+            id: comet-classic-full
+            version: "1"
+        id: workspace-file-browser:7
+        input:
+          input:
+            change: workspace-file-browser
+            changeDir: docs/openspec/changes/workspace-file-browser
+          outputs:
+            full.design.confirm:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.design.handoff:
+                    handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+                    handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+                    proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                      的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                      WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                      index.html 的 .terminal-column 内、#terminalHost 之后新增
+                      #fileViewer 覆盖层，.terminal-column 设
+                      position:relative，绝对定位覆盖终端区域，不改 Grid 行定义，xterm
+                      尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                      上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                      openViewer/closeViewer/renderViewer，src/workspace/state.m\
+                      js 增加 app.viewer 状态，样式追加到
+                      src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩\
+                      包）继续走 openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与
+                      Enter 改为 activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                      渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                      Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                      tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm
+                      run
+                      build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍\
+                      挡住；覆盖层不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+                    requirementsEvidence:
+                      contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                      ref: docs/openspec/changes/workspace-file-browser
+                    sourceEvidence:
+                      contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                      ref: docs/openspec/changes/workspace-file-browser
+            full.design.handoff:
+              handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+              handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+              proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                index.html 的 .terminal-column 内、#terminalHost 之后新增 #fileViewer
+                覆盖层，.terminal-column 设 position:relative，绝对定位覆盖终端区域，不改 Grid
+                行定义，xterm 尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                openViewer/closeViewer/renderViewer，src/workspace/state.mjs 增加
+                app.viewer 状态，样式追加到
+                src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩包）继续走
+                openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与 Enter 改为
+                activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm run
+                build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍挡住；覆盖层\
+                不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+              requirementsEvidence:
+                contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                ref: docs/openspec/changes/workspace-file-browser
+              sourceEvidence:
+                contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                ref: docs/openspec/changes/workspace-file-browser
+            full.open:
+              event: open-complete
+            full.open.confirm:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.open:
+                    event: open-complete
+                  full.open.evidence:
+                    contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                    ref: docs/openspec/changes/workspace-file-browser
+            full.open.evidence:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+            full.open.revalidate:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+        inputHash: d93218a93135a61eeb5a528ad4cc51f078c9d57b3233b1a1e0c3421ba33f1221
+        outcome:
+          actionId: workspace-file-browser:7
+          attempt: 1
+          claimToken: portable-88273ad1f8920976d7808f83cfc74682cca9de1e8567645e648fec3c529157c9
+          inputHash: d93218a93135a61eeb5a528ad4cc51f078c9d57b3233b1a1e0c3421ba33f1221
+          outcomeId: 80f9222f-4d0e-4548-96c4-318e660abdba
+          output:
+            designDoc: docs/openspec/changes/workspace-file-browser/design.md
+          status: succeeded
+        protocolVersion: 1
+        receipts:
+          - hash: 79b637f3013abba5268a1be458f70d398ddfa4dbade2fd3874abef00c2f0602d
+            outcomeId: 80f9222f-4d0e-4548-96c4-318e660abdba
+        reconciliations: []
+        ref: comet-design
+        requiredCapabilities: []
+        retry: manual
+        runId: workspace-file-browser
+        status: succeeded
+        stepId: full.design.document
+        type: invoke_skill
+      - attempt: 1
+        claim:
+          executorId: comet-classic-state
+          token: portable-d15293bf4969f08bf3479f04618188ce016fdf857a2dc7bc681b6904bad9df60
+        executionOrigin:
+          workflow:
+            hash: ee198afdb53add0c23f98202aae8cdbe4079b9f4ebf7a62ed4ab8411ed591db5
+            id: comet-classic-full
+            version: "1"
+        id: workspace-file-browser:9
+        input:
+          input:
+            change: workspace-file-browser
+            changeDir: docs/openspec/changes/workspace-file-browser
+          outputs:
+            full.design.confirm:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.design.handoff:
+                    handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+                    handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+                    proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                      的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                      WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                      index.html 的 .terminal-column 内、#terminalHost 之后新增
+                      #fileViewer 覆盖层，.terminal-column 设
+                      position:relative，绝对定位覆盖终端区域，不改 Grid 行定义，xterm
+                      尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                      上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                      openViewer/closeViewer/renderViewer，src/workspace/state.m\
+                      js 增加 app.viewer 状态，样式追加到
+                      src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩\
+                      包）继续走 openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与
+                      Enter 改为 activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                      渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                      Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                      tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm
+                      run
+                      build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍\
+                      挡住；覆盖层不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+                    requirementsEvidence:
+                      contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                      ref: docs/openspec/changes/workspace-file-browser
+                    sourceEvidence:
+                      contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                      ref: docs/openspec/changes/workspace-file-browser
+            full.design.document:
+              designDoc: docs/openspec/changes/workspace-file-browser/design.md
+            full.design.evidence:
+              contentHash: 75db4e4f95826ed6237f91e85f1c0c56fcff1bd6179f1a8a65c14e9f4edd528b
+              ref: docs/openspec/changes/workspace-file-browser/design.md
+            full.design.handoff:
+              handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+              handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+              proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                index.html 的 .terminal-column 内、#terminalHost 之后新增 #fileViewer
+                覆盖层，.terminal-column 设 position:relative，绝对定位覆盖终端区域，不改 Grid
+                行定义，xterm 尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                openViewer/closeViewer/renderViewer，src/workspace/state.mjs 增加
+                app.viewer 状态，样式追加到
+                src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩包）继续走
+                openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与 Enter 改为
+                activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm run
+                build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍挡住；覆盖层\
+                不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+              requirementsEvidence:
+                contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                ref: docs/openspec/changes/workspace-file-browser
+              sourceEvidence:
+                contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                ref: docs/openspec/changes/workspace-file-browser
+            full.open:
+              event: open-complete
+            full.open.confirm:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.open:
+                    event: open-complete
+                  full.open.evidence:
+                    contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                    ref: docs/openspec/changes/workspace-file-browser
+            full.open.evidence:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+            full.open.revalidate:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+        inputHash: 7eb1151241c240695549352d29dac29bcb191ef8854bb776d740e1ada84f7d9b
+        outcome:
+          actionId: workspace-file-browser:9
+          attempt: 1
+          claimToken: portable-d15293bf4969f08bf3479f04618188ce016fdf857a2dc7bc681b6904bad9df60
+          inputHash: 7eb1151241c240695549352d29dac29bcb191ef8854bb776d740e1ada84f7d9b
+          outcomeId: d91c8530-8f43-47d6-b210-21561623a84e
+          output:
+            boundBranch: comet/workspace-file-browser
+            buildMode: subagent-driven-development
+            directOverride: false
+            isolation: worktree
+            reviewMode: standard
+            subagentDispatch: confirmed
+            tddMode: tdd
+          status: succeeded
+        protocolVersion: 1
+        receipts:
+          - hash: fff282dba673c7eb65df79d24c423587c9e9fdf827874f53177dfefeff94c477
+            outcomeId: d91c8530-8f43-47d6-b210-21561623a84e
+        reconciliations: []
+        ref: comet-build
+        requiredCapabilities: []
+        retry: manual
+        runId: workspace-file-browser
+        status: succeeded
+        stepId: full.build.configure
+        type: invoke_skill
+      - attempt: 1
+        claim:
+          executorId: comet-classic-state
+          token: portable-3ac0b4b43adda42d1cc4d00a2ecebd307f8f1ef962101233d3fdb8cdc96d8d7f
+        executionOrigin:
+          workflow:
+            hash: ee198afdb53add0c23f98202aae8cdbe4079b9f4ebf7a62ed4ab8411ed591db5
+            id: comet-classic-full
+            version: "1"
+        id: workspace-file-browser:11
+        input:
+          input:
+            change: workspace-file-browser
+            changeDir: docs/openspec/changes/workspace-file-browser
+          outputs:
+            full.build.configure:
+              boundBranch: comet/workspace-file-browser
+              buildMode: subagent-driven-development
+              directOverride: false
+              isolation: worktree
+              reviewMode: standard
+              subagentDispatch: confirmed
+              tddMode: tdd
+            full.build.confirm:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.build.configure:
+                    boundBranch: comet/workspace-file-browser
+                    buildMode: subagent-driven-development
+                    directOverride: false
+                    isolation: worktree
+                    reviewMode: standard
+                    subagentDispatch: confirmed
+                    tddMode: tdd
+            full.design.confirm:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.design.handoff:
+                    handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+                    handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+                    proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                      的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                      WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                      index.html 的 .terminal-column 内、#terminalHost 之后新增
+                      #fileViewer 覆盖层，.terminal-column 设
+                      position:relative，绝对定位覆盖终端区域，不改 Grid 行定义，xterm
+                      尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                      上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                      openViewer/closeViewer/renderViewer，src/workspace/state.m\
+                      js 增加 app.viewer 状态，样式追加到
+                      src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩\
+                      包）继续走 openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与
+                      Enter 改为 activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                      渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                      Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                      tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm
+                      run
+                      build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍\
+                      挡住；覆盖层不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+                    requirementsEvidence:
+                      contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                      ref: docs/openspec/changes/workspace-file-browser
+                    sourceEvidence:
+                      contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                      ref: docs/openspec/changes/workspace-file-browser
+            full.design.document:
+              designDoc: docs/openspec/changes/workspace-file-browser/design.md
+            full.design.evidence:
+              contentHash: 75db4e4f95826ed6237f91e85f1c0c56fcff1bd6179f1a8a65c14e9f4edd528b
+              ref: docs/openspec/changes/workspace-file-browser/design.md
+            full.design.handoff:
+              handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+              handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+              proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                index.html 的 .terminal-column 内、#terminalHost 之后新增 #fileViewer
+                覆盖层，.terminal-column 设 position:relative，绝对定位覆盖终端区域，不改 Grid
+                行定义，xterm 尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                openViewer/closeViewer/renderViewer，src/workspace/state.mjs 增加
+                app.viewer 状态，样式追加到
+                src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩包）继续走
+                openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与 Enter 改为
+                activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm run
+                build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍挡住；覆盖层\
+                不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+              requirementsEvidence:
+                contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                ref: docs/openspec/changes/workspace-file-browser
+              sourceEvidence:
+                contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                ref: docs/openspec/changes/workspace-file-browser
+            full.open:
+              event: open-complete
+            full.open.confirm:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.open:
+                    event: open-complete
+                  full.open.evidence:
+                    contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                    ref: docs/openspec/changes/workspace-file-browser
+            full.open.evidence:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+            full.open.revalidate:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+        inputHash: 314f28b4fa42e0803fed5752a1b3bc182c430ffad7aa767d6231bbfd73f962b1
+        outcome:
+          actionId: workspace-file-browser:11
+          attempt: 1
+          claimToken: portable-3ac0b4b43adda42d1cc4d00a2ecebd307f8f1ef962101233d3fdb8cdc96d8d7f
+          inputHash: 314f28b4fa42e0803fed5752a1b3bc182c430ffad7aa767d6231bbfd73f962b1
+          outcomeId: 453863ad-d6ed-4067-99e5-14b377491276
+          output:
+            designEvidence:
+              contentHash: 75db4e4f95826ed6237f91e85f1c0c56fcff1bd6179f1a8a65c14e9f4edd528b
+              ref: docs/openspec/changes/workspace-file-browser/design.md
+            plan: docs/superpowers/plans/2026-10-28-workspace-file-browser.md
+            planEvidence:
+              contentHash: a9efbef3451f8909b9a73a221d7b704b905133c2c93be80d25657333f0e7e1c4
+              ref: docs/superpowers/plans/2026-10-28-workspace-file-browser.md
+            taskRevision: 48dee6e4d623a8356e94a9f481fa7d5b72f7e7c04a1976192700df88f30f7245
+          status: succeeded
+        protocolVersion: 1
+        receipts:
+          - hash: 1c3dfa9abc1fc7d9fdda1c003345f648745150810643ed6b5836d1806e932fdd
+            outcomeId: 453863ad-d6ed-4067-99e5-14b377491276
+        reconciliations: []
+        ref: comet-build
+        requiredCapabilities: []
+        retry: manual
+        runId: workspace-file-browser
+        status: succeeded
+        stepId: full.build.plan
+        type: invoke_skill
+      - attempt: 1
+        id: workspace-file-browser:13
+        input:
+          input:
+            change: workspace-file-browser
+            changeDir: docs/openspec/changes/workspace-file-browser
+          outputs:
+            full.build.configure:
+              boundBranch: comet/workspace-file-browser
+              buildMode: subagent-driven-development
+              directOverride: false
+              isolation: worktree
+              reviewMode: standard
+              subagentDispatch: confirmed
+              tddMode: tdd
+            full.build.confirm:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.build.configure:
+                    boundBranch: comet/workspace-file-browser
+                    buildMode: subagent-driven-development
+                    directOverride: false
+                    isolation: worktree
+                    reviewMode: standard
+                    subagentDispatch: confirmed
+                    tddMode: tdd
+            full.build.plan:
+              designEvidence:
+                contentHash: 75db4e4f95826ed6237f91e85f1c0c56fcff1bd6179f1a8a65c14e9f4edd528b
+                ref: docs/openspec/changes/workspace-file-browser/design.md
+              plan: docs/superpowers/plans/2026-10-28-workspace-file-browser.md
+              planEvidence:
+                contentHash: a9efbef3451f8909b9a73a221d7b704b905133c2c93be80d25657333f0e7e1c4
+                ref: docs/superpowers/plans/2026-10-28-workspace-file-browser.md
+              taskRevision: 48dee6e4d623a8356e94a9f481fa7d5b72f7e7c04a1976192700df88f30f7245
+            full.build.plan.evidence:
+              contentHash: a9efbef3451f8909b9a73a221d7b704b905133c2c93be80d25657333f0e7e1c4
+              ref: docs/superpowers/plans/2026-10-28-workspace-file-browser.md
+            full.design.confirm:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.design.handoff:
+                    handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+                    handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+                    proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                      的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                      WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                      index.html 的 .terminal-column 内、#terminalHost 之后新增
+                      #fileViewer 覆盖层，.terminal-column 设
+                      position:relative，绝对定位覆盖终端区域，不改 Grid 行定义，xterm
+                      尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                      上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                      openViewer/closeViewer/renderViewer，src/workspace/state.m\
+                      js 增加 app.viewer 状态，样式追加到
+                      src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩\
+                      包）继续走 openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与
+                      Enter 改为 activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                      渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                      Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                      tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm
+                      run
+                      build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍\
+                      挡住；覆盖层不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+                    requirementsEvidence:
+                      contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                      ref: docs/openspec/changes/workspace-file-browser
+                    sourceEvidence:
+                      contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                      ref: docs/openspec/changes/workspace-file-browser
+            full.design.document:
+              designDoc: docs/openspec/changes/workspace-file-browser/design.md
+            full.design.evidence:
+              contentHash: 75db4e4f95826ed6237f91e85f1c0c56fcff1bd6179f1a8a65c14e9f4edd528b
+              ref: docs/openspec/changes/workspace-file-browser/design.md
+            full.design.handoff:
+              handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+              handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+              proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                index.html 的 .terminal-column 内、#terminalHost 之后新增 #fileViewer
+                覆盖层，.terminal-column 设 position:relative，绝对定位覆盖终端区域，不改 Grid
+                行定义，xterm 尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                openViewer/closeViewer/renderViewer，src/workspace/state.mjs 增加
+                app.viewer 状态，样式追加到
+                src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩包）继续走
+                openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与 Enter 改为
+                activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm run
+                build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍挡住；覆盖层\
+                不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+              requirementsEvidence:
+                contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                ref: docs/openspec/changes/workspace-file-browser
+              sourceEvidence:
+                contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                ref: docs/openspec/changes/workspace-file-browser
+            full.open:
+              event: open-complete
+            full.open.confirm:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.open:
+                    event: open-complete
+                  full.open.evidence:
+                    contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                    ref: docs/openspec/changes/workspace-file-browser
+            full.open.evidence:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+            full.open.revalidate:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+        inputHash: 72d90edc1054fff4f36763c0242cee2383d1d6ca1905c34dd9fa81c49cb3fc2b
+        protocolVersion: 1
+        receipts: []
+        reconciliations: []
+        ref: comet-build
+        requiredCapabilities: []
+        retry: manual
+        runId: workspace-file-browser
+        status: pending
+        stepId: full.build.execute
+        type: invoke_skill
+    actionContexts:
+      workspace-file-browser:1:
+        results: {}
+        sequence: 1
+      workspace-file-browser:11:
+        results:
+          full.build.configure:
+            sequence: 9
+            value:
+              boundBranch: comet/workspace-file-browser
+              buildMode: subagent-driven-development
+              directOverride: false
+              isolation: worktree
+              reviewMode: standard
+              subagentDispatch: confirmed
+              tddMode: tdd
+          full.build.confirm:
+            sequence: 10
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.build.configure:
+                    boundBranch: comet/workspace-file-browser
+                    buildMode: subagent-driven-development
+                    directOverride: false
+                    isolation: worktree
+                    reviewMode: standard
+                    subagentDispatch: confirmed
+                    tddMode: tdd
+          full.design.confirm:
+            sequence: 6
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.design.handoff:
+                    handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+                    handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+                    proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                      的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                      WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                      index.html 的 .terminal-column 内、#terminalHost 之后新增
+                      #fileViewer 覆盖层，.terminal-column 设
+                      position:relative，绝对定位覆盖终端区域，不改 Grid 行定义，xterm
+                      尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                      上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                      openViewer/closeViewer/renderViewer，src/workspace/state.m\
+                      js 增加 app.viewer 状态，样式追加到
+                      src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩\
+                      包）继续走 openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与
+                      Enter 改为 activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                      渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                      Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                      tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm
+                      run
+                      build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍\
+                      挡住；覆盖层不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+                    requirementsEvidence:
+                      contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                      ref: docs/openspec/changes/workspace-file-browser
+                    sourceEvidence:
+                      contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                      ref: docs/openspec/changes/workspace-file-browser
+          full.design.document:
+            sequence: 7
+            value:
+              designDoc: docs/openspec/changes/workspace-file-browser/design.md
+          full.design.evidence:
+            sequence: 8
+            value:
+              contentHash: 75db4e4f95826ed6237f91e85f1c0c56fcff1bd6179f1a8a65c14e9f4edd528b
+              ref: docs/openspec/changes/workspace-file-browser/design.md
+          full.design.handoff:
+            sequence: 5
+            value:
+              handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+              handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+              proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                index.html 的 .terminal-column 内、#terminalHost 之后新增 #fileViewer
+                覆盖层，.terminal-column 设 position:relative，绝对定位覆盖终端区域，不改 Grid
+                行定义，xterm 尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                openViewer/closeViewer/renderViewer，src/workspace/state.mjs 增加
+                app.viewer 状态，样式追加到
+                src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩包）继续走
+                openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与 Enter 改为
+                activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm run
+                build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍挡住；覆盖层\
+                不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+              requirementsEvidence:
+                contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                ref: docs/openspec/changes/workspace-file-browser
+              sourceEvidence:
+                contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                ref: docs/openspec/changes/workspace-file-browser
+          full.open:
+            sequence: 1
+            value:
+              event: open-complete
+          full.open.confirm:
+            sequence: 3
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.open:
+                    event: open-complete
+                  full.open.evidence:
+                    contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                    ref: docs/openspec/changes/workspace-file-browser
+          full.open.evidence:
+            sequence: 2
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+          full.open.revalidate:
+            sequence: 4
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+        sequence: 11
+      workspace-file-browser:13:
+        results:
+          full.build.configure:
+            sequence: 9
+            value:
+              boundBranch: comet/workspace-file-browser
+              buildMode: subagent-driven-development
+              directOverride: false
+              isolation: worktree
+              reviewMode: standard
+              subagentDispatch: confirmed
+              tddMode: tdd
+          full.build.confirm:
+            sequence: 10
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.build.configure:
+                    boundBranch: comet/workspace-file-browser
+                    buildMode: subagent-driven-development
+                    directOverride: false
+                    isolation: worktree
+                    reviewMode: standard
+                    subagentDispatch: confirmed
+                    tddMode: tdd
+          full.build.plan:
+            sequence: 11
+            value:
+              designEvidence:
+                contentHash: 75db4e4f95826ed6237f91e85f1c0c56fcff1bd6179f1a8a65c14e9f4edd528b
+                ref: docs/openspec/changes/workspace-file-browser/design.md
+              plan: docs/superpowers/plans/2026-10-28-workspace-file-browser.md
+              planEvidence:
+                contentHash: a9efbef3451f8909b9a73a221d7b704b905133c2c93be80d25657333f0e7e1c4
+                ref: docs/superpowers/plans/2026-10-28-workspace-file-browser.md
+              taskRevision: 48dee6e4d623a8356e94a9f481fa7d5b72f7e7c04a1976192700df88f30f7245
+          full.build.plan.evidence:
+            sequence: 12
+            value:
+              contentHash: a9efbef3451f8909b9a73a221d7b704b905133c2c93be80d25657333f0e7e1c4
+              ref: docs/superpowers/plans/2026-10-28-workspace-file-browser.md
+          full.design.confirm:
+            sequence: 6
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.design.handoff:
+                    handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+                    handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+                    proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                      的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                      WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                      index.html 的 .terminal-column 内、#terminalHost 之后新增
+                      #fileViewer 覆盖层，.terminal-column 设
+                      position:relative，绝对定位覆盖终端区域，不改 Grid 行定义，xterm
+                      尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                      上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                      openViewer/closeViewer/renderViewer，src/workspace/state.m\
+                      js 增加 app.viewer 状态，样式追加到
+                      src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩\
+                      包）继续走 openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与
+                      Enter 改为 activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                      渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                      Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                      tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm
+                      run
+                      build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍\
+                      挡住；覆盖层不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+                    requirementsEvidence:
+                      contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                      ref: docs/openspec/changes/workspace-file-browser
+                    sourceEvidence:
+                      contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                      ref: docs/openspec/changes/workspace-file-browser
+          full.design.document:
+            sequence: 7
+            value:
+              designDoc: docs/openspec/changes/workspace-file-browser/design.md
+          full.design.evidence:
+            sequence: 8
+            value:
+              contentHash: 75db4e4f95826ed6237f91e85f1c0c56fcff1bd6179f1a8a65c14e9f4edd528b
+              ref: docs/openspec/changes/workspace-file-browser/design.md
+          full.design.handoff:
+            sequence: 5
+            value:
+              handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+              handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+              proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                index.html 的 .terminal-column 内、#terminalHost 之后新增 #fileViewer
+                覆盖层，.terminal-column 设 position:relative，绝对定位覆盖终端区域，不改 Grid
+                行定义，xterm 尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                openViewer/closeViewer/renderViewer，src/workspace/state.mjs 增加
+                app.viewer 状态，样式追加到
+                src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩包）继续走
+                openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与 Enter 改为
+                activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm run
+                build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍挡住；覆盖层\
+                不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+              requirementsEvidence:
+                contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                ref: docs/openspec/changes/workspace-file-browser
+              sourceEvidence:
+                contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                ref: docs/openspec/changes/workspace-file-browser
+          full.open:
+            sequence: 1
+            value:
+              event: open-complete
+          full.open.confirm:
+            sequence: 3
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.open:
+                    event: open-complete
+                  full.open.evidence:
+                    contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                    ref: docs/openspec/changes/workspace-file-browser
+          full.open.evidence:
+            sequence: 2
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+          full.open.revalidate:
+            sequence: 4
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+        sequence: 13
+      workspace-file-browser:4:
+        results:
+          full.open:
+            sequence: 1
+            value:
+              event: open-complete
+          full.open.confirm:
+            sequence: 3
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.open:
+                    event: open-complete
+                  full.open.evidence:
+                    contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                    ref: docs/openspec/changes/workspace-file-browser
+          full.open.evidence:
+            sequence: 2
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+        sequence: 4
+      workspace-file-browser:5:
+        results:
+          full.open:
+            sequence: 1
+            value:
+              event: open-complete
+          full.open.confirm:
+            sequence: 3
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.open:
+                    event: open-complete
+                  full.open.evidence:
+                    contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                    ref: docs/openspec/changes/workspace-file-browser
+          full.open.evidence:
+            sequence: 2
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+          full.open.revalidate:
+            sequence: 4
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+        sequence: 5
+      workspace-file-browser:7:
+        results:
+          full.design.confirm:
+            sequence: 6
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.design.handoff:
+                    handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+                    handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+                    proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                      的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                      WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                      index.html 的 .terminal-column 内、#terminalHost 之后新增
+                      #fileViewer 覆盖层，.terminal-column 设
+                      position:relative，绝对定位覆盖终端区域，不改 Grid 行定义，xterm
+                      尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                      上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                      openViewer/closeViewer/renderViewer，src/workspace/state.m\
+                      js 增加 app.viewer 状态，样式追加到
+                      src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩\
+                      包）继续走 openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与
+                      Enter 改为 activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                      渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                      Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                      tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm
+                      run
+                      build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍\
+                      挡住；覆盖层不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+                    requirementsEvidence:
+                      contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                      ref: docs/openspec/changes/workspace-file-browser
+                    sourceEvidence:
+                      contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                      ref: docs/openspec/changes/workspace-file-browser
+          full.design.handoff:
+            sequence: 5
+            value:
+              handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+              handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+              proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                index.html 的 .terminal-column 内、#terminalHost 之后新增 #fileViewer
+                覆盖层，.terminal-column 设 position:relative，绝对定位覆盖终端区域，不改 Grid
+                行定义，xterm 尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                openViewer/closeViewer/renderViewer，src/workspace/state.mjs 增加
+                app.viewer 状态，样式追加到
+                src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩包）继续走
+                openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与 Enter 改为
+                activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm run
+                build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍挡住；覆盖层\
+                不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+              requirementsEvidence:
+                contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                ref: docs/openspec/changes/workspace-file-browser
+              sourceEvidence:
+                contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                ref: docs/openspec/changes/workspace-file-browser
+          full.open:
+            sequence: 1
+            value:
+              event: open-complete
+          full.open.confirm:
+            sequence: 3
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.open:
+                    event: open-complete
+                  full.open.evidence:
+                    contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                    ref: docs/openspec/changes/workspace-file-browser
+          full.open.evidence:
+            sequence: 2
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+          full.open.revalidate:
+            sequence: 4
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+        sequence: 7
+      workspace-file-browser:9:
+        results:
+          full.design.confirm:
+            sequence: 6
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.design.handoff:
+                    handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+                    handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+                    proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                      的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                      WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                      index.html 的 .terminal-column 内、#terminalHost 之后新增
+                      #fileViewer 覆盖层，.terminal-column 设
+                      position:relative，绝对定位覆盖终端区域，不改 Grid 行定义，xterm
+                      尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                      上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                      openViewer/closeViewer/renderViewer，src/workspace/state.m\
+                      js 增加 app.viewer 状态，样式追加到
+                      src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩\
+                      包）继续走 openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与
+                      Enter 改为 activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                      渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                      Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                      tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm
+                      run
+                      build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍\
+                      挡住；覆盖层不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+                    requirementsEvidence:
+                      contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                      ref: docs/openspec/changes/workspace-file-browser
+                    sourceEvidence:
+                      contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                      ref: docs/openspec/changes/workspace-file-browser
+          full.design.document:
+            sequence: 7
+            value:
+              designDoc: docs/openspec/changes/workspace-file-browser/design.md
+          full.design.evidence:
+            sequence: 8
+            value:
+              contentHash: 75db4e4f95826ed6237f91e85f1c0c56fcff1bd6179f1a8a65c14e9f4edd528b
+              ref: docs/openspec/changes/workspace-file-browser/design.md
+          full.design.handoff:
+            sequence: 5
+            value:
+              handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+              handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+              proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                index.html 的 .terminal-column 内、#terminalHost 之后新增 #fileViewer
+                覆盖层，.terminal-column 设 position:relative，绝对定位覆盖终端区域，不改 Grid
+                行定义，xterm 尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                openViewer/closeViewer/renderViewer，src/workspace/state.mjs 增加
+                app.viewer 状态，样式追加到
+                src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩包）继续走
+                openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与 Enter 改为
+                activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm run
+                build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍挡住；覆盖层\
+                不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+              requirementsEvidence:
+                contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                ref: docs/openspec/changes/workspace-file-browser
+              sourceEvidence:
+                contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                ref: docs/openspec/changes/workspace-file-browser
+          full.open:
+            sequence: 1
+            value:
+              event: open-complete
+          full.open.confirm:
+            sequence: 3
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.open:
+                    event: open-complete
+                  full.open.evidence:
+                    contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                    ref: docs/openspec/changes/workspace-file-browser
+          full.open.evidence:
+            sequence: 2
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+          full.open.revalidate:
+            sequence: 4
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+        sequence: 9
+    waits:
+      - id: workspace-file-browser:3
+        stepId: full.open.confirm
+        sequence: 3
+        status: resolved
+        proposal:
+          input:
+            change: workspace-file-browser
+            changeDir: docs/openspec/changes/workspace-file-browser
+          outputs:
+            full.open:
+              event: open-complete
+            full.open.evidence:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+        proposalHash: 43ef253de2f1cdcd71181d8d938b8a9d4911c30a8057f8c1fd41cbf6953dcd49
+        choices:
+          - approved
+          - rejected
+        results:
+          full.open:
+            sequence: 1
+            value:
+              event: open-complete
+          full.open.evidence:
+            sequence: 2
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+        decision:
+          id: classic-open-0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+          choice: approved
+          proposalHash: 43ef253de2f1cdcd71181d8d938b8a9d4911c30a8057f8c1fd41cbf6953dcd49
+      - id: workspace-file-browser:6
+        stepId: full.design.confirm
+        sequence: 6
+        status: resolved
+        proposal:
+          input:
+            change: workspace-file-browser
+            changeDir: docs/openspec/changes/workspace-file-browser
+          outputs:
+            full.design.handoff:
+              handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+              handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+              proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                index.html 的 .terminal-column 内、#terminalHost 之后新增 #fileViewer
+                覆盖层，.terminal-column 设 position:relative，绝对定位覆盖终端区域，不改 Grid
+                行定义，xterm 尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                openViewer/closeViewer/renderViewer，src/workspace/state.mjs 增加
+                app.viewer 状态，样式追加到
+                src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩包）继续走
+                openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与 Enter 改为
+                activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm run
+                build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍挡住；覆盖层\
+                不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+              requirementsEvidence:
+                contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                ref: docs/openspec/changes/workspace-file-browser
+              sourceEvidence:
+                contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                ref: docs/openspec/changes/workspace-file-browser
+        proposalHash: 54eda879ed9f10860988e11fa5f848257847f35654e5ff114b39783381b681e0
+        choices:
+          - approved
+          - rejected
+        results:
+          full.design.handoff:
+            sequence: 5
+            value:
+              handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+              handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+              proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                index.html 的 .terminal-column 内、#terminalHost 之后新增 #fileViewer
+                覆盖层，.terminal-column 设 position:relative，绝对定位覆盖终端区域，不改 Grid
+                行定义，xterm 尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                openViewer/closeViewer/renderViewer，src/workspace/state.mjs 增加
+                app.viewer 状态，样式追加到
+                src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩包）继续走
+                openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与 Enter 改为
+                activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm run
+                build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍挡住；覆盖层\
+                不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+              requirementsEvidence:
+                contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                ref: docs/openspec/changes/workspace-file-browser
+              sourceEvidence:
+                contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                ref: docs/openspec/changes/workspace-file-browser
+          full.open:
+            sequence: 1
+            value:
+              event: open-complete
+          full.open.confirm:
+            sequence: 3
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.open:
+                    event: open-complete
+                  full.open.evidence:
+                    contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                    ref: docs/openspec/changes/workspace-file-browser
+          full.open.evidence:
+            sequence: 2
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+          full.open.revalidate:
+            sequence: 4
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+        decision:
+          id: classic-design-54eda879ed9f10860988e11fa5f848257847f35654e5ff114b39783381b681e0-approved
+          choice: approved
+          proposalHash: 54eda879ed9f10860988e11fa5f848257847f35654e5ff114b39783381b681e0
+      - id: workspace-file-browser:10
+        stepId: full.build.confirm
+        sequence: 10
+        status: resolved
+        proposal:
+          input:
+            change: workspace-file-browser
+            changeDir: docs/openspec/changes/workspace-file-browser
+          outputs:
+            full.build.configure:
+              boundBranch: comet/workspace-file-browser
+              buildMode: subagent-driven-development
+              directOverride: false
+              isolation: worktree
+              reviewMode: standard
+              subagentDispatch: confirmed
+              tddMode: tdd
+        proposalHash: 7b05772cf3abaf6f9ca72a059a6c045a23deca88cbfece41a73b9da46303a22c
+        choices:
+          - approved
+          - rejected
+        results:
+          full.build.configure:
+            sequence: 9
+            value:
+              boundBranch: comet/workspace-file-browser
+              buildMode: subagent-driven-development
+              directOverride: false
+              isolation: worktree
+              reviewMode: standard
+              subagentDispatch: confirmed
+              tddMode: tdd
+          full.design.confirm:
+            sequence: 6
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.design.handoff:
+                    handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+                    handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+                    proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                      的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                      WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                      index.html 的 .terminal-column 内、#terminalHost 之后新增
+                      #fileViewer 覆盖层，.terminal-column 设
+                      position:relative，绝对定位覆盖终端区域，不改 Grid 行定义，xterm
+                      尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                      上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                      openViewer/closeViewer/renderViewer，src/workspace/state.m\
+                      js 增加 app.viewer 状态，样式追加到
+                      src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩\
+                      包）继续走 openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与
+                      Enter 改为 activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                      渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                      Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                      tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm
+                      run
+                      build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍\
+                      挡住；覆盖层不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+                    requirementsEvidence:
+                      contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                      ref: docs/openspec/changes/workspace-file-browser
+                    sourceEvidence:
+                      contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                      ref: docs/openspec/changes/workspace-file-browser
+          full.design.document:
+            sequence: 7
+            value:
+              designDoc: docs/openspec/changes/workspace-file-browser/design.md
+          full.design.evidence:
+            sequence: 8
+            value:
+              contentHash: 75db4e4f95826ed6237f91e85f1c0c56fcff1bd6179f1a8a65c14e9f4edd528b
+              ref: docs/openspec/changes/workspace-file-browser/design.md
+          full.design.handoff:
+            sequence: 5
+            value:
+              handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+              handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+              proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                index.html 的 .terminal-column 内、#terminalHost 之后新增 #fileViewer
+                覆盖层，.terminal-column 设 position:relative，绝对定位覆盖终端区域，不改 Grid
+                行定义，xterm 尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                openViewer/closeViewer/renderViewer，src/workspace/state.mjs 增加
+                app.viewer 状态，样式追加到
+                src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩包）继续走
+                openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与 Enter 改为
+                activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm run
+                build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍挡住；覆盖层\
+                不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+              requirementsEvidence:
+                contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                ref: docs/openspec/changes/workspace-file-browser
+              sourceEvidence:
+                contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                ref: docs/openspec/changes/workspace-file-browser
+          full.open:
+            sequence: 1
+            value:
+              event: open-complete
+          full.open.confirm:
+            sequence: 3
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.open:
+                    event: open-complete
+                  full.open.evidence:
+                    contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                    ref: docs/openspec/changes/workspace-file-browser
+          full.open.evidence:
+            sequence: 2
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+          full.open.revalidate:
+            sequence: 4
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+        decision:
+          id: 61382b8e-dc27-4680-8323-a2825ab0df48
+          choice: approved
+          proposalHash: 7b05772cf3abaf6f9ca72a059a6c045a23deca88cbfece41a73b9da46303a22c
+    evidenceWaits:
+      - id: workspace-file-browser:2
+        stepId: full.open.evidence
+        sequence: 2
+        kind: classic-open-artifacts
+        status: resolved
+        results:
+          full.open:
+            sequence: 1
+            value:
+              event: open-complete
+        receipt:
+          ref: docs/openspec/changes/workspace-file-browser
+          contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+          submissionId: 4e192794-2199-44d3-85d8-28add9c2277b
+      - id: workspace-file-browser:8
+        stepId: full.design.evidence
+        sequence: 8
+        kind: classic-design-document
+        status: resolved
+        results:
+          full.design.confirm:
+            sequence: 6
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.design.handoff:
+                    handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+                    handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+                    proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                      的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                      WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                      index.html 的 .terminal-column 内、#terminalHost 之后新增
+                      #fileViewer 覆盖层，.terminal-column 设
+                      position:relative，绝对定位覆盖终端区域，不改 Grid 行定义，xterm
+                      尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                      上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                      openViewer/closeViewer/renderViewer，src/workspace/state.m\
+                      js 增加 app.viewer 状态，样式追加到
+                      src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩\
+                      包）继续走 openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与
+                      Enter 改为 activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                      渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                      Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                      tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm
+                      run
+                      build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍\
+                      挡住；覆盖层不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+                    requirementsEvidence:
+                      contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                      ref: docs/openspec/changes/workspace-file-browser
+                    sourceEvidence:
+                      contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                      ref: docs/openspec/changes/workspace-file-browser
+          full.design.document:
+            sequence: 7
+            value:
+              designDoc: docs/openspec/changes/workspace-file-browser/design.md
+          full.design.handoff:
+            sequence: 5
+            value:
+              handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+              handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+              proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                index.html 的 .terminal-column 内、#terminalHost 之后新增 #fileViewer
+                覆盖层，.terminal-column 设 position:relative，绝对定位覆盖终端区域，不改 Grid
+                行定义，xterm 尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                openViewer/closeViewer/renderViewer，src/workspace/state.mjs 增加
+                app.viewer 状态，样式追加到
+                src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩包）继续走
+                openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与 Enter 改为
+                activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm run
+                build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍挡住；覆盖层\
+                不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+              requirementsEvidence:
+                contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                ref: docs/openspec/changes/workspace-file-browser
+              sourceEvidence:
+                contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                ref: docs/openspec/changes/workspace-file-browser
+          full.open:
+            sequence: 1
+            value:
+              event: open-complete
+          full.open.confirm:
+            sequence: 3
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.open:
+                    event: open-complete
+                  full.open.evidence:
+                    contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                    ref: docs/openspec/changes/workspace-file-browser
+          full.open.evidence:
+            sequence: 2
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+          full.open.revalidate:
+            sequence: 4
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+        receipt:
+          ref: docs/openspec/changes/workspace-file-browser/design.md
+          contentHash: 75db4e4f95826ed6237f91e85f1c0c56fcff1bd6179f1a8a65c14e9f4edd528b
+          submissionId: e2f38a10-5b46-491c-a1d3-687423f991d0
+      - id: workspace-file-browser:12
+        stepId: full.build.plan.evidence
+        sequence: 12
+        kind: classic-build-plan
+        status: resolved
+        results:
+          full.build.configure:
+            sequence: 9
+            value:
+              boundBranch: comet/workspace-file-browser
+              buildMode: subagent-driven-development
+              directOverride: false
+              isolation: worktree
+              reviewMode: standard
+              subagentDispatch: confirmed
+              tddMode: tdd
+          full.build.confirm:
+            sequence: 10
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.build.configure:
+                    boundBranch: comet/workspace-file-browser
+                    buildMode: subagent-driven-development
+                    directOverride: false
+                    isolation: worktree
+                    reviewMode: standard
+                    subagentDispatch: confirmed
+                    tddMode: tdd
+          full.build.plan:
+            sequence: 11
+            value:
+              designEvidence:
+                contentHash: 75db4e4f95826ed6237f91e85f1c0c56fcff1bd6179f1a8a65c14e9f4edd528b
+                ref: docs/openspec/changes/workspace-file-browser/design.md
+              plan: docs/superpowers/plans/2026-10-28-workspace-file-browser.md
+              planEvidence:
+                contentHash: a9efbef3451f8909b9a73a221d7b704b905133c2c93be80d25657333f0e7e1c4
+                ref: docs/superpowers/plans/2026-10-28-workspace-file-browser.md
+              taskRevision: 48dee6e4d623a8356e94a9f481fa7d5b72f7e7c04a1976192700df88f30f7245
+          full.design.confirm:
+            sequence: 6
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.design.handoff:
+                    handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+                    handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+                    proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                      的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                      WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                      index.html 的 .terminal-column 内、#terminalHost 之后新增
+                      #fileViewer 覆盖层，.terminal-column 设
+                      position:relative，绝对定位覆盖终端区域，不改 Grid 行定义，xterm
+                      尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                      上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                      openViewer/closeViewer/renderViewer，src/workspace/state.m\
+                      js 增加 app.viewer 状态，样式追加到
+                      src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩\
+                      包）继续走 openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与
+                      Enter 改为 activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                      渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                      Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                      tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm
+                      run
+                      build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍\
+                      挡住；覆盖层不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+                    requirementsEvidence:
+                      contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                      ref: docs/openspec/changes/workspace-file-browser
+                    sourceEvidence:
+                      contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                      ref: docs/openspec/changes/workspace-file-browser
+          full.design.document:
+            sequence: 7
+            value:
+              designDoc: docs/openspec/changes/workspace-file-browser/design.md
+          full.design.evidence:
+            sequence: 8
+            value:
+              contentHash: 75db4e4f95826ed6237f91e85f1c0c56fcff1bd6179f1a8a65c14e9f4edd528b
+              ref: docs/openspec/changes/workspace-file-browser/design.md
+          full.design.handoff:
+            sequence: 5
+            value:
+              handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+              handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+              proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                index.html 的 .terminal-column 内、#terminalHost 之后新增 #fileViewer
+                覆盖层，.terminal-column 设 position:relative，绝对定位覆盖终端区域，不改 Grid
+                行定义，xterm 尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                openViewer/closeViewer/renderViewer，src/workspace/state.mjs 增加
+                app.viewer 状态，样式追加到
+                src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩包）继续走
+                openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与 Enter 改为
+                activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm run
+                build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍挡住；覆盖层\
+                不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+              requirementsEvidence:
+                contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                ref: docs/openspec/changes/workspace-file-browser
+              sourceEvidence:
+                contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                ref: docs/openspec/changes/workspace-file-browser
+          full.open:
+            sequence: 1
+            value:
+              event: open-complete
+          full.open.confirm:
+            sequence: 3
+            value:
+              choice: approved
+              proposal:
+                input:
+                  change: workspace-file-browser
+                  changeDir: docs/openspec/changes/workspace-file-browser
+                outputs:
+                  full.open:
+                    event: open-complete
+                  full.open.evidence:
+                    contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                    ref: docs/openspec/changes/workspace-file-browser
+          full.open.evidence:
+            sequence: 2
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+              ref: docs/openspec/changes/workspace-file-browser
+          full.open.revalidate:
+            sequence: 4
+            value:
+              contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+        receipt:
+          ref: docs/superpowers/plans/2026-10-28-workspace-file-browser.md
+          contentHash: a9efbef3451f8909b9a73a221d7b704b905133c2c93be80d25657333f0e7e1c4
+          submissionId: 29e1bb35-62d1-44c2-b33b-48747a4da593
+    ready: []
+    joins: {}
+    outputs:
+      full.build.configure:
+        sequence: 9
+        value:
+          boundBranch: comet/workspace-file-browser
+          buildMode: subagent-driven-development
+          directOverride: false
+          isolation: worktree
+          reviewMode: standard
+          subagentDispatch: confirmed
+          tddMode: tdd
+      full.build.confirm:
+        sequence: 10
+        value:
+          choice: approved
+          proposal:
+            input:
+              change: workspace-file-browser
+              changeDir: docs/openspec/changes/workspace-file-browser
+            outputs:
+              full.build.configure:
+                boundBranch: comet/workspace-file-browser
+                buildMode: subagent-driven-development
+                directOverride: false
+                isolation: worktree
+                reviewMode: standard
+                subagentDispatch: confirmed
+                tddMode: tdd
+      full.build.plan:
+        sequence: 11
+        value:
+          designEvidence:
+            contentHash: 75db4e4f95826ed6237f91e85f1c0c56fcff1bd6179f1a8a65c14e9f4edd528b
+            ref: docs/openspec/changes/workspace-file-browser/design.md
+          plan: docs/superpowers/plans/2026-10-28-workspace-file-browser.md
+          planEvidence:
+            contentHash: a9efbef3451f8909b9a73a221d7b704b905133c2c93be80d25657333f0e7e1c4
+            ref: docs/superpowers/plans/2026-10-28-workspace-file-browser.md
+          taskRevision: 48dee6e4d623a8356e94a9f481fa7d5b72f7e7c04a1976192700df88f30f7245
+      full.build.plan.evidence:
+        sequence: 12
+        value:
+          contentHash: a9efbef3451f8909b9a73a221d7b704b905133c2c93be80d25657333f0e7e1c4
+          ref: docs/superpowers/plans/2026-10-28-workspace-file-browser.md
+      full.design.confirm:
+        sequence: 6
+        value:
+          choice: approved
+          proposal:
+            input:
+              change: workspace-file-browser
+              changeDir: docs/openspec/changes/workspace-file-browser
+            outputs:
+              full.design.handoff:
+                handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+                handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+                proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+                  的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+                  WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+                  index.html 的 .terminal-column 内、#terminalHost 之后新增 #fileViewer
+                  覆盖层，.terminal-column 设 position:relative，绝对定位覆盖终端区域，不改 Grid
+                  行定义，xterm 尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+                  上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+                  openViewer/closeViewer/renderViewer，src/workspace/state.mjs 增加
+                  app.viewer 状态，样式追加到
+                  src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩包）继续走
+                  openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与 Enter 改为
+                  activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+                  渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+                  Patch：无，delta spec 已覆盖全部行为。测试策略：新增
+                  tests/workspace-files.test.mjs 覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm run
+                  build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍挡住；覆\
+                  盖层不触发终端 resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+                requirementsEvidence:
+                  contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+                  ref: docs/openspec/changes/workspace-file-browser
+                sourceEvidence:
+                  contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+                  ref: docs/openspec/changes/workspace-file-browser
+      full.design.document:
+        sequence: 7
+        value:
+          designDoc: docs/openspec/changes/workspace-file-browser/design.md
+      full.design.evidence:
+        sequence: 8
+        value:
+          contentHash: 75db4e4f95826ed6237f91e85f1c0c56fcff1bd6179f1a8a65c14e9f4edd528b
+          ref: docs/openspec/changes/workspace-file-browser/design.md
+      full.design.handoff:
+        sequence: 5
+        value:
+          handoffContext: docs/openspec/changes/workspace-file-browser/.comet/handoff/design-context.json
+          handoffHash: 43c2b27fbcba60d8c3ac1237fcb68d13579b763ed9cee3ff20fe01bf9be2f502
+          proposal: "候选方案：1) 文件栏显示隐藏条目——仅删除 server/workspace/files.mjs 中 workspaceTree()
+            的隐藏项过滤（startsWith('.') && !== '.claude'），保留 ~$ 临时文件跳过与
+            WORKSPACE_SKIP 重型目录跳过；前端渲染、排序、预算全部复用，不新增开关。2) 内置只读文本查看器——在
+            index.html 的 .terminal-column 内、#terminalHost 之后新增 #fileViewer
+            覆盖层，.terminal-column 设 position:relative，绝对定位覆盖终端区域，不改 Grid
+            行定义，xterm 尺寸与终端会话不受影响；复用已有 GET /api/workspace/file（1MB
+            上限+二进制检测），不新增后端路由与依赖；新增 src/workspace/viewer.mjs 负责
+            openViewer/closeViewer/renderViewer，src/workspace/state.mjs 增加
+            app.viewer 状态，样式追加到
+            src/styles/files.css。前端按扩展名判型：非文本（docx/xlsx/pdf/图片/音视频/压缩包）继续走
+            openProjectFile() 系统打开，文本类型请求接口，失败用 toast 展示后端原文；双击与 Enter 改为
+            activateTreeFile()，右键菜单新增「用系统默认应用打开」。只读 pre
+            渲染，无编辑保存。非目标：显示开关、多标签、搜索、语法高亮、Markdown 渲染、图片预览、后端契约变化。Spec
+            Patch：无，delta spec 已覆盖全部行为。测试策略：新增 tests/workspace-files.test.mjs
+            覆盖隐藏项可见/重型目录排除/文件夹优先排序，npm run
+            build，浏览器验收隐藏条目、双击查看器、关闭回终端、右键系统打开。取舍与风险：隐藏项放开后节点变多但重型目录仍挡住；覆盖层不触发终端
+            resize；扩展名判型与后端二进制判定不一致时以后端为最终判定并指引右键系统打开。"
+          requirementsEvidence:
+            contentHash: e5f2224428baed2ce7489c50386b14ef09cc7dbd93b2d63741f1782bb59dc005
+            ref: docs/openspec/changes/workspace-file-browser
+          sourceEvidence:
+            contentHash: a1ed644a84d0b365748e0b201f8d23671806c8ade3ac85149170550d19660241
+            ref: docs/openspec/changes/workspace-file-browser
+      full.open:
+        sequence: 1
+        value:
+          event: open-complete
+      full.open.confirm:
+        sequence: 3
+        value:
+          choice: approved
+          proposal:
+            input:
+              change: workspace-file-browser
+              changeDir: docs/openspec/changes/workspace-file-browser
+            outputs:
+              full.open:
+                event: open-complete
+              full.open.evidence:
+                contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+                ref: docs/openspec/changes/workspace-file-browser
+      full.open.evidence:
+        sequence: 2
+        value:
+          contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+          ref: docs/openspec/changes/workspace-file-browser
+      full.open.revalidate:
+        sequence: 4
+        value:
+          contentHash: 0af21e4516fd1706d47139bca06364ab93742515313a3d132d296878590a4194
+    children: []
+    lineage: []
+  sourceRevision: 19
+  sourceHash: d936ce91137c1dea1abd0caa163233f422bd8800ef47aa21deb8ec372f60f27c
+check_epoch: 2
