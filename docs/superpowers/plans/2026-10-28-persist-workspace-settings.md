@@ -2,6 +2,7 @@
 change: persist-workspace-settings
 design-doc: docs/openspec/changes/persist-workspace-settings/design.md
 base-ref: 96740ca849eecd93133319d866b5c8bc1847b265
+archived-with: 2026-10-28-persist-workspace-settings
 ---
 
 # persist-workspace-settings 实施计划

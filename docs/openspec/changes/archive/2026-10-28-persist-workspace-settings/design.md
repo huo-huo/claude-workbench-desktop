@@ -2,6 +2,8 @@
 comet_change: persist-workspace-settings
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-10-28-persist-workspace-settings
+status: final
 ---
 
 ## Context
