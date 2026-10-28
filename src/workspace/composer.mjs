@@ -3,6 +3,17 @@ import { api, toast } from './core/api.mjs';
 import { app } from './state.mjs';
 import { fitTerminal, quoteWindowsPath } from './terminal.mjs';
 
+/** 输入框自动高度上限，与样式中的 max-height 保持一致 */
+const COMPOSER_MAX_HEIGHT = 180;
+
+/** 按内容调整输入框高度，到上限后在框内滚动 */
+export function autoSizeComposer() {
+  const input = $('#composerInput');
+  if (!input) return;
+  input.style.height = 'auto';
+  input.style.height = `${Math.min(input.scrollHeight, COMPOSER_MAX_HEIGHT)}px`;
+}
+
 export function sendComposerToTerminal() {
   const text = $('#composerInput').value;
   const images = app.composerAttachments.map(item => `@${quoteWindowsPath(item.path)}`);
@@ -17,6 +28,7 @@ export function sendComposerToTerminal() {
   $('#composerInput').value = '';
   app.composerAttachments = [];
   renderComposerAttachments();
+  autoSizeComposer();
   app.terminal.focus();
   toast('已发送到 Claude Code');
 }
@@ -27,6 +39,7 @@ export function insertComposerText(value) {
   const end = input.selectionEnd ?? input.value.length;
   input.setRangeText(String(value || ''), start, end, 'end');
   input.focus();
+  autoSizeComposer();
 }
 
 export function renderComposerAttachments() {
@@ -144,7 +157,7 @@ export function toggleComposer() {
   app.composerVisible = !app.composerVisible;
   $('#terminalComposer').hidden = !app.composerVisible;
   $('#toggleComposer').setAttribute('aria-expanded', String(app.composerVisible));
-  if (app.composerVisible) requestAnimationFrame(() => { $('#composerInput').focus(); fitTerminal(); });
+  if (app.composerVisible) requestAnimationFrame(() => { autoSizeComposer(); $('#composerInput').focus(); fitTerminal(); });
   else requestAnimationFrame(() => fitTerminal());
 }
 
