@@ -98,6 +98,11 @@ export async function runFileTreeContextAction(action) {
     addWorkspacePathToConversation(target.path);
     return;
   }
+  // 用系统默认应用打开：直接交给后端启动外部程序，不经过内置查看器
+  if (action === 'external') {
+    await openProjectFile(target.path).catch(error => toast(error.message));
+    return;
+  }
 }
 
 export function findTreeRow(itemPath, type) {

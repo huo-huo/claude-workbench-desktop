@@ -10,6 +10,7 @@ import {
 } from './sessions.mjs';
 import { closeSessionActivityMonitors, refreshSessionStatuses } from './activity.mjs';
 import { refreshTree, runFileTreeContextAction, closeFileTreeContextMenu } from './files.mjs';
+import { closeViewer } from './viewer.mjs';
 import {
   sendComposerToTerminal, toggleComposer, renderComposerAttachments, addComposerImageFiles,
   pasteIntoComposer, handleComposerDrop, autoSizeComposer,
@@ -100,13 +101,19 @@ function wireFiles() {
   $('#fileTreeRevealPath').addEventListener('click', () => runFileTreeContextAction('reveal'));
   $('#fileTreeAddToConversation').addEventListener('click', () => runFileTreeContextAction('add'));
   $('#fileTreeCopyPath').addEventListener('click', () => runFileTreeContextAction('copy').catch(error => toast(error.message)));
+  // 右键菜单「用系统默认应用打开」：走 external 分支，不打开内置查看器
+  $('#fileTreeOpenExternal').addEventListener('click', () => runFileTreeContextAction('external'));
   $('#fileTreeRecycle').addEventListener('click', () => runFileTreeContextAction('recycle'));
+  // 查看器关闭按钮：隐藏面板并把焦点还给终端
+  $('#closeFileViewer').addEventListener('click', closeViewer);
   document.addEventListener('click', event => { if (!$('#projectContextMenu').contains(event.target)) closeProjectContextMenu(); });
   document.addEventListener('click', event => { if (!$('#fileTreeContextMenu').contains(event.target)) closeFileTreeContextMenu(); });
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') {
       closeProjectContextMenu();
       closeFileTreeContextMenu();
+      // Esc 一并关闭文件查看器
+      closeViewer();
     }
   });
 }
