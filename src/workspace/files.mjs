@@ -13,6 +13,8 @@ export function showFileTreeContextMenu(event, button) {
   const menu = $('#fileTreeContextMenu');
   $('#fileTreeRevealPath').textContent = '在文件夹中显示';
   $('#fileTreeRecycle').disabled = !app.fileTreeContextTarget.path || app.fileTreeContextTarget.path === '.';
+  // 文件夹没有系统打开语义，禁用「用系统默认应用打开」
+  $('#fileTreeOpenExternal').disabled = button.dataset.treeType === 'folder';
   const menuWidth = 190;
   menu.hidden = false;
   const menuHeight = menu.offsetHeight;
