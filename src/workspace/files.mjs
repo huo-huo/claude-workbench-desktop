@@ -3,6 +3,7 @@ import { api, toast } from './core/api.mjs';
 import { app } from './state.mjs';
 import { quoteWindowsPath } from './terminal.mjs';
 import { insertComposerText, toggleComposer } from './composer.mjs';
+import { isPreviewableText, openViewer } from './viewer.mjs';
 
 export function showFileTreeContextMenu(event, button) {
   event.preventDefault();
@@ -259,13 +260,13 @@ export function wireTree() {
         if (!event.target.closest('.tree-caret')) await toggleTreeFolder(button);
         return;
       }
-      openProjectFile(itemPath).catch(error => toast(error.message));
+      activateTreeFile(itemPath).catch(error => toast(error.message));
     };
     button.onkeydown = event => {
       if (event.key !== 'Enter') return;
       event.preventDefault();
       selectTreeRow(button);
-      const action = button.dataset.treeType === 'folder' ? toggleTreeFolder(button) : openProjectFile(button.dataset.treePath);
+      const action = button.dataset.treeType === 'folder' ? toggleTreeFolder(button) : activateTreeFile(button.dataset.treePath);
       action.catch(error => toast(error.message));
     };
   });
@@ -288,6 +289,23 @@ export async function loadTreeFolder(button, children) {
   } finally {
     button.disabled = false;
   }
+}
+
+/** 取路径中的小写扩展名，无扩展名时返回空串 */
+export function fileExtension(filePath) {
+  const name = String(filePath || '').split(/[\\/]/).pop() || '';
+  const index = name.lastIndexOf('.');
+  // 只有点号出现在开头之后才算扩展名，避免把 .gitignore 的前导点当成扩展名
+  return index > 0 ? name.slice(index).toLowerCase() : '';
+}
+
+/** 双击/回车统一入口：文本走内置查看器，其余保持系统应用打开 */
+export async function activateTreeFile(filePath) {
+  if (isPreviewableText(fileExtension(filePath))) {
+    await openViewer(filePath);
+    return;
+  }
+  await openProjectFile(filePath);
 }
 
 export async function openProjectFile(filePath) {
