@@ -2,6 +2,8 @@
 comet_change: workspace-file-browser
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-10-28-workspace-file-browser
+status: final
 ---
 
 ## Context

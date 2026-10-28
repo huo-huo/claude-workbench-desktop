@@ -1,3 +1,7 @@
+---
+archived-with: 2026-10-28-workspace-file-browser
+status: final
+---
 # 文件栏隐藏条目与内置文本查看器 实施计划
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. 主会话负责协调与审查，实现代理按任务包逐项交付。
