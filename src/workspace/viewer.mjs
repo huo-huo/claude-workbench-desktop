@@ -53,6 +53,8 @@ export async function openViewer(filePath) {
 
 /** 关闭查看器并把焦点还给终端 */
 export function closeViewer() {
+  // 递增序号，作废进行中的读取请求，避免其返回后重新渲染并弹出面板
+  viewerRequestSeq += 1;
   const wasOpen = Boolean(app.viewer.path);
   app.viewer = { path: '', name: '', size: 0, modifiedAt: '', content: '', loading: false };
   renderViewer();
