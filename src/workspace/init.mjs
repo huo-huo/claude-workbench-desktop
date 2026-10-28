@@ -10,7 +10,7 @@ import {
 } from './sessions.mjs';
 import { closeSessionActivityMonitors, refreshSessionStatuses } from './activity.mjs';
 import { refreshTree, runFileTreeContextAction, closeFileTreeContextMenu } from './files.mjs';
-import { closeViewer } from './viewer.mjs';
+import { closeViewer, toggleViewerWrap, toggleViewerRender } from './viewer.mjs';
 import {
   sendComposerToTerminal, toggleComposer, renderComposerAttachments, addComposerImageFiles,
   pasteIntoComposer, handleComposerDrop, autoSizeComposer,
@@ -106,6 +106,9 @@ function wireFiles() {
   $('#fileTreeRecycle').addEventListener('click', () => runFileTreeContextAction('recycle'));
   // 查看器关闭按钮：隐藏面板并把焦点还给终端
   $('#closeFileViewer').addEventListener('click', closeViewer);
+  // 查看器工具按钮：源码自动换行与 Markdown 渲染切换
+  $('#toggleFileViewerWrap').addEventListener('click', toggleViewerWrap);
+  $('#toggleFileViewerRender').addEventListener('click', toggleViewerRender);
   document.addEventListener('click', event => { if (!$('#projectContextMenu').contains(event.target)) closeProjectContextMenu(); });
   document.addEventListener('click', event => { if (!$('#fileTreeContextMenu').contains(event.target)) closeFileTreeContextMenu(); });
   document.addEventListener('keydown', event => {

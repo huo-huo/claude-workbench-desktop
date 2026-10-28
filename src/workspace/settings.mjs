@@ -15,6 +15,7 @@ function applyWorkspaceSettings(preferences) {
   app.filesCollapsed = preferences.filesCollapsed;
   app.statuslineVisible = preferences.statuslineVisible;
   app.toolbarVisible = preferences.toolbarVisible;
+  app.viewerWrap = preferences.viewerWrap === true;
   app.collapsedProjects = preferences.collapsedProjects;
   // 让已初始化的模块（如状态栏字号）在设置加载后重新应用
   window.dispatchEvent(new CustomEvent('workspace-settings-applied', { detail: preferences }));

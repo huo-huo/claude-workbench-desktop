@@ -5,7 +5,7 @@ const VIEWS = new Set(['management', 'workspace']);
 /** 布尔型设置字段，缺省由前端决定 */
 const BOOLEAN_KEYS = new Set([
   'projectsExpanded', 'composerVisible', 'sessionsCollapsed', 'filesCollapsed',
-  'statuslineVisible', 'toolbarVisible', 'navCollapsed',
+  'statuslineVisible', 'toolbarVisible', 'navCollapsed', 'viewerWrap',
 ]);
 
 /** 校验并规范化状态栏配置：字号 10-14，显示项只能是布尔值 */

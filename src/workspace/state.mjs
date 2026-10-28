@@ -36,7 +36,9 @@ export const app = {
   projects: [],
   lastFileOpen: { path: '', at: 0 },
   // 内置查看器状态：path 非空表示面板已打开
-  viewer: { path: '', name: '', size: 0, modifiedAt: '', content: '', loading: false },
+  viewer: { path: '', name: '', size: 0, modifiedAt: '', content: '', loading: false, render: 'source' },
+  // 查看器源码视图自动换行；随工作区设置持久化
+  viewerWrap: false,
   fileTreeRefreshJob: null,
   fileTreeSignature: '',
   fileTreeInteractionAt: 0,

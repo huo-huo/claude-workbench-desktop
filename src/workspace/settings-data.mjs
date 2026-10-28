@@ -15,6 +15,7 @@ export const DEFAULT_PREFERENCES = {
   filesCollapsed: false,
   statuslineVisible: true,
   toolbarVisible: true,
+  viewerWrap: false,
   statusline: { fontSize: 10, items: {} },
 };
 
@@ -32,6 +33,7 @@ export const STORAGE_KEYS = {
   filesCollapsed: 'claude-workbench-files-collapsed',
   statuslineVisible: 'claude-workbench-statusline-visible',
   toolbarVisible: 'claude-workbench-toolbar-visible',
+  viewerWrap: 'claude-workbench-viewer-wrap',
   statusline: 'claude-workbench-statusline-config',
 };
 
@@ -55,7 +57,7 @@ export function readStoredPreferences(storage = globalThis.localStorage) {
     const collapsed = JSON.parse(get(STORAGE_KEYS.collapsedProjects) || 'null');
     if (Array.isArray(collapsed)) result.collapsedProjects = collapsed.filter(item => typeof item === 'string');
   } catch { /* 忽略损坏的缓存值 */ }
-  for (const key of ['navCollapsed', 'composerVisible', 'sessionsCollapsed', 'filesCollapsed', 'statuslineVisible', 'toolbarVisible']) {
+  for (const key of ['navCollapsed', 'composerVisible', 'sessionsCollapsed', 'filesCollapsed', 'statuslineVisible', 'toolbarVisible', 'viewerWrap']) {
     const raw = get(STORAGE_KEYS[key]);
     if (raw === '1' || raw === '0') result[key] = raw === '1';
   }
@@ -86,6 +88,7 @@ export function writeStoredPreferences(patch, storage = globalThis.localStorage)
       case 'filesCollapsed':
       case 'statuslineVisible':
       case 'toolbarVisible':
+      case 'viewerWrap':
         set(STORAGE_KEYS[key], value ? '1' : '0');
         break;
       default: break;
@@ -109,6 +112,7 @@ export function normalizeClientPreferences(raw) {
   preferences.filesCollapsed = Boolean(source.filesCollapsed);
   preferences.statuslineVisible = source.statuslineVisible !== false;
   preferences.toolbarVisible = source.toolbarVisible !== false;
+  preferences.viewerWrap = Boolean(source.viewerWrap);
   preferences.collapsedProjects = Array.isArray(source.collapsedProjects)
     ? source.collapsedProjects.filter(item => typeof item === 'string' && item.length <= 4096)
     : [];

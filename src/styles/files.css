@@ -78,3 +78,26 @@
 .file-viewer-actions{display:flex;align-items:center;gap:8px;flex:none}
 .file-viewer-size{font:9px var(--mono);color:var(--terminal-chrome-muted)}
 .file-viewer-body{flex:1;min-height:0;margin:0;padding:10px 12px;overflow:auto;white-space:pre;font:12px/1.6 var(--mono);tab-size:2}
+/* 源码视图自动换行：长行折行显示，不再横向滚动 */
+.file-viewer-body.wrap{white-space:pre-wrap;word-break:break-word}
+/* 渲染视图：复用正文的滚动与内边距，排版按 Markdown 语义展开 */
+.file-viewer-rendered{white-space:normal;overflow-wrap:break-word;font:13px/1.7 var(--ui,system-ui,sans-serif)}
+.file-viewer-actions .btn[aria-pressed="true"]{background:var(--terminal-accent-focus);border-color:var(--terminal-accent);color:var(--terminal-control-strong-fg)}
+.file-viewer-rendered h1,.file-viewer-rendered h2,.file-viewer-rendered h3,.file-viewer-rendered h4,.file-viewer-rendered h5,.file-viewer-rendered h6{margin:14px 0 6px;line-height:1.35;font-weight:600}
+.file-viewer-rendered h1{font-size:20px;border-bottom:1px solid var(--terminal-chrome-line);padding-bottom:4px}
+.file-viewer-rendered h2{font-size:17px}
+.file-viewer-rendered h3{font-size:15px}
+.file-viewer-rendered h4,.file-viewer-rendered h5,.file-viewer-rendered h6{font-size:13px}
+.file-viewer-rendered p{margin:6px 0}
+.file-viewer-rendered ul,.file-viewer-rendered ol{margin:6px 0;padding-left:22px}
+.file-viewer-rendered li{margin:2px 0}
+.file-viewer-rendered code{font:12px var(--mono);background:var(--terminal-chrome-bg);border:1px solid var(--terminal-chrome-line);border-radius:3px;padding:1px 4px}
+.file-viewer-rendered pre{margin:8px 0;padding:8px 10px;background:var(--terminal-chrome-bg);border:1px solid var(--terminal-chrome-line);border-radius:4px;overflow:auto}
+.file-viewer-rendered pre code{background:none;border:none;padding:0;white-space:pre}
+.file-viewer-rendered blockquote{margin:8px 0;padding:2px 12px;border-left:3px solid var(--terminal-control-line);color:var(--terminal-chrome-muted)}
+.file-viewer-rendered table{border-collapse:collapse;margin:8px 0;font-size:12px}
+.file-viewer-rendered th,.file-viewer-rendered td{border:1px solid var(--terminal-chrome-line);padding:4px 8px;text-align:left}
+.file-viewer-rendered th{background:var(--terminal-chrome-bg)}
+.file-viewer-rendered hr{border:none;border-top:1px solid var(--terminal-chrome-line);margin:12px 0}
+.file-viewer-rendered a{color:var(--terminal-accent)}
+.file-viewer-rendered del{color:var(--terminal-chrome-muted)}
