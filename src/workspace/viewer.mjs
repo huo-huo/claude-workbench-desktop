@@ -18,6 +18,9 @@ export function isPreviewableText(extension) {
   return TEXT_EXTENSIONS.has(ext);
 }
 
+// 查看器请求序号：每次打开自增，只有最新一次请求的响应/错误允许落地
+let viewerRequestSeq = 0;
+
 /** 文件大小展示：KB/MB 保留一位小数 */
 function formatSize(size) {
   const bytes = Number(size) || 0;
@@ -29,16 +32,19 @@ function formatSize(size) {
 /** 读取并展示文件内容；失败时保持面板关闭并提示后端错误原文 */
 export async function openViewer(filePath) {
   if (!app.projectPath) return;
+  const seq = ++viewerRequestSeq;
   app.viewer = { path: filePath, name: '', size: 0, modifiedAt: '', content: '', loading: true };
   renderViewer();
   const url = `/api/workspace/file?projectPath=${encodeURIComponent(app.projectPath)}&path=${encodeURIComponent(filePath)}`;
   try {
     const file = await api(url);
-    // 期间用户可能已切换到别的文件，旧结果直接丢弃
-    if (app.viewer.path !== filePath) return;
+    // 期间用户可能已打开别的文件（含 A→B→A），非最新请求的结果直接丢弃
+    if (seq !== viewerRequestSeq) return;
     app.viewer = { path: filePath, name: file.name || '', size: file.size || 0, modifiedAt: file.modifiedAt || '', content: file.content || '', loading: false };
     renderViewer();
   } catch (error) {
+    // 过期请求的失败不得关闭当前面板，也不提示旧文件的错误
+    if (seq !== viewerRequestSeq) return;
     app.viewer = { path: '', name: '', size: 0, modifiedAt: '', content: '', loading: false };
     renderViewer();
     toast(error.message);
