@@ -44,6 +44,8 @@ function formatSize(size) {
 /** 读取并展示文件内容；失败时保持面板关闭并提示后端错误原文 */
 export async function openViewer(filePath) {
   if (!app.projectPath) return;
+  // 同一文件读取中重复双击直接忽略，避免请求在后端排队堆积
+  if (app.viewer.loading && app.viewer.path === filePath) return;
   const seq = ++viewerRequestSeq;
   // 记录发起请求时的项目，用于丢弃切换项目后才返回的结果
   const projectPath = app.projectPath;

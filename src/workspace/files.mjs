@@ -170,6 +170,16 @@ export function iconFor(extension = '') {
   return { kind: 'generic', label: 'FILE', title: ext ? `${ext.slice(1).toUpperCase()} 文件` : '文件' };
 }
 
+/** 提取树的结构签名：只保留名称、路径、类型与子级，忽略体积等易变字段 */
+function structureSignature(node) {
+  return {
+    n: node.name,
+    p: node.path,
+    t: node.type,
+    c: Array.isArray(node.children) ? node.children.map(structureSignature) : undefined,
+  };
+}
+
 export async function refreshTree({ force = false } = {}) {
   if (!app.projectPath) return;
   const root = app.projectPath;
@@ -202,7 +212,9 @@ export async function refreshTree({ force = false } = {}) {
     if (app.fileTreeRefreshJob !== job || app.projectPath !== root) return;
     // A user opening/collapsing a branch while fetching takes precedence.
     if (JSON.stringify(expandedPaths()) !== JSON.stringify(expanded)) return;
-    const signature = root + '\n' + JSON.stringify(tree);
+    // 签名只含树结构：.claude/todos 等目录的文件体积频繁变化，
+    // 若把 size 算进签名会导致每 5 秒全量重建 DOM，造成持续卡顿
+    const signature = root + '\n' + JSON.stringify(structureSignature(tree));
     if (hadTree && signature === app.fileTreeSignature) return;
     const scrollTop = panel.scrollTop;
     const focused = panel.contains(document.activeElement) ? document.activeElement.closest('[data-tree-path]') : null;

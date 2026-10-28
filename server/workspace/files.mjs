@@ -32,6 +32,8 @@ export function workspaceTree(root, requested = '.', depth = 0, budget = { count
     // 只跳过 Office 临时文件；隐藏文件与隐藏文件夹照常展示
     if (entry.isFile() && entry.name.startsWith('~$')) continue;
     if (WORKSPACE_SKIP.has(entry.name.toLowerCase())) continue;
+    // 预算耗尽立即停止：避免对超大目录（如 Temp）的剩余条目继续同步 lstat，拖垮单线程服务
+    if (budget.count > 1200) break;
     const fullPath = path.join(real, entry.name);
     let childStat;
     try { childStat = fs.lstatSync(fullPath); } catch { continue; }
