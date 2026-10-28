@@ -6,10 +6,12 @@ import path from 'node:path';
 import { WORKSPACE_FILE } from '../server/core/paths.mjs';
 import { atomicJson } from '../server/core/storage.mjs';
 import {
+  readWorkspacePreferences,
   sessionDisplayName,
   setWorkspaceFileForTest,
   workspaceSessionName,
   workspaceState,
+  writeWorkspacePreferences,
 } from '../server/workspace/state.mjs';
 import { listWorkspaceSessions, renameWorkspaceSession, pinWorkspaceSession, archiveWorkspaceSession, removeWorkspaceSession, removeWorkspaceSessionsBatch } from '../server/workspace/sessions.mjs';
 import { workspaceTerminals } from '../server/terminal/sessions.mjs';
@@ -200,4 +202,46 @@ test('removeWorkspaceSessionsBatch:在线会话先发送 Ctrl+C 再删除', () =
     workspaceTerminals.delete('bulk-online');
     restore();
   }
+});
+
+test('设置读写:合并写入后重新读取一致,项目与会话字段保留', () => {
+  const restore = useTempWorkspace({ sessions: [fakeSession({ id: 'keep' })], projects: [{ path: 'C:\\keep', addedAt: 'x', lastUsedAt: 'x' }] });
+  try {
+    assert.deepEqual(readWorkspacePreferences(), {});
+    const saved = writeWorkspacePreferences({ theme: 'dark', terminalFontSize: 13 });
+    assert.deepEqual(saved, { theme: 'dark', terminalFontSize: 13 });
+    assert.deepEqual(readWorkspacePreferences(), { theme: 'dark', terminalFontSize: 13 });
+    assert.equal(workspaceState().sessions[0].id, 'keep');
+    assert.equal(workspaceState().projects[0].path, 'C:\\keep');
+  } finally { restore(); }
+});
+
+test('设置读写:非法字段抛错且文件内容不变', () => {
+  const restore = useTempWorkspace({ preferences: { theme: 'light' } });
+  try {
+    assert.throws(() => writeWorkspacePreferences({ theme: 'blue' }), /theme/);
+    assert.deepEqual(readWorkspacePreferences(), { theme: 'light' });
+  } finally { restore(); }
+});
+
+test('设置读取:文件内非法值回退空对象', () => {
+  const restore = useTempWorkspace({ preferences: { terminalFontSize: 'huge', theme: 'blue' } });
+  try {
+    assert.deepEqual(readWorkspacePreferences(), {});
+  } finally { restore(); }
+});
+
+test('设置读取:单个字段损坏时保留其他合法值', () => {
+  const restore = useTempWorkspace({ preferences: { theme: 'dark', terminalFontSize: 'huge' } });
+  try {
+    assert.deepEqual(readWorkspacePreferences(), { theme: 'dark' });
+  } finally { restore(); }
+});
+
+test('会话写操作保留 preferences', () => {
+  const restore = useTempWorkspace({ sessions: [fakeSession({ id: 'p1' })], preferences: { theme: 'dark', toolbarVisible: false } });
+  try {
+    renameWorkspaceSession('p1', '改名后');
+    assert.deepEqual(readWorkspacePreferences(), { theme: 'dark', toolbarVisible: false });
+  } finally { restore(); }
 });

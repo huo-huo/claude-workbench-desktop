@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { enableStatusline, disableStatusline } from '../server/statusline/toggle.mjs';
+import { enableStatusline, disableStatusline, syncStatuslinePort } from '../server/statusline/toggle.mjs';
 
 /** 在临时目录组装 settings/备份/包装器路径；返回 paths 对象与读取工具 */
 function createEnv(settings) {
@@ -171,4 +171,27 @@ test('空原命令时重复启用不污染备份也不被 409 卡死', () => {
   assert.equal(disabled.enabled, false);
   assert.equal(env.readSettings().statusLine, undefined);
   env.cleanup();
+});
+
+test('同步端口：已启用且端口变化时更新包装器配置与备份', () => {
+  const env = createEnv({ statusLine: { type: 'command', command: ORIGINAL } });
+  try {
+    enableStatusline({ port: 4173, paths: env.paths });
+    const result = syncStatuslinePort(50999, { paths: env.paths });
+    assert.equal(result.synced, true);
+    const config = JSON.parse(fs.readFileSync(env.paths.wrapperConfig, 'utf8'));
+    assert.equal(config.port, 50999);
+    const backup = JSON.parse(fs.readFileSync(env.paths.backupFile, 'utf8'));
+    assert.equal(backup.port, 50999);
+    assert.equal(backup.enabled, true);
+  } finally { env.cleanup(); }
+});
+
+test('同步端口：未启用或端口未变时不做写入', () => {
+  const env = createEnv({ statusLine: { type: 'command', command: ORIGINAL } });
+  try {
+    assert.deepEqual(syncStatuslinePort(50999, { paths: env.paths }), { synced: false });
+    enableStatusline({ port: 50999, paths: env.paths });
+    assert.deepEqual(syncStatuslinePort(50999, { paths: env.paths }), { synced: false });
+  } finally { env.cleanup(); }
 });

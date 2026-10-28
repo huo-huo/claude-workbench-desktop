@@ -127,3 +127,26 @@ export function disableStatusline(options = {}) {
 export function defaultBackupFile() {
   return path.join(os.homedir(), '.claude', 'workbench-statusline.json');
 }
+
+/**
+ * 启动时同步包装器转发端口：桌面端每次启动端口随机，包装器配置里若仍是旧端口，
+ * 状态栏会一直收不到转发数据。仅在已启用且端口变化时更新配置与备份，失败静默。
+ */
+export function syncStatuslinePort(port, options = {}) {
+  const paths = { ...DEFAULT_PATHS(), ...options.paths };
+  try {
+    const backup = readJsonStrict(paths.backupFile);
+    if (backup?.enabled !== true) return { synced: false };
+    if (Number(backup.port) === Number(port)) return { synced: false };
+    if (!fs.existsSync(paths.wrapperCopy)) return { synced: false };
+    writeSettings(paths.wrapperConfig, {
+      command: typeof backup.originalCommand === 'string' ? backup.originalCommand : '',
+      port: Number(port),
+    });
+    writeSettings(paths.backupFile, { ...backup, port: Number(port) });
+    return { synced: true, port: Number(port) };
+  } catch {
+    // 启动阶段不能因状态栏配置失败而影响主服务
+    return { synced: false };
+  }
+}

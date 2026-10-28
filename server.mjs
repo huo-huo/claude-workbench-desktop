@@ -5,6 +5,7 @@ import { PORT } from './server/core/paths.mjs';
 import { createRequestHandler, createUpgradeHandler } from './server/routes/index.mjs';
 import { workspaceTerminals } from './server/terminal/sessions.mjs';
 import { sdkRuntime } from './server/sdk/bridge.mjs';
+import { syncStatuslinePort } from './server/statusline/toggle.mjs';
 
 /** 创建 HTTP 服务与 WebSocket 升级处理；测试可自行监听随机端口 */
 export function createServer() {
@@ -38,6 +39,8 @@ const isEntry = isDirectEntry();
 
 if (isEntry) {
   const server = startServer();
+  // 桌面端端口每次启动随机：把已启用的 statusLine 包装器转发端口同步到本次端口
+  syncStatuslinePort(PORT);
 
   /** 是否已开始优雅退出；重复信号直接退出进程 */
   let sdkShuttingDown = false;

@@ -2,13 +2,21 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { $ } from './core/dom.mjs';
 import { api, toast } from './core/api.mjs';
-import { app, keys } from './state.mjs';
+import { app } from './state.mjs';
+import { saveWorkspaceSettings } from './settings.mjs';
 import { projectName, updateProjectLabels } from './preferences.mjs';
 import { terminalThemes } from './theme.mjs';
 import { refreshProjects } from './projects.mjs';
 import { refreshTree } from './files.mjs';
 import { refreshSessions } from './sessions.mjs';
 import { refreshStatusline } from './statusline.mjs';
+import { createWriteQueue, createDebouncer } from './terminal-scheduler.mjs';
+
+/** 终端输出队列：同一渲染帧内的多个数据块合并为一次写入 */
+const terminalWriteQueue = createWriteQueue({ write: chunk => app.terminal?.write(chunk) });
+
+/** 尺寸适配防抖：合并 ResizeObserver、窗口缩放与焦点变化 */
+const debouncedFit = createDebouncer({ delay: 90, run: () => applyTerminalFit() });
 
 export function ensureTerminal() {
   if (app.terminal) return;
@@ -91,7 +99,7 @@ export function ensureTerminal() {
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) requestAnimationFrame(() => fitTerminal());
   });
-  fitTerminal();
+  fitTerminalImmediate();
 }
 
 export function suppressCursorVisibility(data) {
@@ -153,9 +161,37 @@ export async function pasteClipboardToTerminal(shortcut) {
 }
 
 export function fitTerminal() {
+  debouncedFit();
+}
+
+/** 立即适配终端尺寸；连接建立等需要同步生效的场景使用 */
+export function fitTerminalImmediate() {
+  debouncedFit.cancel();
+  applyTerminalFit();
+}
+
+/**
+ * xterm 的行高是小数，fit 计算出的行数可能让屏幕比可视区高出几像素，
+ * 底部内容会被 overflow:hidden 裁掉。这里逐行收缩，保证最后一行完整可见。
+ */
+function shrinkRowsToFit() {
+  const screen = app.terminal?.element?.querySelector('.xterm-screen');
+  if (!screen || !app.terminalHost) return;
+  const style = getComputedStyle(app.terminalHost);
+  const available = app.terminalHost.clientHeight
+    - (parseFloat(style.paddingTop) || 0)
+    - (parseFloat(style.paddingBottom) || 0);
+  let guard = 0;
+  while (app.terminal.rows > 1 && screen.getBoundingClientRect().height > available + 0.5 && guard++ < 6) {
+    app.terminal.resize(app.terminal.cols, app.terminal.rows - 1);
+  }
+}
+
+function applyTerminalFit() {
   if (!app.fitAddon || app.workspace.hidden) return;
   try {
     app.fitAddon.fit();
+    shrinkRowsToFit();
     const size = `${app.terminal.cols}x${app.terminal.rows}`;
     if (app.socket?.readyState === WebSocket.OPEN && size !== app.lastTerminalPtySize) {
       app.socket.send(JSON.stringify({ type: 'resize', cols: app.terminal.cols, rows: app.terminal.rows }));
@@ -187,13 +223,14 @@ export function connectTerminal(session, { reconnecting = false } = {}) {
   app.lastTerminalPtySize = '';
   if (!reconnecting) {
     app.projectPath = session.projectPath;
-    localStorage.setItem(keys.projectPath, app.projectPath);
+    saveWorkspaceSettings({ projectPath: app.projectPath });
     updateProjectLabels();
     refreshProjects().catch(() => {});
     refreshTree().catch(error => toast(error.message));
     refreshStatusline().catch(() => {});
   }
   app.terminal.reset();
+  terminalWriteQueue.clear();
   app.terminalCursorVisibilityPending = '';
   app.terminal.write('\u001b[?25l');
   $('#terminalEmpty').hidden = true;
@@ -210,7 +247,7 @@ export function connectTerminal(session, { reconnecting = false } = {}) {
   app.socket = connection;
   connection.onopen = () => {
     if (generation !== app.terminalConnectionGeneration || app.socket !== connection) return;
-    fitTerminal();
+    fitTerminalImmediate();
     app.terminal.focus();
   };
   connection.onmessage = event => {
@@ -218,6 +255,8 @@ export function connectTerminal(session, { reconnecting = false } = {}) {
     let message;
     try { message = JSON.parse(event.data); } catch { return; }
     if (message.type === 'ready') {
+      // 先写入已排队的输出，保证 ready 之前的画面顺序不乱
+      terminalWriteQueue.flush();
       app.terminal.write(suppressCursorVisibility(message.data), () => {
         if (generation !== app.terminalConnectionGeneration || app.socket !== connection
           || connection.readyState !== WebSocket.OPEN || message.status !== 'running') return;
@@ -235,7 +274,7 @@ export function connectTerminal(session, { reconnecting = false } = {}) {
         $('#terminalLed').classList.remove('live');
         $('#stopSession').disabled = true;
       }
-    } else if (message.type === 'data') app.terminal.write(suppressCursorVisibility(message.data));
+    } else if (message.type === 'data') terminalWriteQueue.push(suppressCursorVisibility(message.data));
     else if (message.type === 'exit') {
       app.terminalSessionAlive = false;
       clearTimeout(app.terminalReconnectTimer);
