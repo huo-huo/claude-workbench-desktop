@@ -10,6 +10,7 @@ import { refreshProjects } from './projects.mjs';
 import { refreshTree } from './files.mjs';
 import { refreshSessions } from './sessions.mjs';
 import { refreshStatusline } from './statusline.mjs';
+import { closeViewer } from './viewer.mjs';
 import { createWriteQueue, createDebouncer } from './terminal-scheduler.mjs';
 
 /** 终端输出队列：同一渲染帧内的多个数据块合并为一次写入 */
@@ -223,6 +224,7 @@ export function connectTerminal(session, { reconnecting = false } = {}) {
   app.lastTerminalPtySize = '';
   if (!reconnecting) {
     app.projectPath = session.projectPath;
+    closeViewer();
     saveWorkspaceSettings({ projectPath: app.projectPath });
     updateProjectLabels();
     refreshProjects().catch(() => {});

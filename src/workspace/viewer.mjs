@@ -33,6 +33,8 @@ function formatSize(size) {
 export async function openViewer(filePath) {
   if (!app.projectPath) return;
   const seq = ++viewerRequestSeq;
+  // 记录发起请求时的项目，用于丢弃切换项目后才返回的结果
+  const projectPath = app.projectPath;
   app.viewer = { path: filePath, name: '', size: 0, modifiedAt: '', content: '', loading: true };
   renderViewer();
   const url = `/api/workspace/file?projectPath=${encodeURIComponent(app.projectPath)}&path=${encodeURIComponent(filePath)}`;
@@ -40,11 +42,15 @@ export async function openViewer(filePath) {
     const file = await api(url);
     // 期间用户可能已打开别的文件（含 A→B→A），非最新请求的结果直接丢弃
     if (seq !== viewerRequestSeq) return;
+    // 期间已切换项目，旧项目的结果不得落到新项目上下文
+    if (app.projectPath !== projectPath) return;
     app.viewer = { path: filePath, name: file.name || '', size: file.size || 0, modifiedAt: file.modifiedAt || '', content: file.content || '', loading: false };
     renderViewer();
   } catch (error) {
     // 过期请求的失败不得关闭当前面板，也不提示旧文件的错误
     if (seq !== viewerRequestSeq) return;
+    // 跨项目的失败同样丢弃，避免在新项目里提示旧项目错误
+    if (app.projectPath !== projectPath) return;
     app.viewer = { path: '', name: '', size: 0, modifiedAt: '', content: '', loading: false };
     renderViewer();
     toast(error.message);
