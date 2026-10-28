@@ -18,6 +18,8 @@ export default defineConfig({
       CLAUDE_WORKBENCH_PORT: '4199',
       // 显式覆盖用户级 CLAUDE_WORKBENCH_WEB_ROOT（可能指向已安装桌面应用的旧 dist），确保服务本仓库构建产物
       CLAUDE_WORKBENCH_WEB_ROOT: path.resolve(process.cwd(), 'dist'),
+      // E2E 使用独立工作区文件，避免首屏设置与真实用户配置互相污染
+      CLAUDE_WORKBENCH_WORKSPACE_FILE: path.resolve(process.cwd(), 'test-results', 'e2e-workspace.json'),
     },
     url: 'http://127.0.0.1:4199/api/workspace/projects',
     reuseExistingServer: false,

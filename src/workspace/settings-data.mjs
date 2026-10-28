@@ -251,7 +251,7 @@ export function createSettingsManager({
     // 只提交 patch 中出现的白名单字段，并采用归一化后的值，避免单个越界值拖垮整批写入
     const safePatch = {};
     for (const key of Object.keys(patch)) {
-      if (key in DEFAULT_PREFERENCES) safePatch[key] = merged[key];
+      if (Object.prototype.hasOwnProperty.call(DEFAULT_PREFERENCES, key)) safePatch[key] = merged[key];
     }
     current = { ...base, ...safePatch };
     writeStoredPreferences(safePatch, storage);

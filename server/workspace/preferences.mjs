@@ -73,7 +73,8 @@ export function normalizePreferences(patch, current = {}) {
         next.collapsedProjects = [...new Set(value)];
         break;
       case 'statusline':
-        next.statusline = normalizeStatusline(value);
+        // 与普通字段一样按部分合并处理，只传 fontSize 时保留已有显示项
+        next.statusline = { ...(base.statusline || {}), ...normalizeStatusline(value) };
         break;
       default:
         ignored.push(key);

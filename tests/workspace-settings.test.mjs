@@ -166,6 +166,18 @@ test('写入前归一化：越界字段被夹紧且不拖垮其他字段', async
   assert.deepEqual(fetchImpl.calls[1].body, { terminalFontSize: 24, theme: 'dark' });
 });
 
+test('显式 flush：立即写入待处理的设置', async () => {
+  const storage = fakeStorage();
+  const timers = fakeTimers();
+  const fetchImpl = fakeFetch([{ body: { preferences: {} } }, { body: { preferences: {} } }]);
+  const manager = createSettingsManager({ fetchImpl, storage, timers, saveDelay: 10000 });
+  await manager.load();
+  manager.save({ theme: 'dark' });
+  await manager.flush();
+  assert.equal(fetchImpl.calls.length, 2);
+  assert.equal(fetchImpl.calls[1].body.theme, 'dark');
+});
+
 test('写入失败：提示错误但保留内存与缓存中的设置', async () => {
   const storage = fakeStorage();
   const errors = [];

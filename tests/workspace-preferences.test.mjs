@@ -34,6 +34,14 @@ test('设置合并：状态栏与折叠项目正常规范化', () => {
   assert.deepEqual(preferences.collapsedProjects, ['C:\\a', 'C:\\b']);
 });
 
+test('设置合并：状态栏只传字号时保留已有显示项', () => {
+  const { preferences } = normalizePreferences(
+    { statusline: { fontSize: 13 } },
+    { statusline: { fontSize: 10, items: { model: true, hooks: false } } },
+  );
+  assert.deepEqual(preferences.statusline, { fontSize: 13, items: { model: true, hooks: false } });
+});
+
 test('设置合并：非对象输入被拒绝', () => {
   assert.throws(() => normalizePreferences(null, {}), /对象/);
   assert.throws(() => normalizePreferences([], {}), /对象/);

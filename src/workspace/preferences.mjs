@@ -53,8 +53,11 @@ export function updateTerminalEmptyState() {
 
 /** 设置终端字号并持久化；范围限制为 10-24px */
 export function setTerminalFontSize(value, fitTerminal) {
-  app.terminalFontSize = Math.max(10, Math.min(24, Math.round(Number(value) || 12)));
-  saveWorkspaceSettings({ terminalFontSize: app.terminalFontSize });
+  const nextSize = Math.max(10, Math.min(24, Math.round(Number(value) || 12)));
+  const changed = nextSize !== app.terminalFontSize;
+  app.terminalFontSize = nextSize;
+  // 启动恢复时值未变化就不写服务端，避免每次启动产生一次无意义保存
+  if (changed) saveWorkspaceSettings({ terminalFontSize: app.terminalFontSize });
   $('#terminalZoomLevel').textContent = `${app.terminalFontSize}px`;
   $('#terminalZoomOut').disabled = app.terminalFontSize <= 10;
   $('#terminalZoomIn').disabled = app.terminalFontSize >= 24;
