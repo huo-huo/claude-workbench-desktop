@@ -7,7 +7,9 @@ import { readRawBody } from '../core/http.mjs';
 import { safeWorkspaceRoot } from './state.mjs';
 
 // 文件树遍历时跳过的重型目录
-const WORKSPACE_SKIP = new Set(['.git', 'node_modules', '.next', '.turbo', 'dist', 'build', 'target', '.venv', 'vendor']);
+// appdata：Windows 用户主目录常被直接作为项目，其下临时文件高频增删，
+// 会造成文件树签名每轮刷新必变（全量重建 DOM）与后端遍历风暴，必须排除
+const WORKSPACE_SKIP = new Set(['.git', 'node_modules', '.next', '.turbo', 'dist', 'build', 'target', '.venv', 'vendor', 'appdata']);
 
 export function workspacePath(root, requested) {
   const project = safeWorkspaceRoot(root);

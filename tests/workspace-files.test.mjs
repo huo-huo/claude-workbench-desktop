@@ -12,11 +12,19 @@ function createFixture() {
   fs.mkdirSync(path.join(root, '.vscode'));
   fs.mkdirSync(path.join(root, '.git'));
   fs.mkdirSync(path.join(root, 'node_modules'));
+  fs.mkdirSync(path.join(root, 'AppData', 'Local', 'Temp'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'AppData', 'Local', 'Temp', 'churn.tmp'), 'x');
   fs.writeFileSync(path.join(root, '.gitignore'), 'node_modules\n');
   fs.writeFileSync(path.join(root, 'README.md'), '# demo\n');
   fs.writeFileSync(path.join(root, '~$draft.docx'), 'tmp');
   return root;
 }
+
+test('用户主目录场景下 AppData 不进入文件树', () => {
+  const root = createFixture();
+  const names = workspaceTree(root).children.map(item => item.name);
+  assert.ok(!names.includes('AppData'));
+});
 
 test('文件树展示隐藏文件与隐藏文件夹', () => {
   const root = createFixture();

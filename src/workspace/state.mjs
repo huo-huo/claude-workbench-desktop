@@ -41,6 +41,7 @@ export const app = {
   viewerWrap: false,
   fileTreeRefreshJob: null,
   fileTreeSignature: '',
+  fileTreeRebuildAt: 0, // 上次全量重建时间；钳制结构变化触发的重建频率
   fileTreeInteractionAt: 0,
   fileTreeDragging: false,
   contextProjectPath: '',
