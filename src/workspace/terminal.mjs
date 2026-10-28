@@ -170,10 +170,28 @@ export function fitTerminalImmediate() {
   applyTerminalFit();
 }
 
+/**
+ * xterm 的行高是小数，fit 计算出的行数可能让屏幕比可视区高出几像素，
+ * 底部内容会被 overflow:hidden 裁掉。这里逐行收缩，保证最后一行完整可见。
+ */
+function shrinkRowsToFit() {
+  const screen = app.terminal?.element?.querySelector('.xterm-screen');
+  if (!screen || !app.terminalHost) return;
+  const style = getComputedStyle(app.terminalHost);
+  const available = app.terminalHost.clientHeight
+    - (parseFloat(style.paddingTop) || 0)
+    - (parseFloat(style.paddingBottom) || 0);
+  let guard = 0;
+  while (app.terminal.rows > 1 && screen.getBoundingClientRect().height > available + 0.5 && guard++ < 6) {
+    app.terminal.resize(app.terminal.cols, app.terminal.rows - 1);
+  }
+}
+
 function applyTerminalFit() {
   if (!app.fitAddon || app.workspace.hidden) return;
   try {
     app.fitAddon.fit();
+    shrinkRowsToFit();
     const size = `${app.terminal.cols}x${app.terminal.rows}`;
     if (app.socket?.readyState === WebSocket.OPEN && size !== app.lastTerminalPtySize) {
       app.socket.send(JSON.stringify({ type: 'resize', cols: app.terminal.cols, rows: app.terminal.rows }));
