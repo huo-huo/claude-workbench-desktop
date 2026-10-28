@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { WORKSPACE_FILE } from '../core/paths.mjs';
 import { atomicJson, safeReadJson } from '../core/storage.mjs';
+import { normalizePreferences, sanitizePreferences } from './preferences.mjs';
 
 // 模块级可变引用:测试可重定向到临时文件,生产仍指向真实工作区数据文件;
 // ESM 导出为活动绑定,依赖方(如 sessions.mjs)读到的始终是最新值
@@ -9,6 +10,21 @@ export let workspaceFile = WORKSPACE_FILE;
 
 /** 仅供测试重定向工作区数据文件;生产代码不得调用 */
 export function setWorkspaceFileForTest(file) { workspaceFile = file; }
+
+/** 读取界面设置；单个字段损坏时只丢弃该字段，整份损坏时回退空对象 */
+export function readWorkspacePreferences() {
+  const saved = safeReadJson(workspaceFile, {});
+  return sanitizePreferences(saved.preferences);
+}
+
+/** 合并写入界面设置；非法字段抛出可读错误时文件保持原状 */
+export function writeWorkspacePreferences(patch) {
+  const saved = safeReadJson(workspaceFile, {});
+  const current = sanitizePreferences(saved.preferences);
+  const { preferences } = normalizePreferences(patch, current);
+  atomicJson(workspaceFile, { ...saved, preferences });
+  return preferences;
+}
 
 export function workspaceSessionName(session) {
   const folderName = path.basename(String(session.projectPath || '').replace(/[\\/]+$/, '')) || '未命名项目';
@@ -62,7 +78,8 @@ export function workspaceState() {
   const allProjects = [...knownProjects.values()];
   const savedProjects = allProjects.filter(x => !hiddenKeys.has(path.resolve(x.path).toLowerCase()));
   if (changed || !Array.isArray(saved.projects) || !Array.isArray(saved.hiddenProjects)) atomicJson(workspaceFile, { ...saved, projects: allProjects, hiddenProjects, sessions: namedSessions });
-  return { projects: savedProjects, hiddenProjects, sessions: namedSessions };
+  // 保留 preferences 等其余字段：其他模块会用返回值整体写回，缺字段会清空设置
+  return { ...saved, projects: savedProjects, hiddenProjects, sessions: namedSessions };
 }
 
 export function safeWorkspaceRoot(value) {
@@ -83,7 +100,8 @@ export function recordWorkspaceProject(value, at = new Date().toISOString()) {
     ? saved.projects.map(x => path.resolve(x.path).toLowerCase() === key ? { ...x, lastUsedAt: at } : x)
     : [{ path: projectPath, addedAt: at, lastUsedAt: at }, ...saved.projects];
   const hiddenProjects = saved.hiddenProjects.filter(x => path.resolve(x).toLowerCase() !== key);
-  atomicJson(workspaceFile, { projects, hiddenProjects, sessions: saved.sessions });
+  const raw = safeReadJson(workspaceFile, {});
+  atomicJson(workspaceFile, { ...raw, projects, hiddenProjects, sessions: saved.sessions });
   return projectPath;
 }
 
@@ -98,7 +116,8 @@ export function hideWorkspaceProject(value) {
   const projectPath = known.path || known.projectPath;
   const projects = saved.projects.filter(x => path.resolve(x.path).toLowerCase() !== key);
   const hiddenProjects = [...new Map([...saved.hiddenProjects, projectPath].map(x => [path.resolve(x).toLowerCase(), x])).values()];
-  atomicJson(workspaceFile, { projects, hiddenProjects, sessions: saved.sessions });
+  const raw = safeReadJson(workspaceFile, {});
+  atomicJson(workspaceFile, { ...raw, projects, hiddenProjects, sessions: saved.sessions });
   return { hidden: true };
 }
 

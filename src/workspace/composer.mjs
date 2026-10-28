@@ -2,6 +2,7 @@ import { $ } from './core/dom.mjs';
 import { api, toast } from './core/api.mjs';
 import { app } from './state.mjs';
 import { fitTerminal, quoteWindowsPath } from './terminal.mjs';
+import { saveWorkspaceSettings } from './settings.mjs';
 
 /** 输入框自动高度上限，与样式中的 max-height 保持一致 */
 const COMPOSER_MAX_HEIGHT = 180;
@@ -157,6 +158,7 @@ export function toggleComposer() {
   app.composerVisible = !app.composerVisible;
   $('#terminalComposer').hidden = !app.composerVisible;
   $('#toggleComposer').setAttribute('aria-expanded', String(app.composerVisible));
+  saveWorkspaceSettings({ composerVisible: app.composerVisible });
   if (app.composerVisible) requestAnimationFrame(() => { autoSizeComposer(); $('#composerInput').focus(); fitTerminal(); });
   else requestAnimationFrame(() => fitTerminal());
 }

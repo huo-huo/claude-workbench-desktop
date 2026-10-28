@@ -1,4 +1,4 @@
-import { hideWorkspaceProject, listWorkspaceProjects, recordWorkspaceProject, safeWorkspaceRoot } from '../workspace/state.mjs';
+import { hideWorkspaceProject, listWorkspaceProjects, readWorkspacePreferences, recordWorkspaceProject, safeWorkspaceRoot, writeWorkspacePreferences } from '../workspace/state.mjs';
 import { listWorkspaceSessions, removeWorkspaceSession, removeWorkspaceSessionsBatch, renameWorkspaceSession, pinWorkspaceSession, archiveWorkspaceSession } from '../workspace/sessions.mjs';
 import { workspaceAsset, workspaceFileText, workspaceTree } from '../workspace/files.mjs';
 import { openWorkspaceFile, readWorkspaceClipboard, recycleWorkspaceItem, revealWorkspaceFile, selectWorkspaceFolder } from '../workspace/native.mjs';
@@ -25,6 +25,7 @@ import { deletePromptLibraryItem, promptLibraryRows, refinePromptLibraryItem, sa
 // GET handler 接收 URL，返回 { status, body, type? }
 export const GET_ROUTES = new Map([
   ['/api/workspace/projects', () => ({ status: 200, body: { projects: listWorkspaceProjects() } })],
+  ['/api/workspace/preferences', () => ({ status: 200, body: { preferences: readWorkspacePreferences() } })],
   ['/api/workspace/sessions', url => ({ status: 200, body: { sessions: listWorkspaceSessions(url.searchParams.get('projectPath'), { archived: url.searchParams.get('archived') === '1' }) } })],
   ['/api/workspace/files', url => ({ status: 200, body: workspaceTree(safeWorkspaceRoot(url.searchParams.get('projectPath')), url.searchParams.get('path') || '.') })],
   ['/api/workspace/file', url => ({ status: 200, body: workspaceFileText(safeWorkspaceRoot(url.searchParams.get('projectPath')), url.searchParams.get('path')) })],
@@ -68,6 +69,14 @@ export const POST_ROUTES = new Map([
     return { status: 200, body: { projectPath: selected ? recordWorkspaceProject(selected) : '' } };
   }],
   ['/api/workspace/project/hide', body => ({ status: 200, body: hideWorkspaceProject(body.path) })],
+  ['/api/workspace/preferences', body => {
+    // 非法字段由 normalizePreferences 抛错，路由层统一转成 400
+    try {
+      return { status: 200, body: { preferences: writeWorkspacePreferences(body) } };
+    } catch (error) {
+      return { status: 400, body: { error: error.message } };
+    }
+  }],
   ['/api/workspace/session', body => ({ status: 200, body: createWorkspaceSession(body) })],
   ['/api/workspace/session/remove', body => ({ status: 200, body: removeWorkspaceSession(body.id) })],
   ['/api/workspace/sessions/remove-batch', body => ({ status: 200, body: removeWorkspaceSessionsBatch(body.ids) })],

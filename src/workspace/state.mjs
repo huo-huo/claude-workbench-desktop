@@ -20,6 +20,13 @@ export const app = {
   promptLibraryItems: [],
   promptEditingId: '',
   terminalFontSize: Number(localStorage.getItem('claude-workbench-terminal-font-size')) || 12,
+  view: localStorage.getItem('claude-workbench-view') === 'workspace' ? 'workspace' : 'management',
+  navCollapsed: localStorage.getItem('claude-workbench-nav-collapsed') === '1',
+  sessionsCollapsed: localStorage.getItem('claude-workbench-sessions-collapsed') === '1',
+  filesCollapsed: localStorage.getItem('claude-workbench-files-collapsed') === '1',
+  statuslineVisible: localStorage.getItem('claude-workbench-statusline-visible') !== '0',
+  toolbarVisible: localStorage.getItem('claude-workbench-toolbar-visible') !== '0',
+  collapsedProjects: [],
   selectedFile: '',
   lastManagementCrumb: '运行概览',
   cachedSessions: [], // 主列表全量缓存;搜索过滤只重渲染这份数据,不发请求
@@ -36,14 +43,4 @@ export const app = {
   fileTreeContextTarget: { path: '', type: '' },
   sessionActivityMonitors: new Map(),
   sessionActivityStates: new Map(),
-};
-
-// localStorage 键；与拆分前保持一致
-export const keys = {
-  projectPath: 'claude-workbench-project-path',
-  view: 'claude-workbench-view',
-  theme: 'claude-workbench-workspace-theme',
-  terminalFontSize: 'claude-workbench-terminal-font-size',
-  projectsExpanded: 'claude-workbench-projects-expanded',
-  collapsedProjects: 'claude-workbench-collapsed-projects',
 };

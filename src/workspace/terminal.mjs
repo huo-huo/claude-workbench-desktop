@@ -2,7 +2,8 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { $ } from './core/dom.mjs';
 import { api, toast } from './core/api.mjs';
-import { app, keys } from './state.mjs';
+import { app } from './state.mjs';
+import { saveWorkspaceSettings } from './settings.mjs';
 import { projectName, updateProjectLabels } from './preferences.mjs';
 import { terminalThemes } from './theme.mjs';
 import { refreshProjects } from './projects.mjs';
@@ -204,7 +205,7 @@ export function connectTerminal(session, { reconnecting = false } = {}) {
   app.lastTerminalPtySize = '';
   if (!reconnecting) {
     app.projectPath = session.projectPath;
-    localStorage.setItem(keys.projectPath, app.projectPath);
+    saveWorkspaceSettings({ projectPath: app.projectPath });
     updateProjectLabels();
     refreshProjects().catch(() => {});
     refreshTree().catch(error => toast(error.message));

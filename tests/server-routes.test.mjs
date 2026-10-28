@@ -130,3 +130,29 @@ test('POST /api/workspace/sessions/remove-batch 空 ids 返回 400', async () =>
     assert.ok((await res.json()).error);
   }
 });
+
+test('GET /api/workspace/preferences 空文件返回空对象', async () => {
+  atomicJson(path.join(tempDir, 'workspace.json'), {});
+  const res = await fetch(`${base}/api/workspace/preferences`);
+  assert.equal(res.status, 200);
+  assert.deepEqual(await res.json(), { preferences: {} });
+});
+
+test('POST /api/workspace/preferences 合并写入并可重新读取', async () => {
+  atomicJson(path.join(tempDir, 'workspace.json'), { preferences: { theme: 'light' }, sessions: [] });
+  const res = await post('/api/workspace/preferences', { theme: 'dark', terminalFontSize: 13, unknownKey: 1 });
+  assert.equal(res.status, 200);
+  assert.deepEqual(await res.json(), { preferences: { theme: 'dark', terminalFontSize: 13 } });
+  const read = await (await fetch(`${base}/api/workspace/preferences`)).json();
+  assert.deepEqual(read.preferences, { theme: 'dark', terminalFontSize: 13 });
+});
+
+test('POST /api/workspace/preferences 非法字段返回 400 且不落盘', async () => {
+  const file = path.join(tempDir, 'workspace.json');
+  atomicJson(file, { preferences: { theme: 'light' } });
+  const res = await post('/api/workspace/preferences', { theme: 'blue' });
+  assert.equal(res.status, 400);
+  assert.ok((await res.json()).error);
+  const saved = JSON.parse(fs.readFileSync(file, 'utf8'));
+  assert.deepEqual(saved.preferences, { theme: 'light' });
+});
