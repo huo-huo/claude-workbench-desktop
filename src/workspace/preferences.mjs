@@ -1,5 +1,6 @@
 import { $ } from './core/dom.mjs';
-import { app, keys } from './state.mjs';
+import { app } from './state.mjs';
+import { getWorkspaceSettings, saveWorkspaceSettings } from './settings.mjs';
 
 /** 从项目路径提取显示名称 */
 export function projectName(path) {
@@ -18,19 +19,15 @@ export function sessionGroupKey(path) {
   return String(path || '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
 }
 
-/** 读取折叠的项目 key；内容非法（非 JSON 或非数组）时按空数组处理 */
+/** 读取折叠的项目 key；统一设置尚未加载时回退空数组 */
 export function readCollapsedProjects() {
-  try {
-    const value = JSON.parse(localStorage.getItem(keys.collapsedProjects) || '[]');
-    return Array.isArray(value) ? value.filter(item => typeof item === 'string') : [];
-  } catch { return []; }
+  const value = getWorkspaceSettings().collapsedProjects;
+  return Array.isArray(value) ? value.filter(item => typeof item === 'string') : [];
 }
 
-/** 写入折叠的项目 key（去重，保持顺序）；localStorage 写入失败时静默失败 */
+/** 写入折叠的项目 key（去重，保持顺序）；持久化失败由设置管理器提示 */
 export function writeCollapsedProjects(nextKeys) {
-  try {
-    localStorage.setItem(keys.collapsedProjects, JSON.stringify([...new Set(nextKeys)]));
-  } catch { /* 持久化失败不影响本次折叠交互 */ }
+  saveWorkspaceSettings({ collapsedProjects: [...new Set(nextKeys)] });
 }
 
 /** 同步项目标签与空状态文案 */
@@ -57,7 +54,7 @@ export function updateTerminalEmptyState() {
 /** 设置终端字号并持久化；范围限制为 10-24px */
 export function setTerminalFontSize(value, fitTerminal) {
   app.terminalFontSize = Math.max(10, Math.min(24, Math.round(Number(value) || 12)));
-  localStorage.setItem(keys.terminalFontSize, String(app.terminalFontSize));
+  saveWorkspaceSettings({ terminalFontSize: app.terminalFontSize });
   $('#terminalZoomLevel').textContent = `${app.terminalFontSize}px`;
   $('#terminalZoomOut').disabled = app.terminalFontSize <= 10;
   $('#terminalZoomIn').disabled = app.terminalFontSize >= 24;

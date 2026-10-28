@@ -106,10 +106,12 @@
           </div>
           <div class="statusline-detail-backdrop" id="statuslineSettingsBackdrop" hidden>
             <section class="statusline-detail-panel" role="dialog" aria-modal="true" aria-labelledby="statuslineSettingsTitle">
-              <header class="statusline-detail-panel-head"><div><h2 id="statuslineSettingsTitle">状态栏配置</h2><p>显示项与字体大小保存在浏览器本地，仅影响本机界面</p></div><button class="close" id="closeStatuslineSettings" aria-label="关闭">×</button></header>
+              <header class="statusline-detail-panel-head"><div><h2 id="statuslineSettingsTitle">状态栏配置</h2><p>显示项与字体大小保存到本机工作区设置，重启与更换端口后仍然有效</p></div><button class="close" id="closeStatuslineSettings" aria-label="关闭">×</button></header>
               <div class="statusline-detail-panel-body" id="statuslineSettingsBody">
                 <label class="statusline-setting-row"><span class="statusline-setting-label">启用 statusLine 包装<small>接管终端 statusLine 的数据源转发给软件；终端内原状态栏由软件状态栏替代</small></span><input type="checkbox" class="switch" id="settingWrapper"></label>
-                <label class="statusline-setting-row"><span class="statusline-setting-label">状态栏字体大小</span><span class="statusline-font-controls"><button type="button" class="btn flat" id="statuslineFontMinus">A−</button><span id="statuslineFontSize">8px</span><button type="button" class="btn flat" id="statuslineFontPlus">A+</button></span></label>
+                <label class="statusline-setting-row"><span class="statusline-setting-label">显示状态栏<small>关闭后底部状态栏隐藏，终端区域自动扩展</small></span><input type="checkbox" class="switch" id="settingStatuslineVisible"></label>
+                <label class="statusline-setting-row"><span class="statusline-setting-label">显示工具栏<small>关闭后终端工具栏隐藏，可用 Ctrl+Shift+, 重新打开本面板</small></span><input type="checkbox" class="switch" id="settingToolbarVisible"></label>
+                <label class="statusline-setting-row"><span class="statusline-setting-label">状态栏字体大小</span><span class="statusline-font-controls"><button type="button" class="btn flat" id="statuslineFontMinus">A−</button><span id="statuslineFontSize">10px</span><button type="button" class="btn flat" id="statuslineFontPlus">A+</button></span></label>
                 <div class="statusline-setting-group" id="statuslineItemToggles"></div>
               </div>
             </section>

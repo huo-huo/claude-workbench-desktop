@@ -1,7 +1,8 @@
 import { $, escapeHtml } from './core/dom.mjs';
 import { api, toast } from './core/api.mjs';
-import { app, keys } from './state.mjs';
+import { app } from './state.mjs';
 import { projectName, updateProjectLabels } from './preferences.mjs';
+import { saveWorkspaceSettings } from './settings.mjs';
 import { refreshSessions } from './sessions.mjs';
 import { refreshTree } from './files.mjs';
 
@@ -10,7 +11,7 @@ export async function refreshProjects() {
   app.projects = result.projects || [];
   if (!app.projectPath && app.projects.length) {
     app.projectPath = app.projects[0].path;
-    localStorage.setItem(keys.projectPath, app.projectPath);
+    saveWorkspaceSettings({ projectPath: app.projectPath });
   }
   renderProjects();
   updateProjectLabels();
@@ -58,8 +59,7 @@ export async function hideProjectFromList() {
   if (app.projectPath.toLowerCase() === path.toLowerCase()) {
     const next = app.projects.find(item => item.path.toLowerCase() !== path.toLowerCase());
     app.projectPath = next?.path || '';
-    if (app.projectPath) localStorage.setItem(keys.projectPath, app.projectPath);
-    else localStorage.removeItem(keys.projectPath);
+    saveWorkspaceSettings({ projectPath: app.projectPath });
     app.selectedFile = '';
   }
   await refreshProjects();
@@ -71,7 +71,7 @@ export async function hideProjectFromList() {
 
 export async function activateProject(path) {
   app.projectPath = path;
-  localStorage.setItem(keys.projectPath, app.projectPath);
+  saveWorkspaceSettings({ projectPath: app.projectPath });
   app.selectedFile = '';
   await refreshProjects();
   updateProjectLabels();
@@ -90,7 +90,7 @@ export async function selectProject() {
     const result = await api('/api/workspace/select-folder', { method: 'POST', body: {} });
     if (!result.projectPath) return;
     app.projectPath = result.projectPath;
-    localStorage.setItem(keys.projectPath, app.projectPath);
+    saveWorkspaceSettings({ projectPath: app.projectPath });
     app.selectedFile = '';
     updateProjectLabels();
     await Promise.all([refreshProjects(), refreshSessions(), refreshTree()]);

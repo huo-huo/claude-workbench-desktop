@@ -1,6 +1,6 @@
 import { $ } from './core/dom.mjs';
 import { toast } from './core/api.mjs';
-import { app, keys } from './state.mjs';
+import { app } from './state.mjs';
 import { fitTerminal } from './terminal.mjs';
 import { setTerminalFontSize, updateProjectLabels } from './preferences.mjs';
 import { refreshProjects, selectProject, hideProjectFromList, closeProjectContextMenu, renderProjects } from './projects.mjs';
@@ -20,6 +20,7 @@ import {
 } from './prompts.mjs';
 import { applyWorkspaceTheme } from './theme.mjs';
 import { refreshStatusline, openStatuslineSettings } from './statusline.mjs';
+import { saveWorkspaceSettings } from './settings.mjs';
 
 // 启动时先同步 body 主题，避免管理页首屏闪回浅色
 document.body.classList.toggle('theme-dark', app.workspaceDark);
@@ -40,7 +41,10 @@ export function setView(view) {
   $('#scanTime').hidden = isWorkspace;
   $('#workspaceProjectIndicator').style.display = isWorkspace ? 'inline-block' : 'none';
   document.querySelectorAll('[data-view]').forEach(button => button.classList.toggle('active', button.dataset.view === view));
-  localStorage.setItem(keys.view, view);
+  // 启动时恢复已有视图不重复写入，避免每次启动都发一次无意义的保存
+  const viewChanged = app.view !== view;
+  app.view = view;
+  if (viewChanged) saveWorkspaceSettings({ view });
   if (isWorkspace) {
     updateProjectLabels();
     refreshProjects().then(refreshSessions).then(() => app.projectPath ? refreshTree() : null).catch(error => toast(error.message));
@@ -55,7 +59,7 @@ function wireProjects() {
   $('#chooseProjectEmpty').addEventListener('click', selectProject);
   $('#toggleMoreProjects').addEventListener('click', () => {
     app.projectsExpanded = !app.projectsExpanded;
-    localStorage.setItem(keys.projectsExpanded, app.projectsExpanded ? '1' : '0');
+    saveWorkspaceSettings({ projectsExpanded: app.projectsExpanded });
     renderProjects();
   });
   $('#hideProjectFromList').addEventListener('click', () => hideProjectFromList().catch(error => toast(error.message)));
@@ -192,21 +196,65 @@ function wirePreferences() {
   document.querySelectorAll('.nav-btn').forEach(button => button.addEventListener('click', () => setView('management')));
   $('#railToggle').addEventListener('click', () => {
     const collapsed = document.querySelector('.shell').classList.toggle('nav-collapsed');
-    localStorage.setItem('claude-workbench-nav-collapsed', collapsed ? '1' : '0');
+    app.navCollapsed = collapsed;
+    saveWorkspaceSettings({ navCollapsed: collapsed });
     $('#railToggle').title = collapsed ? '展开侧栏' : '收起侧栏';
     $('#railToggle').textContent = collapsed ? '›' : '‹';
     requestAnimationFrame(() => fitTerminal());
   });
-  $('#collapseSessions').addEventListener('click', () => { app.workspace.classList.toggle('sessions-collapsed'); requestAnimationFrame(() => fitTerminal()); });
-  const toggleFiles = () => { app.workspace.classList.toggle('files-collapsed'); requestAnimationFrame(() => fitTerminal()); };
+  $('#collapseSessions').addEventListener('click', () => {
+    app.sessionsCollapsed = !app.sessionsCollapsed;
+    app.workspace.classList.toggle('sessions-collapsed', app.sessionsCollapsed);
+    saveWorkspaceSettings({ sessionsCollapsed: app.sessionsCollapsed });
+    requestAnimationFrame(() => fitTerminal());
+  });
+  const toggleFiles = () => {
+    app.filesCollapsed = !app.filesCollapsed;
+    app.workspace.classList.toggle('files-collapsed', app.filesCollapsed);
+    saveWorkspaceSettings({ filesCollapsed: app.filesCollapsed });
+    requestAnimationFrame(() => fitTerminal());
+  };
   $('#collapseFiles').addEventListener('click', toggleFiles);
   $('#toggleFiles').addEventListener('click', toggleFiles);
   $('#toggleWorkspaceTheme').addEventListener('click', () => {
     app.workspaceDark = !app.workspaceDark;
-    // 持久化失败时静默：主题仍在当前会话生效
-    try { localStorage.setItem(keys.theme, app.workspaceDark ? 'dark' : 'light'); } catch { /* 忽略写入异常 */ }
+    // 本地缓存与服务端写入由设置管理器统一处理，失败时界面仍生效
+    saveWorkspaceSettings({ theme: app.workspaceDark ? 'dark' : 'light' });
     applyWorkspaceTheme();
   });
+  // 工具栏与状态栏同时隐藏时，仍可通过快捷键打开配置面板恢复
+  document.addEventListener('keydown', event => {
+    // Shift+, 在多数布局下 key 是 '<'，必须用 code 判定
+    const isComma = event.code === 'Comma' || event.key === ',';
+    if (!event.ctrlKey || !event.shiftKey || event.altKey || !isComma) return;
+    if (!$('#statuslineSettingsBackdrop').hidden) return;
+    event.preventDefault();
+    openStatuslineSettings();
+  });
+}
+
+/** 按设置恢复加载时就存在的界面状态（视图、折叠、显隐、输入区） */
+function applyInitialWorkspaceState() {
+  const shell = document.querySelector('.shell');
+  shell.classList.toggle('nav-collapsed', app.navCollapsed);
+  if (app.navCollapsed) { $('#railToggle').textContent = '›'; $('#railToggle').title = '展开侧栏'; }
+  app.workspace.classList.toggle('sessions-collapsed', app.sessionsCollapsed);
+  app.workspace.classList.toggle('files-collapsed', app.filesCollapsed);
+  $('#terminalComposer').hidden = !app.composerVisible;
+  $('#toggleComposer').setAttribute('aria-expanded', String(app.composerVisible));
+  applyRegionVisibility();
+  // 显隐开关在状态栏面板内切换，布局由本模块负责刷新
+  window.addEventListener('workspace-region-visibility', applyRegionVisibility);
+}
+
+/** 应用状态栏与工具栏显隐；隐藏后由 CSS 调整终端网格并重新适配尺寸 */
+export function applyRegionVisibility() {
+  const column = $('.terminal-column');
+  $('.terminal-toolbar').hidden = !app.toolbarVisible;
+  $('.terminal-footer').hidden = !app.statuslineVisible;
+  column.classList.toggle('toolbar-hidden', !app.toolbarVisible);
+  column.classList.toggle('statusline-hidden', !app.statuslineVisible);
+  requestAnimationFrame(() => fitTerminal());
 }
 
 /** 工作区初始化：按原有顺序完成事件绑定与首屏渲染 */
@@ -218,9 +266,7 @@ export function setupWorkspace() {
   wirePrompts();
   wireProjects();
   wirePreferences();
-  const navCollapsed = localStorage.getItem('claude-workbench-nav-collapsed') === '1';
-  document.querySelector('.shell').classList.toggle('nav-collapsed', navCollapsed);
-  if (navCollapsed) { $('#railToggle').textContent = '›'; $('#railToggle').title = '展开侧栏'; }
+  applyInitialWorkspaceState();
   updateProjectLabels();
-  setView(localStorage.getItem(keys.view) === 'workspace' ? 'workspace' : 'management');
+  setView(app.view);
 }

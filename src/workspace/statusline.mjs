@@ -1,6 +1,7 @@
 import { $, escapeHtml } from './core/dom.mjs';
 import { api, toast } from './core/api.mjs';
 import { app } from './state.mjs';
+import { getWorkspaceSettings, saveWorkspaceSettings } from './settings.mjs';
 
 /** 上次渲染的会话 ID，切换会话后强制重绘一次 */
 let renderedForSession = '';
@@ -28,26 +29,22 @@ const STATUSLINE_ITEMS = [
   { key: 'sessionMcp', label: '✓ MCPs（会话）', row: 2 },
 ];
 
-const CONFIG_STORAGE_KEY = 'claude-workbench-statusline-config';
-const FONT_RANGE = { min: 8, max: 14, default: 8 };
+const FONT_RANGE = { min: 10, max: 14, default: 10 };
 
-/** 读取持久化配置；缺省全部显示、字号 8px */
+/** 读取统一设置中的状态栏配置；设置尚未加载时使用本地缓存快照 */
 function loadStatuslineConfig() {
+  const raw = getWorkspaceSettings().statusline;
   const fallback = { fontSize: FONT_RANGE.default, items: {} };
-  try {
-    const raw = JSON.parse(localStorage.getItem(CONFIG_STORAGE_KEY) || '');
-    if (!raw || typeof raw !== 'object') return fallback;
-    return { fontSize: Math.max(FONT_RANGE.min, Math.min(FONT_RANGE.max, Number(raw.fontSize) || FONT_RANGE.default)), items: raw.items && typeof raw.items === 'object' ? raw.items : {} };
-  } catch {
-    return fallback;
-  }
+  if (!raw || typeof raw !== 'object') return fallback;
+  return {
+    fontSize: Math.max(FONT_RANGE.min, Math.min(FONT_RANGE.max, Number(raw.fontSize) || FONT_RANGE.default)),
+    items: raw.items && typeof raw.items === 'object' ? raw.items : {},
+  };
 }
 
-/** 持久化配置；写入失败静默（配置仍在当前会话生效） */
+/** 持久化配置：由设置管理器合并写入服务端与本地缓存 */
 function saveStatuslineConfig(config) {
-  try {
-    localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
-  } catch { /* 忽略写入异常 */ }
+  saveWorkspaceSettings({ statusline: config });
 }
 
 /** 某个显示单元是否启用；未配置过默认显示 */
@@ -267,6 +264,8 @@ export function openStatuslineSettings() {
   $('#statuslineFontSize').textContent = `${config.fontSize}px`;
   $('#settingWrapper').checked = Boolean(lastState?.enabled);
   $('#settingWrapper').disabled = !lastState;
+  $('#settingStatuslineVisible').checked = app.statuslineVisible;
+  $('#settingToolbarVisible').checked = app.toolbarVisible;
   const toggles = $('#statuslineItemToggles');
   toggles.innerHTML = STATUSLINE_ITEMS.map(item =>
     `<label class="statusline-setting-row"><span class="statusline-setting-label">${escapeHtml(item.label)}<small>${item.row === 1 ? '第一行 · 会话状态' : '第二行 · 配置与会话'}</small></span><input type="checkbox" class="switch" data-item-toggle="${item.key}" ${itemEnabled(config, item.key) ? 'checked' : ''}></label>`
@@ -417,6 +416,27 @@ export async function setWrapperEnabled(enable) {
 document.addEventListener('change', event => {
   if (event.target?.id !== 'settingWrapper') return;
   setWrapperEnabled(event.target.checked);
+});
+
+// 状态栏/工具栏显隐：持久化后通知工作区重新布局
+document.addEventListener('change', event => {
+  const id = event.target?.id;
+  if (id !== 'settingStatuslineVisible' && id !== 'settingToolbarVisible') return;
+  const visible = Boolean(event.target.checked);
+  if (id === 'settingStatuslineVisible') {
+    app.statuslineVisible = visible;
+    saveWorkspaceSettings({ statuslineVisible: visible });
+  } else {
+    app.toolbarVisible = visible;
+    saveWorkspaceSettings({ toolbarVisible: visible });
+  }
+  window.dispatchEvent(new Event('workspace-region-visibility'));
+});
+
+// 设置加载完成后重新应用字号与渲染，避免使用旧缓存值
+window.addEventListener('workspace-settings-applied', () => {
+  applyFontSize(loadStatuslineConfig().fontSize);
+  if (lastState) renderStatusline(lastState);
 });
 
 // 初始化时应用持久化的字体大小

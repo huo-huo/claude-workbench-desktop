@@ -2,6 +2,7 @@ import { $ } from './core/dom.mjs';
 import { api, toast } from './core/api.mjs';
 import { app } from './state.mjs';
 import { fitTerminal, quoteWindowsPath } from './terminal.mjs';
+import { saveWorkspaceSettings } from './settings.mjs';
 
 export function sendComposerToTerminal() {
   const text = $('#composerInput').value;
@@ -144,6 +145,7 @@ export function toggleComposer() {
   app.composerVisible = !app.composerVisible;
   $('#terminalComposer').hidden = !app.composerVisible;
   $('#toggleComposer').setAttribute('aria-expanded', String(app.composerVisible));
+  saveWorkspaceSettings({ composerVisible: app.composerVisible });
   if (app.composerVisible) requestAnimationFrame(() => { $('#composerInput').focus(); fitTerminal(); });
   else requestAnimationFrame(() => fitTerminal());
 }
