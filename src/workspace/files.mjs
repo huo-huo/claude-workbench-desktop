@@ -203,20 +203,20 @@ export async function refreshTree({ force = false } = {}) {
     const hadTree = Boolean(panel.querySelector('[data-tree-path]'));
     const url = itemPath => `/api/workspace/files?projectPath=${encodeURIComponent(root)}&path=${encodeURIComponent(itemPath)}`;
     const tree = await api(url('.'));
-    const nodes = new Map();
-    const index = node => {
-      nodes.set(node.path || '.', node);
-      for (const child of node.children || []) index(child);
-    };
-    index(tree);
     // Refresh expanded lazy branches as well as the initial root snapshot.
+    // 展开分支做局部刷新：结果直接写入各自的 DOM 容器，不写回数据树——
+    // 否则懒加载分支会从 undefined 变数组，反复触发 signature 变化，每 5 秒全量重建一次 DOM
     for (const itemPath of [...expanded].sort((a, b) => a.split(/[\\/]/).length - b.split(/[\\/]/).length)) {
       if (app.fileTreeRefreshJob !== job || app.projectPath !== root) return;
-      const folder = nodes.get(itemPath);
-      if (folder?.type === 'folder' && !Array.isArray(folder.children)) {
-        folder.children = (await api(url(itemPath))).children || [];
-        index(folder);
-      }
+      const container = panel.querySelector(`[data-tree-children="${CSS.escape(itemPath)}"]`);
+      // 只刷新已懒加载过内容的分支；空容器（根快照里未展开）交给重建后的自动懒加载
+      if (!container || !container.querySelector('[data-tree-path]')) continue;
+      try {
+        const branch = await api(url(itemPath));
+        if (app.fileTreeRefreshJob !== job || app.projectPath !== root) return;
+        container.innerHTML = (branch.children || []).map(child => treeMarkup(child)).join('');
+        wireTree();
+      } catch { /* 分支刷新失败保留现状，下轮重试 */ }
     }
     if (app.fileTreeRefreshJob !== job || app.projectPath !== root) return;
     // A user opening/collapsing a branch while fetching takes precedence.
@@ -239,6 +239,11 @@ export async function refreshTree({ force = false } = {}) {
         const opened = expanded.includes(children.dataset.treeChildren);
         children.classList.toggle('closed', !opened);
         children.parentElement.querySelector('.tree-caret').textContent = opened ? '⌄' : '▸';
+        // 展开分支的懒加载内容不参与全量重建，重建后自动补齐，用户无需重新展开
+        if (opened && !children.querySelector('[data-tree-path]')) {
+          const button = children.parentElement.querySelector('[data-tree-path]');
+          if (button) loadTreeFolder(button, children).catch(() => {});
+        }
       }
     }
     wireTree();
