@@ -216,8 +216,10 @@ export async function refreshTree({ force = false } = {}) {
     // 若把 size 算进签名会导致每 5 秒全量重建 DOM，造成持续卡顿
     const signature = root + '\n' + JSON.stringify(structureSignature(tree));
     if (hadTree && signature === app.fileTreeSignature) return;
-    // 结构签名变化（如临时文件增删）触发的重建钳制为 15 秒一次；手动刷新不受限
-    if (hadTree && !force && Date.now() - (app.fileTreeRebuildAt || 0) < 15000) return;
+    // 结构签名变化（如临时文件增删）触发的重建钳制为 15 秒一次；
+    // 仅限同一项目内的 churn——切换项目必须立即重建，否则文件栏残留旧目录内容
+    const sameProject = app.fileTreeSignature.startsWith(`${root}\n`);
+    if (hadTree && !force && sameProject && Date.now() - (app.fileTreeRebuildAt || 0) < 15000) return;
     const scrollTop = panel.scrollTop;
     const focused = panel.contains(document.activeElement) ? document.activeElement.closest('[data-tree-path]') : null;
     const focusedPath = focused?.dataset.treePath;

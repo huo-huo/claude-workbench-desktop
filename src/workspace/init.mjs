@@ -96,7 +96,8 @@ function wireFiles() {
   window.addEventListener('focus', refreshVisibleFiles);
   $('#fileTree').addEventListener('pointerdown', () => { app.fileTreeInteractionAt = Date.now(); });
   $('#refreshFiles').addEventListener('click', () => {
-    refreshTree().then(() => toast('文件列表已刷新')).catch(error => toast(error.message));
+    // 手动刷新强制重建，不受结构变化钳制限制
+    refreshTree({ force: true }).then(() => toast('文件列表已刷新')).catch(error => toast(error.message));
   });
   $('#fileTreeRevealPath').addEventListener('click', () => runFileTreeContextAction('reveal'));
   $('#fileTreeAddToConversation').addEventListener('click', () => runFileTreeContextAction('add'));
