@@ -6,6 +6,7 @@ use std::{
     net::{TcpListener, TcpStream},
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
+    sync::atomic::{AtomicBool, Ordering},
     sync::Mutex,
     thread,
     time::{Duration, Instant},
@@ -14,6 +15,23 @@ use std::{
 use tauri::{Manager, RunEvent, WebviewUrl, WebviewWindowBuilder};
 
 struct WorkbenchServer(Mutex<Option<Child>>);
+
+/// 服务进程的完整启动参数：守护线程重启服务时按原样重建
+#[derive(Clone)]
+struct ServerSpec {
+    node: PathBuf,
+    server_script: PathBuf,
+    web_root: PathBuf,
+    working_directory: PathBuf,
+    port: u16,
+    log_path: PathBuf,
+}
+
+/// 守护线程停止信号；应用退出时置位，避免关机流程与守护重启互相竞争
+static SERVER_GUARD_SHUTDOWN: AtomicBool = AtomicBool::new(false);
+
+/// 守护线程连续重启失败上限；超过后停止重启并记录日志，等待用户手动重启应用
+const SERVER_RESTART_LIMIT: u32 = 3;
 
 fn normalize_windows_path(path: PathBuf) -> PathBuf {
     let text = path.to_string_lossy().into_owned();
@@ -81,6 +99,88 @@ fn wait_until_ready(child: &mut Child, port: u16) -> Result<(), String> {
     Err("工作台服务启动超时。请查看 ~/.claude/workbench-desktop.log。".to_owned())
 }
 
+fn append_server_log(log_path: &Path, message: &str) {
+    if let Ok(mut log) = OpenOptions::new().create(true).append(true).open(log_path) {
+        let _ = writeln!(log, "{message}");
+    }
+}
+
+/// 按参数启动工作台服务并等待端口就绪；端口被占用时返回错误，由调用方记录
+fn spawn_server(spec: &ServerSpec) -> Result<Child, String> {
+    // 启动前确认端口可用，失败时给出明确原因而不是等待超时
+    TcpListener::bind(("127.0.0.1", spec.port)).map_err(|e| format!("端口 {} 不可用：{e}", spec.port))?;
+    let log = OpenOptions::new().create(true).append(true).open(&spec.log_path)
+        .map_err(|e| format!("无法打开服务日志：{e}"))?;
+    let log_err = log.try_clone().map_err(|e| format!("无法复制服务日志句柄：{e}"))?;
+    let mut child = Command::new(&spec.node)
+        .arg(&spec.server_script)
+        .current_dir(&spec.working_directory)
+        .env("CLAUDE_WORKBENCH_PORT", spec.port.to_string())
+        .env("CLAUDE_WORKBENCH_WEB_ROOT", &spec.web_root)
+        .stdin(Stdio::null())
+        .stdout(Stdio::from(log))
+        .stderr(Stdio::from(log_err))
+        .creation_flags(0x0800_0000)
+        .spawn()
+        .map_err(|e| format!("无法启动工作台服务：{e}"))?;
+    wait_until_ready(&mut child, spec.port)?;
+    Ok(child)
+}
+
+/// 服务守护线程：node 进程意外退出时按原参数自动重启，保证界面无需手动重启应用
+fn guard_server(app: tauri::AppHandle, spec: ServerSpec) {
+    let mut restarts: u32 = 0;
+    while !SERVER_GUARD_SHUTDOWN.load(Ordering::SeqCst) {
+        thread::sleep(Duration::from_secs(3));
+        if SERVER_GUARD_SHUTDOWN.load(Ordering::SeqCst) {
+            break;
+        }
+        let exited = {
+            let server = app.state::<WorkbenchServer>();
+            let mut guard = match server.0.lock() {
+                Ok(guard) => guard,
+                Err(_) => continue,
+            };
+            match guard.as_mut() {
+                Some(child) => match child.try_wait() {
+                    Ok(Some(_status)) => {
+                        // 进程已退出：清空槽位，交由下方重启
+                        *guard = None;
+                        true
+                    }
+                    Ok(None) => false,
+                    Err(error) => {
+                        append_server_log(&spec.log_path, &format!("server guard: 检查服务状态失败：{error}"));
+                        false
+                    }
+                },
+                None => false,
+            }
+        };
+        if !exited {
+            restarts = 0;
+            continue;
+        }
+        if restarts >= SERVER_RESTART_LIMIT {
+            append_server_log(&spec.log_path, "server guard: 连续重启失败次数达上限，停止自动重启；请手动重启应用");
+            break;
+        }
+        restarts += 1;
+        append_server_log(&spec.log_path, &format!("server guard: 检测到工作台服务退出，正在自动重启（第 {restarts} 次）"));
+        match spawn_server(&spec) {
+            Ok(child) => {
+                let server = app.state::<WorkbenchServer>();
+                if let Ok(mut guard) = server.0.lock() {
+                    *guard = Some(child);
+                }
+                restarts = 0;
+                append_server_log(&spec.log_path, "server guard: 工作台服务已自动恢复");
+            }
+            Err(error) => append_server_log(&spec.log_path, &format!("server guard: 自动重启失败：{error}")),
+        }
+    }
+}
+
 fn launch_workbench(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let node = find_node().map_err(std::io::Error::other)?;
     let root = normalize_windows_path(project_root());
@@ -102,21 +202,24 @@ fn launch_workbench(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Er
         let mut diagnostic = OpenOptions::new().create(true).append(true).open(&log_path)?;
         writeln!(diagnostic, "desktop startup: node={:?}; server={:?}; web={:?}; cwd={:?}; port={port}", node, server_script, web_root, working_directory)?;
     }
-    let log = OpenOptions::new().create(true).append(true).open(log_path)?;
-    let log_err = log.try_clone()?;
-    let mut child = Command::new(node)
-        .arg(&server_script)
-        .current_dir(working_directory)
-        .env("CLAUDE_WORKBENCH_PORT", port.to_string())
-        .env("CLAUDE_WORKBENCH_WEB_ROOT", &web_root)
-        .stdin(Stdio::null())
-        .stdout(Stdio::from(log))
-        .stderr(Stdio::from(log_err))
-        .creation_flags(0x0800_0000)
-        .spawn()?;
 
-    wait_until_ready(&mut child, port).map_err(std::io::Error::other)?;
+    let spec = ServerSpec {
+        node,
+        server_script,
+        web_root,
+        working_directory,
+        port,
+        log_path: log_path.clone(),
+    };
+    let child = spawn_server(&spec).map_err(std::io::Error::other)?;
     app.manage(WorkbenchServer(Mutex::new(Some(child))));
+
+    // 启动服务守护线程：node 意外退出时自动按原参数重启
+    {
+        let guard_app = app.clone();
+        let guard_spec = spec.clone();
+        thread::spawn(move || guard_server(guard_app, guard_spec));
+    }
 
     let url = format!("http://127.0.0.1:{port}/").parse()?;
     let window_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/icon.png"))?;
@@ -173,6 +276,8 @@ fn dirs_path() -> Result<PathBuf, std::io::Error> {
 }
 
 fn stop_workbench(app: &tauri::AppHandle) {
+    // 先通知守护线程停止，避免退出流程与自动重启互相竞争
+    SERVER_GUARD_SHUTDOWN.store(true, Ordering::SeqCst);
     if let Some(server) = app.try_state::<WorkbenchServer>() {
         if let Ok(mut guard) = server.0.lock() {
             if let Some(mut child) = guard.take() {
