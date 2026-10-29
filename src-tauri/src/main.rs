@@ -181,6 +181,9 @@ fn guard_server(app: tauri::AppHandle, spec: ServerSpec) {
     }
 }
 
+/// 工作台服务固定端口：多窗口共享同一服务，避免各实例随机端口导致窗口连接已死亡实例的假活
+const WORKBENCH_PORT: u16 = 4173;
+
 fn launch_workbench(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let node = find_node().map_err(std::io::Error::other)?;
     let root = normalize_windows_path(project_root());
@@ -191,9 +194,7 @@ fn launch_workbench(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Er
         (packaged_root.join("server.mjs"), packaged_root.join("dist"), packaged_root)
     };
 
-    let listener = TcpListener::bind(("127.0.0.1", 0))?;
-    let port = listener.local_addr()?.port();
-    drop(listener);
+    let port = WORKBENCH_PORT;
 
     let claude_dir = dirs_path()?.join(".claude");
     fs::create_dir_all(&claude_dir)?;
@@ -211,8 +212,15 @@ fn launch_workbench(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Er
         port,
         log_path: log_path.clone(),
     };
-    let child = spawn_server(&spec).map_err(std::io::Error::other)?;
-    app.manage(WorkbenchServer(Mutex::new(Some(child))));
+    // 端口已有存活服务时直接复用（多窗口共享），不重复 spawn
+    let reused = TcpStream::connect(("127.0.0.1", port)).is_ok();
+    let child = if reused {
+        append_server_log(&log_path, "desktop startup: 端口已有存活服务，直接复用");
+        None
+    } else {
+        Some(spawn_server(&spec).map_err(std::io::Error::other)?)
+    };
+    app.manage(WorkbenchServer(Mutex::new(child)));
 
     // 启动服务守护线程：node 意外退出时自动按原参数重启
     {
