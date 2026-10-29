@@ -180,6 +180,15 @@ function structureSignature(node) {
   };
 }
 
+/** 切换项目时立即清空文件树并显示加载态：旧目录的行若残留可交互，双击会用旧路径拼新项目根导致打开失败 */
+export function resetFileTree() {
+  const panel = $('#fileTree');
+  if (panel) panel.innerHTML = '<div class="empty">正在加载文件…</div>';
+  // 清掉签名与重建时间戳：新树渲染属于新项目，不受同项目重建钳制影响
+  app.fileTreeSignature = '';
+  app.fileTreeRebuildAt = 0;
+}
+
 export async function refreshTree({ force = false } = {}) {
   if (!app.projectPath) return;
   const root = app.projectPath;

@@ -4,7 +4,7 @@ import { app } from './state.mjs';
 import { projectName, updateProjectLabels } from './preferences.mjs';
 import { saveWorkspaceSettings } from './settings.mjs';
 import { refreshSessions } from './sessions.mjs';
-import { refreshTree } from './files.mjs';
+import { refreshTree, resetFileTree } from './files.mjs';
 import { closeViewer } from './viewer.mjs';
 
 export async function refreshProjects() {
@@ -73,6 +73,8 @@ export async function hideProjectFromList() {
 export async function activateProject(path) {
   app.projectPath = path;
   closeViewer();
+  // 立即清空文件栏：旧目录的树若残留，双击会用旧路径拼新项目根导致打开失败
+  resetFileTree();
   saveWorkspaceSettings({ projectPath: app.projectPath });
   app.selectedFile = '';
   await refreshProjects();
@@ -93,6 +95,7 @@ export async function selectProject() {
     if (!result.projectPath) return;
     app.projectPath = result.projectPath;
     closeViewer();
+    resetFileTree();
     saveWorkspaceSettings({ projectPath: app.projectPath });
     app.selectedFile = '';
     updateProjectLabels();

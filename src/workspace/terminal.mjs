@@ -7,7 +7,7 @@ import { saveWorkspaceSettings } from './settings.mjs';
 import { projectName, updateProjectLabels } from './preferences.mjs';
 import { terminalThemes } from './theme.mjs';
 import { refreshProjects } from './projects.mjs';
-import { refreshTree } from './files.mjs';
+import { refreshTree, resetFileTree } from './files.mjs';
 import { refreshSessions } from './sessions.mjs';
 import { refreshStatusline } from './statusline.mjs';
 import { closeViewer } from './viewer.mjs';
@@ -225,6 +225,8 @@ export function connectTerminal(session, { reconnecting = false } = {}) {
   if (!reconnecting) {
     app.projectPath = session.projectPath;
     closeViewer();
+    // 切换会话即切换项目：立即清空文件栏，避免旧目录残留可交互
+    resetFileTree();
     saveWorkspaceSettings({ projectPath: app.projectPath });
     updateProjectLabels();
     refreshProjects().catch(() => {});
