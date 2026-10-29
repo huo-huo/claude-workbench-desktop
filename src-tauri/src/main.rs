@@ -288,7 +288,29 @@ fn stop_workbench(app: &tauri::AppHandle) {
     }
 }
 
+/// Windows 命名互斥体：已有应用实例运行时静默退出，避免多窗口/旧窗口并存造成"切换目录无反应"的假象
+#[cfg(windows)]
+fn ensure_single_instance() {
+    #[link(name = "kernel32")]
+    extern "system" {
+        fn CreateMutexW(attributes: *mut std::ffi::c_void, initial_owner: i32, name: *const u16) -> *mut std::ffi::c_void;
+        fn GetLastError() -> u32;
+    }
+    const ERROR_ALREADY_EXISTS: u32 = 183;
+    let name: Vec<u16> = "Global\\ClaudeWorkbenchDesktopSingleInstance\0"
+        .encode_utf16()
+        .collect();
+    let handle = unsafe { CreateMutexW(std::ptr::null_mut(), 0, name.as_ptr()) };
+    // 句柄需要存活到进程退出，防止互斥体被提前释放；泄漏一个内核句柄无实际影响
+    std::mem::forget(handle);
+    if !handle.is_null() && unsafe { GetLastError() } == ERROR_ALREADY_EXISTS {
+        std::process::exit(0);
+    }
+}
+
 fn main() {
+    #[cfg(windows)]
+    ensure_single_instance();
     let app = tauri::Builder::default()
         .setup(|app| {
             launch_workbench(app.handle())?;

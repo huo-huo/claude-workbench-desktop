@@ -19,6 +19,7 @@ export async function api(url, options = {}) {
 }
 
 let lastOfflineNoticeAt = 0;
+let reconnectTimer = null;
 
 /** 服务断连提示节流：30 秒内只提示一次，避免多请求同时失败时刷屏 */
 function notifyServiceDown() {
@@ -26,6 +27,22 @@ function notifyServiceDown() {
   if (now - lastOfflineNoticeAt < 30000) return;
   lastOfflineNoticeAt = now;
   toast('工作台服务已断开，正在尝试自动恢复；若持续失败请重启应用');
+  scheduleReconnect();
+}
+
+/** 断线自动恢复轮询：服务守护重启成功后自动刷新页面，窗口无需手动重开 */
+function scheduleReconnect() {
+  if (reconnectTimer) return;
+  reconnectTimer = setInterval(async () => {
+    try {
+      const response = await fetch('/api/workspace/projects', { cache: 'no-store' });
+      if (response.ok) {
+        clearInterval(reconnectTimer);
+        reconnectTimer = null;
+        location.reload();
+      }
+    } catch { /* 服务未恢复，继续重试 */ }
+  }, 3000);
 }
 
 /** 优先复用管理页的 toast；不可用时回退到原生 alert */
