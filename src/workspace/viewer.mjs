@@ -171,12 +171,20 @@ function reportViewerRenderState(panel) {
       const probeX = rect.left + rect.width / 2;
       const probeY = rect.top + Math.min(40, rect.height / 2);
       const top = probeY > 0 ? document.elementFromPoint(probeX, probeY) : null;
+      // 网格行定义与各行实际高度：定位 1fr 终端行被其他行挤压的塌陷场景
+      const column = panel.closest('.terminal-column');
+      const rows = column ? getComputedStyle(column).gridTemplateRows : '';
+      const rowHeights = column
+        ? [...column.children].map(child => `${child.tagName}#${child.id || ''}.${String(child.className).split(' ')[0] || ''}:${Math.round(child.getBoundingClientRect().height)}`).join(' | ')
+        : '';
       reportViewerDiag('rendered', {
         hidden: panel.hidden,
         rect: `${Math.round(rect.left)},${Math.round(rect.top)} ${Math.round(rect.width)}x${Math.round(rect.height)}`,
         viewport: `${window.innerWidth}x${window.innerHeight} dpr=${window.devicePixelRatio}`,
         display: getComputedStyle(panel).display,
         cover: top === panel || panel.contains(top) ? 'none' : (top ? `${top.tagName}#${top.id || ''}.${String(top.className).slice(0, 50)}` : 'outside-viewport'),
+        rows,
+        rowHeights: rowHeights.slice(0, 400),
       });
     });
   } catch { /* 快照失败不影响主流程 */ }
