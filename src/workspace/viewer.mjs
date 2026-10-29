@@ -41,35 +41,55 @@ function formatSize(size) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/** 诊断上报：用原生 fetch 直发后端落桌面壳日志，避免与 api() 的错误处理互相纠缠 */
+export function reportViewerDiag(event, detail) {
+  try {
+    fetch('/api/workspace/diagnostic-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event, ...detail }),
+    }).catch(() => { /* 诊断失败不影响主流程 */ });
+  } catch { /* 忽略 */ }
+}
+
 /** 读取并展示文件内容；失败时保持面板关闭并提示后端错误原文 */
 export async function openViewer(filePath) {
-  if (!app.projectPath) return;
+  if (!app.projectPath) {
+    reportViewerDiag('blocked-no-project', { filePath });
+    return;
+  }
   // 同一文件读取中重复双击直接忽略，避免请求在后端排队堆积
-  if (app.viewer.loading && app.viewer.path === filePath) return;
+  if (app.viewer.loading && app.viewer.path === filePath) {
+    reportViewerDiag('blocked-loading', { filePath });
+    return;
+  }
   const seq = ++viewerRequestSeq;
   // 记录发起请求时的项目，用于丢弃切换项目后才返回的结果
   const projectPath = app.projectPath;
   // Markdown 默认展示渲染视图，可随时切回源码；其余文本固定源码视图
   app.viewer = { path: filePath, name: '', size: 0, modifiedAt: '', content: '', loading: true, render: 'source' };
   renderViewer();
+  reportViewerDiag('start', { filePath, projectPath });
   const url = `/api/workspace/file?projectPath=${encodeURIComponent(app.projectPath)}&path=${encodeURIComponent(filePath)}`;
   try {
     const file = await api(url);
     // 期间用户可能已打开别的文件（含 A→B→A），非最新请求的结果直接丢弃
-    if (seq !== viewerRequestSeq) return;
+    if (seq !== viewerRequestSeq) { reportViewerDiag('dropped-stale', { filePath }); return; }
     // 期间已切换项目，旧项目的结果不得落到新项目上下文
-    if (app.projectPath !== projectPath) return;
+    if (app.projectPath !== projectPath) { reportViewerDiag('dropped-project-switch', { filePath }); return; }
     const render = isMarkdownName(file.name) ? 'rendered' : 'source';
     app.viewer = { path: filePath, name: file.name || '', size: file.size || 0, modifiedAt: file.modifiedAt || '', content: file.content || '', loading: false, render };
     renderViewer();
+    reportViewerDiag('done', { filePath, bytes: (file.content || '').length });
   } catch (error) {
     // 过期请求的失败不得关闭当前面板，也不提示旧文件的错误
-    if (seq !== viewerRequestSeq) return;
+    if (seq !== viewerRequestSeq) { reportViewerDiag('dropped-stale-error', { filePath }); return; }
     // 跨项目的失败同样丢弃，避免在新项目里提示旧项目错误
-    if (app.projectPath !== projectPath) return;
+    if (app.projectPath !== projectPath) { reportViewerDiag('dropped-project-switch-error', { filePath }); return; }
     app.viewer = { path: '', name: '', size: 0, modifiedAt: '', content: '', loading: false, render: 'source' };
     renderViewer();
     toast(error.message);
+    reportViewerDiag('error', { filePath, message: error.message });
   }
 }
 

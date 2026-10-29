@@ -3,7 +3,7 @@ import { api, toast } from './core/api.mjs';
 import { app } from './state.mjs';
 import { quoteWindowsPath } from './terminal.mjs';
 import { insertComposerText, toggleComposer } from './composer.mjs';
-import { isPreviewableText, openViewer } from './viewer.mjs';
+import { isPreviewableText, openViewer, reportViewerDiag } from './viewer.mjs';
 
 export function showFileTreeContextMenu(event, button) {
   event.preventDefault();
@@ -334,6 +334,8 @@ export function fileExtension(filePath) {
 
 /** 双击/回车统一入口：文本走内置查看器，其余保持系统应用打开 */
 export async function activateTreeFile(filePath) {
+  // 诊断：记录双击是否触发与判型结果，用于定位"打不开"类反馈
+  reportViewerDiag('activate', { filePath, extension: fileExtension(filePath) });
   if (isPreviewableText(fileExtension(filePath))) {
     await openViewer(filePath);
     return;

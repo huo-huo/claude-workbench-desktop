@@ -1,4 +1,7 @@
 import { hideWorkspaceProject, listWorkspaceProjects, readWorkspacePreferences, recordWorkspaceProject, safeWorkspaceRoot, writeWorkspacePreferences } from '../workspace/state.mjs';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { listWorkspaceSessions, removeWorkspaceSession, removeWorkspaceSessionsBatch, renameWorkspaceSession, pinWorkspaceSession, archiveWorkspaceSession } from '../workspace/sessions.mjs';
 import { workspaceAsset, workspaceFileText, workspaceTree } from '../workspace/files.mjs';
 import { openWorkspaceFile, readWorkspaceClipboard, recycleWorkspaceItem, revealWorkspaceFile, selectWorkspaceFolder } from '../workspace/native.mjs';
@@ -64,6 +67,14 @@ export const POST_ROUTES = new Map([
   ['/api/workspace/reveal-file', async body => ({ status: 200, body: await revealWorkspaceFile(body.projectPath, body.path) })],
   ['/api/workspace/recycle', async body => ({ status: 200, body: await recycleWorkspaceItem(body.projectPath, body.path) })],
   ['/api/workspace/clipboard', async () => ({ status: 200, body: await readWorkspaceClipboard() })],
+  // 查看器诊断日志：把前端打开文件的完整过程落到桌面壳日志，便于远程定位"打不开"类问题
+  ['/api/workspace/diagnostic-log', body => {
+    try {
+      const line = `[viewer-diag] ${new Date().toISOString()} ${JSON.stringify(body || {}).slice(0, 600)}`;
+      fs.appendFileSync(path.join(os.homedir(), '.claude', 'workbench-desktop.log'), line + '\n');
+    } catch { /* 诊断写日志失败不影响主流程 */ }
+    return { status: 200, body: { logged: true } };
+  }],
   ['/api/workspace/select-folder', () => {
     const selected = selectWorkspaceFolder();
     return { status: 200, body: { projectPath: selected ? recordWorkspaceProject(selected) : '' } };
