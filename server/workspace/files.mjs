@@ -26,27 +26,25 @@ export function workspacePath(root, requested) {
 export function workspaceTree(root, requested = '.', depth = 0, budget = { count: 0 }) {
   const { project, real } = workspacePath(root, requested);
   const stat = fs.statSync(real);
-  if (!stat.isDirectory()) return { name: path.basename(real), path: path.relative(project, real), type: 'file', size: stat.size };
-  if (depth > 5 || budget.count > 1200) return { name: path.basename(real) || real, path: path.relative(project, real), type: 'folder', children: [] };
+  if (!stat.isDirectory()) return { name: path.basename(real), path: path.relative(project, real), type: 'file' };
+  // 预算耗尽时返回 undefined 而非空数组：前端按「未加载」处理，展开时会重新懒加载该目录
+  if (depth > 5 || budget.count > 1200) return { name: path.basename(real) || real, path: path.relative(project, real), type: 'folder' };
   const entries = fs.readdirSync(real, { withFileTypes: true });
   const folders = [], files = [];
   for (const entry of entries) {
     // 只跳过 Office 临时文件；隐藏文件与隐藏文件夹照常展示
     if (entry.isFile() && entry.name.startsWith('~$')) continue;
     if (WORKSPACE_SKIP.has(entry.name.toLowerCase())) continue;
-    // 预算耗尽立即停止：避免对超大目录（如 Temp）的剩余条目继续同步 lstat，拖垮单线程服务
-    if (budget.count > 1200) break;
+    // Dirent 自带类型与符号链接判断，无需逐条同步 lstat；条目必须全部展示，不得因预算中断
+    if (entry.isSymbolicLink()) continue;
+    const isDir = entry.isDirectory();
     const fullPath = path.join(real, entry.name);
-    let childStat;
-    try { childStat = fs.lstatSync(fullPath); } catch { continue; }
-    if (childStat.isSymbolicLink()) continue;
-    const item = { name: entry.name, path: path.relative(project, fullPath), type: childStat.isDirectory() ? 'folder' : 'file' };
+    const item = { name: entry.name, path: path.relative(project, fullPath), type: isDir ? 'folder' : 'file' };
     budget.count++;
-    if (childStat.isDirectory()) {
+    if (isDir) {
       item.children = depth < 3 ? workspaceTree(project, fullPath, depth + 1, budget).children : undefined;
       folders.push(item);
     } else {
-      item.size = childStat.size;
       item.extension = path.extname(entry.name).toLowerCase();
       files.push(item);
     }
