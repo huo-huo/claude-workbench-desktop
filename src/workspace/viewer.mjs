@@ -148,18 +148,36 @@ export function renderViewer() {
     source.textContent = '正在读取文件…';
     rendered.hidden = true;
     rendered.innerHTML = '';
-    return;
-  }
-  if (app.viewer.render !== 'source') {
+  } else if (app.viewer.render !== 'source') {
     source.hidden = true;
     source.textContent = '';
     rendered.hidden = false;
     rendered.innerHTML = renderMarkdown(app.viewer.content);
-    return;
+  } else {
+    source.hidden = false;
+    source.classList.toggle('wrap', Boolean(app.viewerWrap));
+    source.textContent = app.viewer.content;
+    rendered.hidden = true;
+    rendered.innerHTML = '';
   }
-  source.hidden = false;
-  source.classList.toggle('wrap', Boolean(app.viewerWrap));
-  source.textContent = app.viewer.content;
-  rendered.hidden = true;
-  rendered.innerHTML = '';
+  reportViewerRenderState(panel);
+}
+
+/** 视觉快照上报：记录面板位置尺寸与遮挡物，远程定位"数据成功但看不见"类渲染差异 */
+function reportViewerRenderState(panel) {
+  try {
+    requestAnimationFrame(() => {
+      const rect = panel.getBoundingClientRect();
+      const probeX = rect.left + rect.width / 2;
+      const probeY = rect.top + Math.min(40, rect.height / 2);
+      const top = probeY > 0 ? document.elementFromPoint(probeX, probeY) : null;
+      reportViewerDiag('rendered', {
+        hidden: panel.hidden,
+        rect: `${Math.round(rect.left)},${Math.round(rect.top)} ${Math.round(rect.width)}x${Math.round(rect.height)}`,
+        viewport: `${window.innerWidth}x${window.innerHeight} dpr=${window.devicePixelRatio}`,
+        display: getComputedStyle(panel).display,
+        cover: top === panel || panel.contains(top) ? 'none' : (top ? `${top.tagName}#${top.id || ''}.${String(top.className).slice(0, 50)}` : 'outside-viewport'),
+      });
+    });
+  } catch { /* 快照失败不影响主流程 */ }
 }
